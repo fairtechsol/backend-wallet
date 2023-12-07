@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
-const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid,setExposureLimitValid} = require('../validators/userValidator');
-const {createUser,lockUnlockUser,insertWallet,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence} = require('../controllers/userController');
+const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid,setExposureLimitValid, CreateSuperAdmin} = require('../validators/userValidator');
+const {createUser,lockUnlockUser,insertWallet,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, createSuperAdmin} = require('../controllers/userController');
 
 const { isAuthenticate } = require('../middleware/auth');
 
@@ -11,6 +11,7 @@ const { isAuthenticate } = require('../middleware/auth');
 
 
 router.post('/add',isAuthenticate,validator(CreateUser),createUser);
+router.post('/create/superadmin',isAuthenticate,validator(CreateSuperAdmin),createSuperAdmin);
 router.post('/updateUser',validator(updateUserValid),updateUser);
 router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
 router.post('/insert/wallet',insertWallet)

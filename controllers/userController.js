@@ -9,13 +9,17 @@ const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
-
+const { addDomainData, getDomainData } = require('../services/domainDataService');
+ 
 exports.createUser = async (req, res) => {
   try {
-    let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership, createdBy, creditRefrence, exposureLimit, maxBetLimit, minBetLimit } = req.body;
+    let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership,creditRefrence, exposureLimit, maxBetLimit, minBetLimit } = req.body;
     let reqUser = req.user || {}
-    let creator = await getUserById(reqUser.id || createdBy);
+    let creator = await getUserById(reqUser.id);
     if (!creator) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
+    if(creator.roleName != userRoleConstant.fairGameWallet || roleName !== userRoleConstant.fairGameAdmin)
+    return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidRole" } }, req, res);
 
     if (!checkUserCreationHierarchy(creator, roleName))
       return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidHierarchy" } }, req, res);
@@ -23,10 +27,10 @@ exports.createUser = async (req, res) => {
     userName = userName.toUpperCase();
     let userExist = await getUserByUserName(userName);
     if (userExist) return ErrorResponse({ statusCode: 400, message: { msg: "user.userExist" } }, req, res);
-    if (creator.roleName != userRoleConstant.fairGameWallet) {
-      if (exposureLimit && exposureLimit > creator.exposureLimit)
-        return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
-    }
+    // if (creator.roleName != userRoleConstant.fairGameWallet) {
+    //   if (exposureLimit && exposureLimit > creator.exposureLimit)
+    //     return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
+    // }
     password = await bcrypt.hash(
       password,
       process.env.BCRYPTSALT
@@ -94,7 +98,110 @@ exports.createUser = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
+exports.createSuperAdmin = async (req, res) => {
+  try {
+    let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership, creditRefrence, exposureLimit, maxBetLimit, minBetLimit,domain,logo,sidebarColor,headerColor,footerColor } = req.body;
+    let reqUser = req.user || {}
+    let creator = await getUserById(reqUser.id);
+    if (!creator) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
+    if(roleName !== userRoleConstant.superAdmin || creator.roleName != userRoleConstant.fairGameAdmin)
+    return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidRole" } }, req, res);
+
+    let checkDomainData = await getDomainData([{domain},{userName}],["id","userName","domain"])
+    if(checkDomainData)
+    return ErrorResponse({ statusCode: 400, message: { msg: "user.domainExist" } }, req, res);
+
+    if (!checkUserCreationHierarchy(creator, roleName))
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidHierarchy" } }, req, res);
+
+    creator.myPartnership = parseInt(myPartnership)
+    userName = userName.toUpperCase();
+    let userExist = await getUserByUserName(userName);
+    if (userExist) return ErrorResponse({ statusCode: 400, message: { msg: "user.userExist" } }, req, res);
+    
+    if (exposureLimit && exposureLimit > creator.exposureLimit)
+    return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
+  
+    password = await bcrypt.hash(
+      password,
+      process.env.BCRYPTSALT
+    );
+    let userData = {
+      userName,
+      fullName,
+      password,
+      phoneNumber,
+      city,
+      roleName,
+      userBlock: creator.userBlock,
+      betBlock: creator.betBlock,
+      createBy: creator.id,
+      creditRefrence: creditRefrence ? creditRefrence : creator.creditRefrence,
+      exposureLimit: exposureLimit ? exposureLimit : creator.exposureLimit,
+      maxBetLimit: maxBetLimit ? maxBetLimit : creator.maxBetLimit,
+      minBetLimit: minBetLimit ? minBetLimit : creator.minBetLimit,
+      isUrl : true
+    }
+    let partnerships = await calculatePartnership(userData, creator)
+    userData = { ...userData, ...partnerships };
+    let insertUser = await addUser(userData);
+    let updateUser = {}
+    if (creditRefrence) {
+      updateUser = await addUser({
+        id: creator.id,
+        downLevelCreditRefrence: parseInt(creditRefrence) + parseInt(creator.downLevelCreditRefrence)
+      })
+    }
+    let transactionArray = [{
+      actionBy: insertUser.createBy,
+      searchId: insertUser.createBy,
+      userId: insertUser.id,
+      amount: 0,
+      transType: transType.add,
+      currentAmount: insertUser.creditRefer,
+      description: walletDescription.userCreate
+    }]
+    if (insertUser.createdBy != insertUser.id) {
+      transactionArray.push({
+        actionBy: insertUser.createBy,
+        searchId: insertUser.id,
+        userId: insertUser.id,
+        amount: 0,
+        transType: transType.withDraw,
+        currentAmount: insertUser.creditRefer,
+        description: walletDescription.userCreate
+      });
+    }
+
+    const transactioninserted = await insertTransactions(transactionArray);
+    let insertUserBalanceData = {
+      currentBalance: 0,
+      userId: insertUser.id,
+      profitLoss: 0,
+      myProfitLoss: 0,
+      downLevelBalance: 0,
+      exposure: 0
+    }
+    insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
+
+    const insertDomainData = {
+      userName,domain,sidebarColor,headerColor,footerColor,logo,
+      createBy : creator.id,
+      userId : insertUser.id
+    }
+    let DomainData = await addDomainData(insertDomainData)
+
+    let response = {
+      user : lodash.omit(insertUser, ["password", "transPassword"]),
+        DomainData
+    }
+
+    return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
 exports.updateUser = async (req, res) => {
   try {
     let { sessionCommission, matchComissionType, matchCommission, id, createBy } = req.body;

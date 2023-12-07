@@ -31,7 +31,8 @@
   "alreadyBlocked":"{name} is already {type}",
     "ExposurelimitSet" : "Exposure limit set successfully",
     "UserBalanceFetchSuccessfully" : "User balance fetch successfully",
-    "invalidRole" : "Invalid role"
+    "invalidRole" : "Invalid role",
+    "domainExist" : "Domain or username already exist"
   },
   "button" : {
     "InvalidUser" : "User is invalid"

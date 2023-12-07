@@ -10,7 +10,7 @@ const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
 const { addDomainData, getDomainData } = require('../services/domainDataService');
- 
+const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
 exports.createUser = async (req, res) => {
   try {
     let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership,creditRefrence, exposureLimit, maxBetLimit, minBetLimit } = req.body;
@@ -191,7 +191,7 @@ exports.createSuperAdmin = async (req, res) => {
       userId : insertUser.id
     }
     let DomainData = await addDomainData(insertDomainData)
-
+    
     let response = {
       user : lodash.omit(insertUser, ["password", "transPassword"]),
         DomainData

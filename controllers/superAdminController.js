@@ -126,6 +126,7 @@ exports.createSuperAdmin = async (req, res) => {
             "aPartnership",
             "smPartnership",
             "mPartnership",
+            "password"
         ])
         response = {
             ...response,
@@ -185,7 +186,7 @@ exports.setExposureLimit = async (req, res, next) => {
 
         let reqUser = req.user || {}
         let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"])
-        let user = await getUser({ id: userId, createBy:reqUser.id }, ["id", "exposureLimit", "roleName"])
+        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "exposureLimit", "roleName"])
         if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         let domain = await getDomainByUserId(userId);
         if (!domain) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
@@ -237,7 +238,10 @@ exports.setCreditReferrence = async (req, res, next) => {
 
         let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
         let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss })
-
+        updateUser = await addUser({
+            id: creator.id,
+            downLevelCreditRefrence: parseInt(creditRefrence) + parseInt(creator.downLevelCreditRefrence)
+        })
         let transactionArray = [{
             actionBy: reqUser.id,
             searchId: user.id,
@@ -278,131 +282,93 @@ exports.setCreditReferrence = async (req, res, next) => {
 
 }
 
-// Controller function for locking/unlocking a user
-exports.lockUnlockUser = async (req, res, next) => {
+
+
+exports.updateUserBalance = async (req, res) => {
     try {
-        // Extract relevant data from the request body and user object
-        const { userId, block, type, transPassword } = req.body;
-        const { id: loginId } = req.user;
+        let { userId, transactionType, amount, transactionPassword, remark } = req.body
+        let reqUser = req.user
+        amount = parseFloat(amount)
 
-        const isPasswordMatch = await checkTransactionPassword(
-            loginId,
-            transPassword
-        );
+        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
+        if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
-        if (!isPasswordMatch) {
-            return ErrorResponse(
-                {
-                    statusCode: 403,
-                    message: { msg: "auth.invalidPass", keys: { type: "transaction" } },
-                },
-                req,
-                res
-            );
+        let domainData = getDomainByUserId(user.id)
+        let loginUserBalanceData = getUserBalanceDataByUserId(reqUser.id);
+        let insertUserBalanceData = getUserBalanceDataByUserId(user.id);
+
+        let usersBalanceData = await Promise.all([loginUserBalanceData, insertUserBalanceData, domainData])
+        if (!usersBalanceData.length || !usersBalanceData[1] || usersBalanceData[2])
+            return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
+        loginUserBalanceData = usersBalanceData[0]
+        domainData = usersBalanceData[2]
+        let updatedLoginUserBalanceData = {}
+        let updatedUpdateUserBalanceData = {}
+        let body = {
+            userId: user.id,
+            amount,
+            transactionType,
+            remark
+        }
+        //let APIDATA = await apiCall(apiMethod.post,domainData+allApiRoutes.updateUserBalance,body)
+        if (APIDATA.statusCode != 200) {
+            return ErrorResponse({ statusCode: 400, message: { msg: APIDATA.data.message } }, req, res);
         }
 
-        // Fetch user details of the current user, including block information
-        const userDetails = await getUserById(loginId, ["userBlock", "betBlock"]);
-
-        // Fetch details of the user who is performing the block/unblock operation,
-        // including the hierarchy and block information
-        const blockingUserDetail = await getUserById(userId, [
-            "createBy",
-            "userBlock",
-            "betBlock",
-        ]);
-
-        // Check if the current user is already blocked
-        if (userDetails?.userBlock) {
-            throw new Error("user.userBlockError");
+        if (transactionType == transType.add) {
+            if (amount > loginUserBalanceData.currentBalance)
+                return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
+            insertUserBalanceData = usersBalanceData[1]
+            updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
+            updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount)
+            let newUserBalanceData = await updateUserBalanceByUserid(user.id, updatedUpdateUserBalanceData)
+            updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
+        } else if (transactionType == transType.withDraw) {
+            insertUserBalanceData = usersBalanceData[1]
+            if (amount > insertUserBalanceData.currentBalance)
+                return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
+            updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
+            updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
+            let newUserBalanceData = await updateUserBalanceByUserid(user.id, updatedUpdateUserBalanceData)
+            updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
+        } else {
+            return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         }
 
-        // Check if the block type is 'betBlock' and the user is already bet-blocked
-        if (type == blockType.betBlock && userDetails?.betBlock) {
-            throw new Error("user.betBlockError");
-        }
+        let newLoginUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedLoginUserBalanceData)
 
-        // Check if the user performing the block/unblock operation has the right access
-        if (blockingUserDetail?.createBy != loginId) {
-            return ErrorResponse(
-                {
-                    statusCode: 403,
-                    message: { msg: "user.blockCantAccess" },
-                },
-                req,
-                res
-            );
-        }
+        let transactionArray = [{
+            actionBy: reqUser.id,
+            searchId: reqUser.id,
+            userId: user.id,
+            amount: transactionType == transType.add ? amount : -amount,
+            transType: transactionType,
+            currentAmount: insertUserBalanceData.currentBalance,
+            description: remark
+        }, {
+            actionBy: reqUser.id,
+            searchId: user.id,
+            userId: user.id,
+            amount: transactionType == transType.add ? -amount : amount,
+            transType: transactionType == transType.add ? transType.withDraw : transType.add,
+            currentAmount: newLoginUserBalanceData.currentBalance,
+            description: remark
+        }]
 
-        // Check if the user is already blocked or unblocked (prevent redundant operations)
-        if (
-            blockingUserDetail?.userBlock === block &&
-            type === blockType.userBlock
-        ) {
-            return ErrorResponse(
-                {
-                    statusCode: 400,
-                    message: {
-                        msg: "user.alreadyBlocked",
-                        keys: {
-                            name: "User",
-                            type: block ? "blocked" : "unblocked",
-                        },
-                    },
-                },
-                req,
-                res
-            );
-        }
-
-        // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
-        if (
-            blockingUserDetail?.betBlock === block &&
-            type === blockType.betBlock
-        ) {
-            return ErrorResponse(
-                {
-                    statusCode: 400,
-                    message: {
-                        msg: "user.alreadyBlocked",
-                        keys: {
-                            name: "Bet",
-                            type: block ? "blocked" : "unblocked",
-                        },
-                    },
-                },
-                req,
-                res
-            );
-        }
-
-        // Perform the user block/unblock operation
-        const blockedUsers = await userBlockUnblock(userId, loginId, block, type);
-
-
-        //   if blocktype is user and its block then user would be logout by socket
-        if (type == blockType.userBlock && block) {
-            blockedUsers?.[0]?.forEach((item) => {
-                forceLogoutUser(item?.id);
-            })
-        }
-
-        // Return success response
+        const transactioninserted = await insertTransactions(transactionArray);
         return SuccessResponse(
-            { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
-            req,
-            res
-        );
-    } catch (error) {
-        return ErrorResponse(
             {
-                statusCode: 500,
-                message: error.message,
+                statusCode: 200,
+                message: { msg: "userBalance.BalanceAddedSuccessfully" },
+                data: { user },
             },
             req,
             res
         );
+    } catch (error) {
+        return ErrorResponse(error, req, res);
     }
-};
+}
 
 

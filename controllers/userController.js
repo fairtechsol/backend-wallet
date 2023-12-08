@@ -95,7 +95,7 @@ exports.createUser = async (req, res) => {
     insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
 
     let response = lodash.omit(insertUser, ["password", "transPassword"])
-    return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
+    return SuccessResponse({ statusCode: 200, message: { msg: "add",keys : {key : "User"} }, data: response }, req, res)
   } catch (err) {
     return ErrorResponse(err, req, res);
   }
@@ -119,56 +119,6 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.insertWallet = async (req, res) => {
-  try {
-    let wallet = {
-      userName: "FGWALLET",
-      fullName: "fair game wallet",
-      password: "FGwallet@123",
-      phoneNumber: "1234567890",
-      city: "india",
-      roleName: userRoleConstant.fairGameWallet,
-      userBlock: false,
-      betBlock: false,
-      createdBy: null,
-      fwPartnership: 0,
-      faPartnership: 0,
-      saPartnership: 0,
-      aPartnership: 0,
-      smPartnership: 0,
-      mPartnership: 0,
-    };
-    let user = await getUserByUserName(wallet.userName);
-    if (user)
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "userExist" } },
-        req,
-        res
-      );
-
-    wallet.password = await bcrypt.hash(
-      wallet.password,
-      process.env.BCRYPTSALT
-    );
-    let insertUser = await addUser(wallet);
-    let insertUserBalanceData = {
-      currentBalance: 0,
-      userId: insertUser.id,
-      profitLoss: 0,
-      myProfitLoss: 0,
-      downLevelBalance: 0,
-      exposure: 0
-    }
-    insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
-    return SuccessResponse(
-      { statusCode: 200, message: { msg: "login" }, data: insertUser },
-      req,
-      res
-    );
-  } catch (err) {
-    return ErrorResponse(err, req, res);
-  }
-};
 
 const generateTransactionPass = () => {
   const randomNumber = Math.floor(100000 + Math.random() * 900000);

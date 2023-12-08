@@ -17,7 +17,7 @@ exports.apiCall = async (method, url, data, headers) => {
     return response.data;
   } catch (error) {
     console.log(error);
-    return error;
+    throw new error;
   }
 };
 

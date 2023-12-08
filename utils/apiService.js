@@ -1,5 +1,4 @@
 const axios = require('axios');
-
 // create common api call function using axios to call external server http call for whole project GET <POST< PUT< DELETE
 exports.apiMethod = {
     get: "get",
@@ -27,6 +26,7 @@ exports.allApiRoutes = {
     createUser: "/user/add",
     createSuperAdmin: "/user/create/superadmin",
     updateUser: "/user/updateUser",
+    updateSuperAdmin: "/user/update/superadmin",
     lockUnlockUser: "/user/lockUnlockUser",
     insertWallet: "/user/insert/wallet",
     changePassword: "/user/changePassword",

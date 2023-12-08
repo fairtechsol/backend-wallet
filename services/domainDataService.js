@@ -18,6 +18,22 @@ exports.getDomainDataByDomain = async (domain, select) => {
     select: select,
   });
 };
+exports.getDomainDataByUserId = async (userId, select) => {
+  return await DomainData.findOne({
+    where: { userId },
+    select: select,
+  });
+}
+
+exports.getDomainByUserId = async (userId) => {
+  let domain= await DomainData.findOne({
+    where: { userId },
+    select: ["domain"],
+  });
+  if(!domain)
+  return null;
+  return domain.domain;
+}
 
 exports.getDomainData = async (where, select) => {
   return await DomainData.findOne({

@@ -9,8 +9,10 @@ const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
-const { addDomainData, getDomainData } = require('../services/domainDataService');
+const { addDomainData, getDomainData, getDomainDataByUserId } = require('../services/domainDataService');
 const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
+const {calculatePartnership,checkUserCreationHierarchy} = require("../services/commonService")
+
 exports.createUser = async (req, res) => {
   try {
     let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership,creditRefrence, exposureLimit, maxBetLimit, minBetLimit } = req.body;
@@ -98,282 +100,25 @@ exports.createUser = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
-exports.createSuperAdmin = async (req, res) => {
-  try {
-    let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership, creditRefrence, exposureLimit, maxBetLimit, minBetLimit,domain,logo,sidebarColor,headerColor,footerColor } = req.body;
-    let reqUser = req.user || {}
-    let creator = await getUserById(reqUser.id);
-    if (!creator) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
-
-    if(roleName !== userRoleConstant.superAdmin || creator.roleName != userRoleConstant.fairGameAdmin)
-    return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidRole" } }, req, res);
-
-    let checkDomainData = await getDomainData([{domain},{userName}],["id","userName","domain"])
-    if(checkDomainData)
-    return ErrorResponse({ statusCode: 400, message: { msg: "user.domainExist" } }, req, res);
-
-    if (!checkUserCreationHierarchy(creator, roleName))
-      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidHierarchy" } }, req, res);
-
-    creator.myPartnership = parseInt(myPartnership)
-    userName = userName.toUpperCase();
-    let userExist = await getUserByUserName(userName);
-    if (userExist) return ErrorResponse({ statusCode: 400, message: { msg: "user.userExist" } }, req, res);
-    
-    if (exposureLimit && exposureLimit > creator.exposureLimit)
-    return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
-  
-    password = await bcrypt.hash(
-      password,
-      process.env.BCRYPTSALT
-    );
-    let userData = {
-      userName,
-      fullName,
-      password,
-      phoneNumber,
-      city,
-      roleName,
-      userBlock: creator.userBlock,
-      betBlock: creator.betBlock,
-      createBy: creator.id,
-      creditRefrence: creditRefrence ? creditRefrence : creator.creditRefrence,
-      exposureLimit: exposureLimit ? exposureLimit : creator.exposureLimit,
-      maxBetLimit: maxBetLimit ? maxBetLimit : creator.maxBetLimit,
-      minBetLimit: minBetLimit ? minBetLimit : creator.minBetLimit,
-      isUrl : true
-    }
-    let partnerships = await calculatePartnership(userData, creator)
-    userData = { ...userData, ...partnerships };
-    let insertUser = await addUser(userData);
-    let updateUser = {}
-    if (creditRefrence) {
-      updateUser = await addUser({
-        id: creator.id,
-        downLevelCreditRefrence: parseInt(creditRefrence) + parseInt(creator.downLevelCreditRefrence)
-      })
-    }
-    let transactionArray = [{
-      actionBy: insertUser.createBy,
-      searchId: insertUser.createBy,
-      userId: insertUser.id,
-      amount: 0,
-      transType: transType.add,
-      currentAmount: insertUser.creditRefer,
-      description: walletDescription.userCreate
-    }]
-    if (insertUser.createdBy != insertUser.id) {
-      transactionArray.push({
-        actionBy: insertUser.createBy,
-        searchId: insertUser.id,
-        userId: insertUser.id,
-        amount: 0,
-        transType: transType.withDraw,
-        currentAmount: insertUser.creditRefer,
-        description: walletDescription.userCreate
-      });
-    }
-
-    const transactioninserted = await insertTransactions(transactionArray);
-    let insertUserBalanceData = {
-      currentBalance: 0,
-      userId: insertUser.id,
-      profitLoss: 0,
-      myProfitLoss: 0,
-      downLevelBalance: 0,
-      exposure: 0
-    }
-    insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
-
-    const insertDomainData = {
-      userName,domain,sidebarColor,headerColor,footerColor,logo,
-      createBy : creator.id,
-      userId : insertUser.id
-    }
-    let DomainData = await addDomainData(insertDomainData)
-    
-    let response = {
-      user : lodash.omit(insertUser, ["password", "transPassword"]),
-        DomainData
-    }
-
-    return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
-  } catch (err) {
-    return ErrorResponse(err, req, res);
-  }
-};
 exports.updateUser = async (req, res) => {
   try {
-    let { sessionCommission, matchComissionType, matchCommission, id, createBy } = req.body;
+    let { sessionCommission, matchComissionType, matchCommission, id } = req.body;
     let reqUser = req.user || {}
-    let updateUser = await getUser({ id, createBy }, ["id", "createBy", "sessionCommission", "matchComissionType", "matchCommission"])
+    let updateUser = await getUser({ id, createBy : reqUser.id }, ["id", "createBy", "sessionCommission", "matchComissionType", "matchCommission"])
     if (!updateUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
     updateUser.sessionCommission = sessionCommission ?? updateUser.sessionCommission;
     updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
     updateUser.matchComissionType = matchComissionType || updateUser.matchComissionType;
     updateUser = await addUser(updateUser);
-    let response = lodash.pick(updateUser, ["sessionCommission", "matchCommission", "matchComissionType"])
+    let domainData = await getDomainDataByUserId(id,["domain"])
+    let response = lodash.pick(updateUser, ["sessionCommission", "matchCommission", "matchComissionType","id"])
+    //await apiCall("post",domainData.domain+allApiRoutes.updateSuperAdmin,response)
     return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
   } catch (err) {
     return ErrorResponse(err, req, res);
   }
 };
 
-
-const calculatePartnership = async (userData, creator) => {
-  if (userData.roleName == userRoleConstant.fairGameWallet) {
-    return {};
-  }
-
-  // user created by fairgame wallet
-  let fwPartnership = creator.fwPartnership;
-  let faPartnership = creator.faPartnership;
-  let saPartnership = creator.saPartnership;
-  let aPartnership = creator.aPartnership;
-  let smPartnership = creator.smPartnership;
-  let mPartnership = creator.mPartnership;
-
-  switch (creator.roleName) {
-    case (userRoleConstant.fairGameWallet): {
-      fwPartnership = creator.myPartnership;
-      break;
-    }
-    case (userRoleConstant.fairGameAdmin): {
-      faPartnership = creator.myPartnership;
-      break;
-    }
-    case (userRoleConstant.superAdmin): {
-      saPartnership = creator.myPartnership;
-      break;
-    }
-    case (userRoleConstant.admin): {
-      aPartnership = creator.myPartnership;
-      break;
-    }
-    case (userRoleConstant.superMaster): {
-      smPartnership = creator.myPartnership;
-      break;
-    }
-    case (userRoleConstant.master): {
-      mPartnership = creator.myPartnership;
-      break;
-    }
-  }
-
-  switch (creator.roleName) {
-    case (userRoleConstant.fairGameWallet): {
-      switch (userData.roleName) {
-        case (userRoleConstant.fairGameAdmin): {
-          faPartnership = 100 - parseInt(creator.myPartnership);
-          break;
-        }
-        case (userRoleConstant.superAdmin): {
-          saPartnership = 100 - parseInt(creator.myPartnership);
-          break;
-        }
-        case (userRoleConstant.admin): {
-          aPartnership = 100 - parseInt(creator.myPartnership);
-          break;
-        }
-        case (userRoleConstant.superMaster): {
-          smPartnership = 100 - parseInt(creator.myPartnership);
-          break;
-        }
-        case (userRoleConstant.master): {
-          mPartnership = 100 - parseInt(creator.myPartnership);
-          break;
-        }
-      }
-    }
-      break;
-    case (userRoleConstant.fairGameAdmin): {
-      switch (userData.roleName) {
-        case (userRoleConstant.superAdmin): {
-          saPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
-          break;
-        }
-        case (userRoleConstant.admin): {
-          aPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
-          break;
-        }
-        case (userRoleConstant.superMaster): {
-          smPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
-          break;
-        }
-        case (userRoleConstant.master): {
-          mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
-          break;
-        }
-      }
-    }
-      break;
-    case (userRoleConstant.superAdmin): {
-      switch (userData.roleName) {
-        case (userRoleConstant.admin): {
-          aPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership);
-          break;
-        }
-        case (userRoleConstant.superMaster): {
-          smPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership);
-          break;
-        }
-        case (userRoleConstant.master): {
-          mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership);
-          break;
-        }
-      }
-    }
-      break;
-    case (userRoleConstant.admin): {
-      switch (userData.roleName) {
-        case (userRoleConstant.superMaster): {
-          smPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership);
-          break;
-        }
-        case (userRoleConstant.master): {
-          mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership);
-          break;
-        }
-      }
-    }
-      break;
-    case (userRoleConstant.superMaster): {
-      switch (userData.roleName) {
-        case (userRoleConstant.master): {
-          mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership + aPartnership);
-          break;
-        }
-      }
-    }
-      break;
-  }
-
-  if (userData.roleName != userRoleConstant.expert && fwPartnership + faPartnership + saPartnership + aPartnership + smPartnership + mPartnership != 100) {
-    throw new Error("user.partnershipNotValid");
-  }
-  return {
-    fwPartnership,
-    faPartnership,
-    saPartnership,
-    aPartnership,
-    smPartnership,
-    mPartnership
-  }
-}
-
-const checkUserCreationHierarchy = (creator, createUserRoleName) => {
-  const hierarchyArray = Object.values(userRoleConstant)
-  let creatorIndex = hierarchyArray.indexOf(creator.roleName)
-  if (creatorIndex == -1) return false
-  let index = hierarchyArray.indexOf(createUserRoleName)
-  if (index == -1) return false
-  if (index < creatorIndex) return false;
-  if (createUserRoleName == userRoleConstant.expert && creator.roleName !== userRoleConstant.fairGameAdmin) {
-    return false
-  }
-  return true
-
-}
 exports.insertWallet = async (req, res) => {
   try {
     let wallet = {

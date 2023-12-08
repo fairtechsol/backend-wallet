@@ -7,10 +7,12 @@ const userRoutes = require('./userRoutes')
 const buttonRoutes = require('./buttonRoutes')
 const transactionsRoutes = require('./transactionRoutes')
 const userBalanceRoutes = require('./userBalanceRoutes')
+const superAdminRoutes = require("../routes/superAdminRoutes")
 // Define routes
 router.use('/auth', authRoutes);
 router.use('/user',userRoutes)
 router.use('/button',buttonRoutes)
 router.use('/transaction',transactionsRoutes)
 router.use('/balance',userBalanceRoutes)
+router.use("/superadmin",superAdminRoutes)
 module.exports = router;

@@ -91,3 +91,5 @@ module.exports.buttonType = {
 module.exports.walletDescription = {
     userCreate : "CREDIT REFRENCE as user create",
 }
+
+module.exports.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{6,30}$/;

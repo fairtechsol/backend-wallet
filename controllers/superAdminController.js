@@ -191,9 +191,9 @@ exports.setExposureLimit = async (req, res, next) => {
         let domain = await getDomainByUserId(userId);
         if (!domain) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
-        // if (loginUser.exposureLimit < amount && loginUser.roleName != userRoleConstant.fairGameWallet) {
-        //     return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
-        // }
+        if (loginUser.exposureLimit < amount) {
+            return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
+        }
         amount = parseInt(amount);
         user.exposureLimit = amount
         await addUser(user);

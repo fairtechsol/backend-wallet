@@ -1,3 +1,4 @@
+const { userRoleConstant } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { sendMessageToUser } = require("../sockets/socketManager");
 

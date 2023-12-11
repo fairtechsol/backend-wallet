@@ -34,6 +34,11 @@ exports.updateUser = async (id, body) => {
   return updateUser;
 };
 
+exports.deleteUser = async (id) => {
+  let deleteUser = await user.delete({id});
+  return deleteUser;
+};
+
 
 exports.getUserByUserName = async (userName, select) => {
   return await user.findOne({

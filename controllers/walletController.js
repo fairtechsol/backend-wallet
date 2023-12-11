@@ -1,7 +1,7 @@
 const { userRoleConstant, transType } = require("../config/contants");
 const { insertTransactions } = require("../services/transactionService");
 const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserid } = require("../services/userBalanceService");
-const { getUserByUserName, addUser } = require("../services/userService");
+const { getUserByUserName, addUser, getUserById, getChildUser, updateUser } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require('bcryptjs')
 exports.insertWallet = async (req, res) => {
@@ -46,7 +46,7 @@ exports.insertWallet = async (req, res) => {
         }
         insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
         return SuccessResponse(
-            { statusCode: 200, message: { msg: "add",keys:{key: "Wallet"} }, data: insertUser },
+            { statusCode: 200, message: { msg: "add", keys: { key: "Wallet" } }, data: insertUser },
             req,
             res
         );
@@ -61,10 +61,10 @@ exports.updateBalance = async (req, res) => {
         let reqUser = req.user
         amount = parseFloat(amount)
 
-        let loginUserBalanceData =await  getUserBalanceDataByUserId(reqUser.id);
-        
+        let loginUserBalanceData = await getUserBalanceDataByUserId(reqUser.id);
+
         if (!loginUserBalanceData)
-            return ErrorResponse({ statusCode: 400, message: { msg: "notFound" ,keys :{name : "Balance"} } }, req, res);
+            return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Balance" } } }, req, res);
 
         // let updatedLoginUserBalanceData = {};
         let updatedUpdateUserBalanceData = {};
@@ -99,7 +99,7 @@ exports.updateBalance = async (req, res) => {
             {
                 statusCode: 200,
                 message: { msg: "userBalance.BalanceAddedSuccessfully" },
-                data:  updatedUpdateUserBalanceData ,
+                data: updatedUpdateUserBalanceData,
             },
             req,
             res
@@ -108,3 +108,91 @@ exports.updateBalance = async (req, res) => {
         return ErrorResponse(error, req, res);
     }
 };
+
+exports.setExposureLimit = async (req, res, next) => {
+    try {
+        let { amount, transactionPassword } = req.body
+
+        let reqUser = req.user || {}
+        let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"])
+
+        amount = parseInt(amount);
+        loginUser.exposureLimit = amount
+        let childUsers = await getChildUser(reqUser.id)
+
+
+        childUsers.map(async childObj => {
+            let childUser = await getUserById(childObj.id);
+            if (childUser.exposureLimit > amount || childUser.exposureLimit == 0) {
+                childUser.exposureLimit = amount;
+                await addUser(childUser);
+            }
+        });
+        await addUser(loginUser)
+        return SuccessResponse(
+            {
+                statusCode: 200,
+                message: { msg: "user.ExposurelimitSet" },
+                data: {
+                    user: {
+                        id: loginUser.id,
+                        exposureLimit: loginUser.exposureLimit
+                    }
+                },
+            },
+            req,
+            res
+        );
+    } catch (error) {
+        return ErrorResponse(error, req, res);
+    }
+}
+
+exports.setCreditReferrence = async (req, res, next) => {
+    try {
+
+        let {  amount, transactionPassword, remark } = req.body;
+        let reqUser = req.user;
+        amount = parseFloat(amount);
+
+        let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence", "roleName"]);
+        if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
+        let userBalance = await getUserBalanceDataByUserId(loginUser.id);
+        if (!userBalance)
+            return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+        let previousCreditReference = loginUser.creditRefrence
+        let updateData = {
+            creditRefrence: amount
+        }
+
+        let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
+        let newUserBalanceData = await updateUserBalanceByUserid(loginUser.id, { profitLoss })
+
+        let transactionArray = [{
+            actionBy: reqUser.id,
+            searchId: loginUser.id,
+            userId: loginUser.id,
+            amount: previousCreditReference,
+            transType: transType.creditRefer,
+            currentAmount: updateData.creditRefrence,
+            description: "CREDIT REFRENCE " + remark
+        }]
+
+        const transactioninserted = await insertTransactions(transactionArray);
+        await updateUser(loginUser.id, updateData);
+        return SuccessResponse(
+            {
+                statusCode: 200,
+                message: { msg: "userBalance.BalanceAddedSuccessfully" },
+                data: { user: updateData },
+            },
+            req,
+            res
+        );
+
+    } catch (error) {
+        return ErrorResponse(error, req, res);
+    }
+
+}

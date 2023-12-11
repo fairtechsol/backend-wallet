@@ -1,49 +1,47 @@
 {
   "internalServerError": "Internal server error",
   "invalidData": "Invalid data",
-  "notFound": "{name} not found",
-  "invalid":"Invalid {name}",
-  "invalidId": "Given id is invalid",
+  "notFound": "{name} not found.",
+  "invalid": "Invalid {name}",
+  "invalidId": "Given id is invalid.",
   "userNotSelect": "User not selected.",
-  "updated":"{name} updated successfully",
-  "userNotFound" : "User not found",
-  "add" : "{key} added successfully",
-  "required" : "{name} is required", 
+  "updated": "{name} updated successfully.",
+  "userNotFound": "User not found.",
+  "add": "{key} added successfully.",
+  "required": "{name} is required.",
   "auth": {
-    "loginSuccess": "Login successfully",
-    "invalidPass": "Invalid {type} password",
-    "authFailed": "Please login into your account",
-    "roleNotCorrectLogin": "Please login with correct user",
-    "logoutSuccess":"Logout successfully",
-    "passwordChanged":"Password changed successfully",
-    "unauthorize":"Unauthorized user"
+    "loginSuccess": "Login successfully.",
+    "invalidPass": "Invalid {type} password.",
+    "authFailed": "Please login into your account.",
+    "roleNotCorrectLogin": "Please login with correct user.",
+    "logoutSuccess": "Logout successfully.",
+    "passwordChanged": "Password changed successfully.",
+    "unauthorize": "Unauthorized user"
   },
-  "user" : {
+  "user": {
     "blocked": "There is something wrong with your account. Please contact your administrator.",
     "passwordMatch": "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character (#$@!%&*?)",
-    "confirmPasswordNotMatch":"Password and confirm password did not match",
-    "partnershipNotValid" : "Given partnership not valid",
-    "InvalidExposureLimit" : "Given Exposure limit is invalid",
+    "confirmPasswordNotMatch": "Password and confirm password did not match.",
+    "partnershipNotValid": "Given partnership not valid.",
+    "InvalidExposureLimit": "Given Exposure limit is invalid.",
     "betBlockError": "Your are block by admin, Please contact to the administrator.",
     "userBlockError": "Your bet block by admin, Please contact to the administrator.",
-    "lock/unlockSuccessfully" : "User lock and unlock operation successfull",
-    "InvalidHierarchy" : "Invalid user role you given for creation",
-    "userExist" : "User already exist on given user name" ,
-    "blockCantAccess":"You can not block this user",
-    "alreadyBlocked":"{name} is already {type}",
-    "ExposurelimitSet" : "Exposure limit set successfully",
-    "UserBalanceFetchSuccessfully" : "User balance fetch successfully",
-    "invalidRole" : "Invalid role",
-    "domainExist" : "Domain or username already exist"
+    "lock/unlockSuccessfully": "User lock and unlock operation successfull.",
+    "InvalidHierarchy": "Invalid user role you given for creation.",
+    "userExist": "User already exist on given user name.",
+    "blockCantAccess": "You can not block this user.",
+    "alreadyBlocked": "{name} is already {type}.",
+    "ExposurelimitSet": "Exposure limit set successfully.",
+    "UserBalanceFetchSuccessfully": "User balance fetch successfully.",
+    "invalidRole": "Invalid role",
+    "domainExist": "Domain or username already exist."
   },
-  "button" : {
-    "InvalidUser" : "User is invalid"
+  "button": {
+    "InvalidUser": "User is invalid"
   },
-  "userBalance" : {
-    "insufficientBalance" : "balance is insufficient to take this action",
-    "BalanceAddedSuccessfully" : "Balance Updated successfully"
+  "userBalance": {
+    "insufficientBalance": "balance is insufficient to take this action.",
+    "BalanceAddedSuccessfully": "Balance Updated successfully."
   },
-  "wallet" : {
-
-  }
+  "wallet": {}
 }

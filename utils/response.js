@@ -1,7 +1,6 @@
 const { __mf } = require("i18n");
 
 module.exports.ErrorResponse = (errorData, req, res) => {
-  console.log(errorData)
   errorData.statusCode = errorData.statusCode || 500;
   errorData.status = "error";
   const errorMessage = errorData.message || "Internal Server Error";
@@ -17,7 +16,6 @@ module.exports.ErrorResponse = (errorData, req, res) => {
     stack: errorData.stack,
   };
   res.status(errorData.statusCode).json(errorObj);
-
 };
 
 module.exports.SuccessResponse = (resData, req, res) => {
@@ -27,7 +25,9 @@ module.exports.SuccessResponse = (resData, req, res) => {
   return res.status(resData.statusCode).json({
     status: resData.status,
     statusCode: resData.statusCode,
-    message: resData?.message?__mf(resData?.message?.msg, resData?.message?.keys):null,
+    message: resData?.message
+      ? __mf(resData?.message?.msg, resData?.message?.keys)
+      : null,
     data: resData.data,
     meta: resData.meta,
   });

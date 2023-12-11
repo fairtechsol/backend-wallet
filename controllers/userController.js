@@ -9,7 +9,7 @@ const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
-const { addDomainData, getDomainData, getDomainDataByUserId } = require('../services/domainDataService');
+const { addDomainData, getDomainData, getDomainDataByUserId, getDomainDataByUserIds } = require('../services/domainDataService');
 const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
 const {calculatePartnership,checkUserCreationHierarchy} = require("../services/commonService")
 
@@ -595,21 +595,21 @@ exports.lockUnlockUser = async (req, res, next) => {
       const { userId, block, type,transPassword } = req.body;
       const { id:loginId } = req.user;
 
-      const isPasswordMatch = await checkTransactionPassword(
-        loginId,
-        transPassword
-      );
+      // const isPasswordMatch = await checkTransactionPassword(
+      //   loginId,
+      //   transPassword
+      // );
   
-      if (!isPasswordMatch) {
-        return ErrorResponse(
-          {
-            statusCode: 403,
-            message: { msg: "auth.invalidPass", keys: { type: "transaction" } },
-          },
-          req,
-          res
-        );
-      }
+      // if (!isPasswordMatch) {
+      //   return ErrorResponse(
+      //     {
+      //       statusCode: 403,
+      //       message: { msg: "auth.invalidPass", keys: { type: "transaction" } },
+      //     },
+      //     req,
+      //     res
+      //   );
+      // }
   
       // Fetch user details of the current user, including block information
       const userDetails = await getUserById(loginId, ["userBlock", "betBlock"]);
@@ -688,15 +688,36 @@ exports.lockUnlockUser = async (req, res, next) => {
   
       // Perform the user block/unblock operation
       const blockedUsers=await userBlockUnblock(userId, loginId, block, type);
-
-
-    //   if blocktype is user and its block then user would be logout by socket
+      let blockedUserIds = blockedUsers[0].map(item => item?.id);
+      //   if blocktype is user and its block then user would be logout by socket
       if(type==blockType.userBlock&&block){
         blockedUsers?.[0]?.forEach((item)=>{
-            forceLogoutUser(item?.id);
+          //blockedUserIds.push(item?.id)
+          forceLogoutUser(item?.id);
         })
-      }
-  
+      };
+
+      const usersDomainData = await getDomainDataByUserIds(blockedUserIds) ;
+
+      await Promise.allSettled(usersDomainData.map((item)=>{
+        return new Promise(async (resolve,reject)=>{
+          let apiData = {
+            userId : item.id,
+            block,
+            type
+          };
+          console.log(apiData);
+          resolve()
+          // await apiCall(apiMethod.post,item.domain+allApiRoutes.lockUnlockUser,apiData)
+          // .then(data => {
+          //   resolve()
+          // })
+          // .catch(err =>{
+          //   reject()
+          // })
+        })
+      }));
+      
       // Return success response
       return SuccessResponse(
         { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },

@@ -1,6 +1,7 @@
 const { AppDataSource } = require("../config/postGresConnection");
 const bcrypt = require("bcryptjs");
 const domainDataSchema = require("../models/domainData.entity");
+const { In } = require("typeorm");
 const DomainData = AppDataSource.getRepository(domainDataSchema);
 
 // id is required and select is optional parameter is an type or array
@@ -33,6 +34,13 @@ exports.getDomainByUserId = async (userId) => {
   if(!domain)
   return null;
   return domain.domain;
+}
+exports.getDomainDataByUserIds = async (userIds) => {
+  let domains= await DomainData.find({
+    where: { userId : In(userIds) },
+    select: ["domain","id"],
+  });
+  return domains;
 }
 
 exports.getDomainData = async (where, select) => {

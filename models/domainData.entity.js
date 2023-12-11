@@ -1,8 +1,8 @@
 const { EntitySchema } = require('typeorm');
-const { userRoleConstant, matchComissionTypeConstant, baseColumnsSchemaPart } = require("./../config/contants");
+const { userRoleConstant, matchComissionTypeConstant, baseColumnsSchemaPart } = require("../config/contants");
 
-const urlDataSchema = new EntitySchema({
-  name: 'urlData',
+const domainDataSchema = new EntitySchema({
+  name: 'domainData',
   columns: {
     ...baseColumnsSchemaPart,
     userName: {
@@ -10,16 +10,25 @@ const urlDataSchema = new EntitySchema({
       nullable: false,
       unique: true
     },
-    url: {
+    userId : {
       type: 'varchar',
       nullable: false,
       unique: true
+    },
+    domain: {
+      type: 'varchar',
+      nullable: false,
+      unique: true
+    },
+    logo: {
+      type: 'varchar',
+      nullable: false
     },
     headerColor: {
       type: 'varchar',
       nullable: false
     },
-    sideBarColor: {
+    sidebarColor: {
       type: 'varchar',
       nullable: false
     },
@@ -33,11 +42,11 @@ const urlDataSchema = new EntitySchema({
   },
   indices: [
     {
-      name: 'urlData_userName',   // index name should be start with the table name
+      name: 'domainData_userName',   // index name should be start with the table name
       unique: true, // Optional: Set to true if you want a unique index
       columns: ['id', 'userName'],
     }
   ],
 });
 
-module.exports = urlDataSchema;
+module.exports = domainDataSchema;

@@ -129,9 +129,6 @@
                   "myPartnership": {
                     "example": "any"
                   },
-                  "createdBy": {
-                    "example": "any"
-                  },
                   "creditRefrence": {
                     "example": "any"
                   },
@@ -154,6 +151,15 @@
     "/user/updateUser": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -176,9 +182,6 @@
                   },
                   "id": {
                     "example": "any"
-                  },
-                  "createBy": {
-                    "example": "any"
                   }
                 }
               }
@@ -190,6 +193,15 @@
     "/user/lockUnlockUser": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -216,16 +228,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/user/insert/wallet": {
-      "post": {
-        "description": "",
-        "responses": {
-          "default": {
-            "description": ""
           }
         }
       }
@@ -275,6 +277,15 @@
     "/user/update/exposurelimit": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -414,6 +425,15 @@
     "/user/update/creditreferrence": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -591,6 +611,322 @@
                   "userId": {
                     "example": "any"
                   },
+                  "transactionType": {
+                    "example": "any"
+                  },
+                  "amount": {
+                    "example": "any"
+                  },
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "remark": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/add": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "userName": {
+                    "example": "any"
+                  },
+                  "fullName": {
+                    "example": "any"
+                  },
+                  "password": {
+                    "example": "any"
+                  },
+                  "confirmPassword": {
+                    "example": "any"
+                  },
+                  "phoneNumber": {
+                    "example": "any"
+                  },
+                  "city": {
+                    "example": "any"
+                  },
+                  "roleName": {
+                    "example": "any"
+                  },
+                  "myPartnership": {
+                    "example": "any"
+                  },
+                  "creditRefrence": {
+                    "example": "any"
+                  },
+                  "exposureLimit": {
+                    "example": "any"
+                  },
+                  "maxBetLimit": {
+                    "example": "any"
+                  },
+                  "minBetLimit": {
+                    "example": "any"
+                  },
+                  "domain": {
+                    "example": "any"
+                  },
+                  "logo": {
+                    "example": "any"
+                  },
+                  "sidebarColor": {
+                    "example": "any"
+                  },
+                  "headerColor": {
+                    "example": "any"
+                  },
+                  "footerColor": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/updateUser": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionCommission": {
+                    "example": "any"
+                  },
+                  "matchComissionType": {
+                    "example": "any"
+                  },
+                  "matchCommission": {
+                    "example": "any"
+                  },
+                  "id": {
+                    "example": "any"
+                  },
+                  "logo": {
+                    "example": "any"
+                  },
+                  "sidebarColor": {
+                    "example": "any"
+                  },
+                  "headerColor": {
+                    "example": "any"
+                  },
+                  "footerColor": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/update/exposurelimit": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "transPassword": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/update/creditreferrence": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "example": "any"
+                  },
+                  "amount": {
+                    "example": "any"
+                  },
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "remark": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/update/balance": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "example": "any"
+                  },
+                  "transactionType": {
+                    "example": "any"
+                  },
+                  "amount": {
+                    "example": "any"
+                  },
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "remark": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallet/insert": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/wallet/update/balance": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
                   "transactionType": {
                     "example": "any"
                   },

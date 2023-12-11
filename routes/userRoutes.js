@@ -11,15 +11,14 @@ const { isAuthenticate } = require('../middleware/auth');
 
 
 router.post('/add',isAuthenticate,validator(CreateUser),createUser);
-router.post('/updateUser',validator(updateUserValid),updateUser);
-router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
-router.post('/insert/wallet',insertWallet)
+router.post('/updateUser',isAuthenticate,validator(updateUserValid),updateUser);
+router.post('/lockUnlockUser',isAuthenticate, validator(LockUnlockUser), lockUnlockUser);
 router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
-router.post("/update/exposurelimit",validator(setExposureLimitValid),setExposureLimit)
+router.post("/update/exposurelimit",isAuthenticate,validator(setExposureLimitValid),setExposureLimit)
 router.get("/list",isAuthenticate,userList)
 router.get("/searchlist",isAuthenticate,userSearchList)
 router.get("/balance",isAuthenticate,userBalanceDetails)
-router.post("/update/creditreferrence",setCreditReferrence)
+router.post("/update/creditreferrence",isAuthenticate,setCreditReferrence)
 router.post("/generateTransactionPassword",isAuthenticate,validator(generateTransactionPass),generateTransactionPassword);
 
 module.exports = router;

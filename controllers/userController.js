@@ -30,8 +30,8 @@ exports.createUser = async (req, res) => {
     let userExist = await getUserByUserName(userName);
     if (userExist) return ErrorResponse({ statusCode: 400, message: { msg: "user.userExist" } }, req, res);
     // if (creator.roleName != userRoleConstant.fairGameWallet) {
-    //   if (exposureLimit && exposureLimit > creator.exposureLimit)
-    //     return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
+      if (exposureLimit && exposureLimit > creator.exposureLimit)
+        return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
     // }
     password = await bcrypt.hash(
       password,
@@ -110,9 +110,7 @@ exports.updateUser = async (req, res) => {
     updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
     updateUser.matchComissionType = matchComissionType || updateUser.matchComissionType;
     updateUser = await addUser(updateUser);
-    let domainData = await getDomainDataByUserId(id,["domain"])
-    let response = lodash.pick(updateUser, ["sessionCommission", "matchCommission", "matchComissionType","id"])
-    //await apiCall("post",domainData.domain+allApiRoutes.updateSuperAdmin,response)
+    let response = lodash.pick(updateUser, ["id","sessionCommission", "matchCommission", "matchComissionType"])
     return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
   } catch (err) {
     return ErrorResponse(err, req, res);

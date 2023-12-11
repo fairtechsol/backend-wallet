@@ -26,35 +26,6 @@ module.exports.CreateUser = Joi.object({
     'any.only': 'Confirm Password must match Password',
   }),
 })
-module.exports.CreateSuperAdmin = Joi.object({
-  userName: Joi.string().trim().required(),
-  fullName: Joi.string().min(3).max(255),
-  password: Joi.string().pattern(passwordRegex).required().label('password').messages({
-    'string.pattern.base': 'user.passwordMatch',
-    'any.required': 'Password is required',
-  }),
-  phoneNumber: Joi.string().required().messages({
-    'any.required': 'Phone number is required',
-  }),
-  city: Joi.string().max(255),
-  roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
-  myPartnership: Joi.number().required(),
-  creditRefrence: Joi.number(),
-  exposureLimit: Joi.number(),
-  maxBetLimit: Joi.number(),
-  minBetLimit: Joi.number(),
-  confirmPassword: Joi.string().required().valid(Joi.ref('password')).label('Confirm Password').messages({
-    'string.base': 'Confirm Password must be a string',
-    'any.required': 'Confirm Password is required',
-    'any.only': 'Confirm Password must match Password',
-  }),
-  //domain,logo,sidebarColor,headerColor,footerColor
-  domain: Joi.string().required(),
-  logo: Joi.string().required(),
-  sidebarColor: Joi.string().required(),
-  headerColor: Joi.string().required(),
-  footerColor: Joi.string().required(),
-})
 
 
 module.exports.ChangePassword=Joi.object({

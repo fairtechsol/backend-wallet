@@ -64,11 +64,12 @@ exports.updateUserBalance = async (req, res) => {
         }]
 
         const transactioninserted = await insertTransactions(transactionArray);
+        updatedUpdateUserBalanceData["id"] = user.id
         return SuccessResponse(
             {
                 statusCode: 200,
                 message: { msg: "updated",keys : {name : "User Balance"} },
-                data: { user },
+                data: updatedUpdateUserBalanceData,
             },
             req,
             res

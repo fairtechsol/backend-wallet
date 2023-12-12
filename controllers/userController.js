@@ -538,12 +538,12 @@ exports.setCreditReferrence = async (req, res, next) => {
       if(!userBalance)
       return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
-      let previousCreditReference = user.creditRefrence;
+      let previousCreditReference = parseFloat(user.creditRefrence);
       let updateData = {
         creditRefrence: amount
       }
   
-      let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
+      let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
       let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss });
       
       let transactionArray = [{
@@ -569,11 +569,12 @@ exports.setCreditReferrence = async (req, res, next) => {
       }
       await updateUser(user.id, updateData);
       await updateUser(loginUser.id, updateLoginUser);
+      updateData["id"]  = user.id
       return SuccessResponse(
         {
           statusCode: 200,
           message: { msg: "updated" , keys : { name : "Credit reference"}},
-          data: { user },
+          data: updateData,
         },
         req,
         res

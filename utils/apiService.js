@@ -23,18 +23,11 @@ exports.apiCall = async (method, url, data, headers) => {
 
 exports.allApiRoutes = {
     //user routes
-    createUser: "/user/add",
     createSuperAdmin: "/fairgameWallet/add/user",
-    updateUser: "/user/updateUser",
     updateSuperAdmin: "/fairgameWallet/update/user",
     lockUnlockUser: "/user/lockUnlockUser",
-    insertWallet: "/user/insert/wallet",
-    changePassword: "/user/changePassword",
+    changePassword: "/fairgameWallet/changePassword",
     setExposureLimit: "/fairgameWallet/update/exposure",
-    userList: "/user/list",
-    userSearchList: "/user/searchlist",
-    userBalanceDetails: "/user/balance",
     setCreditReferrence: "/fairgameWallet/update/creditReference",
-    generateTransactionPassword: "/user/generateTransactionPassword",
     updateUserBalance:"/fairgameWallet/update/balance"
 }

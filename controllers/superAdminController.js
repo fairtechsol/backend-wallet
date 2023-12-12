@@ -444,21 +444,30 @@ exports.changePassword = async (req, res, next) => {
       userId
     } = req.body;
 
+    let user = await getUserById(userId,["id"]);
+    if(!user)
+    return ErrorResponse({
+      statusCode: 500,
+      message: { msg: "notFound", keys: { name: "User" } },
+    }, req, res);
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
     let domain = await getDomainByUserId(userId)
-    // try{
-    //   apiCall(apiMethod.post,domain+allApiRoutes.changePassword,{newPassword,userId})
-    // } catch (err) {
-    //   return ErrorResponse(err?.response?.data, req, res);
-    // }
+    let body = {
+      password,userId
+    }
+    try{
+      apiCall(apiMethod.post,domain+allApiRoutes.changePassword,body)
+    } catch (err) {
+      return ErrorResponse(err?.response?.data, req, res);
+    }
     // Update loginAt, password, and reset transactionPassword
     await updateUser(userId, {
       loginAt: null,
       password,
       transPassword: null,
     });
-    await forceLogoutUser(userId);
+
     return SuccessResponse(
       {
         statusCode: 200,

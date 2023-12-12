@@ -14,11 +14,11 @@ router.post('/add',isAuthenticate,validator(CreateUser),createUser);
 router.post('/updateUser',isAuthenticate,validator(updateUserValid),updateUser);
 router.post('/lockUnlockUser',isAuthenticate,checkTransactionPassword, validator(LockUnlockUser), lockUnlockUser);
 router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
-router.post("/update/exposurelimit",isAuthenticate,validator(SetExposureLimitValid),setExposureLimit)
+router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(SetExposureLimitValid),setExposureLimit)
 router.get("/list",isAuthenticate,userList)
 router.get("/searchlist",isAuthenticate,userSearchList)
 router.get("/balance",isAuthenticate,userBalanceDetails)
-router.post("/update/creditreferrence",isAuthenticate,validator(SetCreditReference),setCreditReferrence)
+router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(SetCreditReference),setCreditReferrence)
 router.post("/generateTransactionPassword",isAuthenticate,validator(generateTransactionPass),generateTransactionPassword);
 
 module.exports = router;

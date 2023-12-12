@@ -14,7 +14,7 @@ router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateSuper
 router.post('/updateUser',isAuthenticate,validator(updateSuperAdminValid),updateSuperAdmin);
 // router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
 router.post('/changePassword',isAuthenticate,checkTransactionPassword,validator(ChangePassword),changePassword);
-router.post('/lockUnlockUser',isAuthenticate, validator(LockUnlockUser), lockUnlockSuperAdmin);
+router.post('/lockUnlockUser',isAuthenticate, checkTransactionPassword,validator(LockUnlockUser), lockUnlockSuperAdmin);
 // router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
 router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(setExposureLimitValid),setExposureLimit)
 router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(setCreditReferValid),setCreditReferrence)

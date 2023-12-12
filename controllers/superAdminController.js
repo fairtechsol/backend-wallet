@@ -735,15 +735,14 @@ exports.changePassword = async (req, res, next) => {
       userId
     } = req.body;
 
-    let user = await getUserById(userId,["id"]);
-    if(!user)
+    let domain = await getDomainByUserId(userId)
+    if(!domain)
     return ErrorResponse({
       statusCode: 500,
-      message: { msg: "notFound", keys: { name: "User" } },
+      message: { msg: "notFound", keys: { name: "Domain" } },
     }, req, res);
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
-    let domain = await getDomainByUserId(userId)
     let body = {
       password,userId
     }

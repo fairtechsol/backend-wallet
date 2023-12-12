@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
-const {CreateSuperAdmin,updateSuperAdminValid,setExposureLimitValid,setCreditReferValid, SetSuperAdminBalance} = require('../validators/superAdminValidator');
-const {createSuperAdmin,updateSuperAdmin,setExposureLimit,setCreditReferrence, updateUserBalance} = require('../controllers/superAdminController');
+const {CreateSuperAdmin,updateSuperAdminValid,setExposureLimitValid,setCreditReferValid, SetSuperAdminBalance, LockUnlockUser} = require('../validators/superAdminValidator');
+const {createSuperAdmin,updateSuperAdmin,setExposureLimit,setCreditReferrence, updateUserBalance, lockUnlockSuperAdmin} = require('../controllers/superAdminController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -12,7 +12,7 @@ const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth
 
 router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateSuperAdmin),createSuperAdmin);
 router.post('/updateUser',isAuthenticate,validator(updateSuperAdminValid),updateSuperAdmin);
-// router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
+router.post('/lockUnlockUser',isAuthenticate, validator(LockUnlockUser), lockUnlockSuperAdmin);
 // router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
 router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(setExposureLimitValid),setExposureLimit)
 router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(setCreditReferValid),setCreditReferrence)

@@ -9,6 +9,7 @@
   "userNotFound": "User not found.",
   "add": "{key} added successfully.",
   "required": "{name} is required.",
+  "fetched" : "{name} fetch successfully.",
   "auth": {
     "loginSuccess": "Login successfully.",
     "invalidPass": "Invalid {type} password.",
@@ -31,7 +32,7 @@
     "userExist": "User already exist on given user name.",
     "blockCantAccess": "You can not block this user.",
     "alreadyBlocked": "{name} is already {type}.",
-    "ExposurelimitSet": "Exposure limit set successfully.",
+    "ExposurelimitSet": "Exposure limit update successfully.",
     "UserBalanceFetchSuccessfully": "User balance fetch successfully.",
     "invalidRole": "Invalid role",
     "domainExist": "Domain or username already exist."
@@ -41,7 +42,8 @@
   },
   "userBalance": {
     "insufficientBalance": "balance is insufficient to take this action.",
-    "BalanceAddedSuccessfully": "Balance Updated successfully."
+    "BalanceAddedSuccessfully": "Balance Updated successfully.",
+    "InvalidTransactionType" : "Invalid transaction type"
   },
   "wallet": {}
 }

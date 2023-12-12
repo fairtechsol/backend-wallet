@@ -1,15 +1,14 @@
-const { userRoleConstant,acceptUserRole, transType, defaultButtonValue, buttonType, walletDescription,blockType } = require('../config/contants');
+const { userRoleConstant, transType, walletDescription,blockType } = require('../config/contants');
 const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance ,userBlockUnblock} = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
-const { insertButton } = require('../services/buttonService')
 const bcrypt = require("bcryptjs");
 const lodash = require('lodash')
 const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
-const { addDomainData, getDomainData, getDomainDataByUserId, getDomainDataByUserIds } = require('../services/domainDataService');
+const {getDomainDataByUserIds } = require('../services/domainDataService');
 const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
 const {calculatePartnership,checkUserCreationHierarchy} = require("../services/commonService")
 
@@ -39,9 +38,9 @@ exports.createUser = async (req, res) => {
     );
 
     creditRefrence = creditRefrence ? parseFloat(creditRefrence) : 0;
-    exposureLimit = exposureLimit ? exposureLimit : creator.exposureLimit
-    maxBetLimit = maxBetLimit ? maxBetLimit : creator.maxBetLimit
-    minBetLimit = minBetLimit ? minBetLimit : creator.minBetLimit
+    exposureLimit = exposureLimit ? exposureLimit : creator.exposureLimit;
+    maxBetLimit = maxBetLimit ? maxBetLimit : creator.maxBetLimit;
+    minBetLimit = minBetLimit ? minBetLimit : creator.minBetLimit;
 
     let userData = {
       userName,
@@ -57,11 +56,11 @@ exports.createUser = async (req, res) => {
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit
-    }
-    let partnerships = await calculatePartnership(userData, creator)
+    };
+    let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };
     let insertUser = await addUser(userData);
-    let updateUser = {}
+    let updateUser = {};
     if (creditRefrence) {
       updateUser = await addUser({
         id: creator.id,
@@ -76,7 +75,7 @@ exports.createUser = async (req, res) => {
       transType: transType.add,
       currentAmount: insertUser.creditRefer,
       description: walletDescription.userCreate
-    }]
+    }];
     if (insertUser.createdBy != insertUser.id) {
       transactionArray.push({
         actionBy: insertUser.createBy,
@@ -97,11 +96,11 @@ exports.createUser = async (req, res) => {
       myProfitLoss: 0,
       downLevelBalance: 0,
       exposure: 0
-    }
-    insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
+    };
+    insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData);
 
-    let response = lodash.omit(insertUser, ["password", "transPassword"])
-    return SuccessResponse({ statusCode: 200, message: { msg: "add",keys : {key : "User"} }, data: response }, req, res)
+    let response = lodash.omit(insertUser, ["password", "transPassword"]);
+    return SuccessResponse({ statusCode: 200, message: { msg: "add",keys : {key : "User"} }, data: response }, req, res);
   } catch (err) {
     return ErrorResponse(err, req, res);
   }
@@ -117,7 +116,7 @@ exports.updateUser = async (req, res) => {
     updateUser.matchComissionType = matchComissionType || updateUser.matchComissionType;
     updateUser = await addUser(updateUser);
     let response = lodash.pick(updateUser, ["id","sessionCommission", "matchCommission", "matchComissionType"])
-    return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated",keys :{name :"User data"} }, data: response }, req, res)
   } catch (err) {
     return ErrorResponse(err, req, res);
   }
@@ -287,15 +286,17 @@ exports.changePassword = async (req, res, next) => {
 
 exports.setExposureLimit = async (req, res, next) => {
   try {
-    let { amount, userid, transPassword } = req.body
+    let { amount, userId, transactionPassword } = req.body
 
     let reqUser = req.user || {}
     let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"])
-    let user = await getUser({ id: userid, createBy:reqUser.id }, ["id", "exposureLimit", "roleName"])
+    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
+    let user = await getUser({ id: userId, createBy:reqUser.id }, ["id", "exposureLimit", "roleName"])
 
     if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
-    if (loginUser.exposureLimit < amount && loginUser.roleName != userRoleConstant.fairGameWallet) {
+    if (loginUser.exposureLimit < amount) {
       return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
     }
     amount = parseInt(amount);
@@ -314,7 +315,7 @@ exports.setExposureLimit = async (req, res, next) => {
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "user.ExposurelimitSet" },
+        message: { msg: "updated" , keys : { name : "Exposure limit "} },
         data: {
           user: {
             id: user.id,
@@ -352,7 +353,7 @@ exports.userList = async (req, res, next) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          message: { msg: "user.userList" },
+          message: { msg: "fetched" , keys : { name : "User list"} },
           data: response,
         },
         req,
@@ -381,22 +382,15 @@ exports.userList = async (req, res, next) => {
     }
 
     let data = await Promise.all(users[0].map(async element => {
-      let elementData = {}
-      elementData = {
-        ...element,
-        ...element.userBal
-      };
 
-      delete elementData.userBal
-
-      elementData['percentProfitLoss'] = elementData['myProfitLoss'];
+      element['percentProfitLoss'] = element.userBal['myProfitLoss'];
       let partner_ships = 100;
       if (partnershipCol && partnershipCol.length) {
-        partner_ships = partnershipCol.reduce((partialSum, a) => partialSum + elementData[a], 0);
-        elementData['percentProfitLoss'] = ((elementData['profitLoss'] / 100) * partner_ships).toFixed(2);
+        partner_ships = partnershipCol.reduce((partialSum, a) => partialSum + element[a], 0);
+        element['percentProfitLoss'] = ((element.userBal['profitLoss'] / 100) * partner_ships).toFixed(2);
       }
-      if (elementData.roleName != userRoleConstant.user) {
-        elementData['available_balance'] = Number((parseFloat(elementData['currentBalance'])).toFixed(2));
+      if (element.roleName != userRoleConstant.user) {
+        element['availableBalance'] = Number((parseFloat(element.userBal['currentBalance'])).toFixed(2));
         let childUsers = await getChildUser(element.id)
         let allChildUserIds = childUsers.map(obj => obj.id)
         let balancesum = 0
@@ -406,26 +400,26 @@ exports.userList = async (req, res, next) => {
           balancesum = parseFloat(allChildBalanceData.allchildscurrentbalancesum) ? parseFloat(allChildBalanceData.allchildscurrentbalancesum) : 0;
         }
 
-        elementData['balance'] = Number(parseFloat(d['currentBalance']) + balancesum).toFixed(2);
+        element['balance'] = Number(parseFloat(element.userBal['currentBalance']) + balancesum).toFixed(2);
       } else {
-        elementData['available_balance'] = Number((parseFloat(elementData['currentBalance']) - elementData['exposure']).toFixed(2));
-        elementData['balance'] = elementData['currentBalance'];
+        element['availableBalance'] = Number((parseFloat(element.userBal['currentBalance']) - element.userBal['exposure']).toFixed(2));
+        element['balance'] = element.userBal['currentBalance'];
       }
-      elementData['percentProfitLoss'] = elementData['myProfitLoss'];
-      elementData['TotalComission'] = elementData['TotalComission']
+      element['percentProfitLoss'] = element.userBal['myProfitLoss'];
+      element['totalComission'] = element['totalComission']
       if (partnershipCol && partnershipCol.length) {
-        let partner_ships = partnershipCol.reduce((partialSum, a) => partialSum + elementData[a], 0);
-        elementData['percentProfitLoss'] = ((elementData['profitLoss'] / 100) * partner_ships).toFixed(2);
-        elementData['TotalComission'] = ((elementData['TotalComission'] / 100) * partner_ships).toFixed(2) + '(' + partner_ships + '%)';
+        let partnerShips = partnershipCol.reduce((partialSum, a) => partialSum + element[a], 0);
+        element['percentProfitLoss'] = ((element.userBal['profitLoss'] / 100) * partnerShips).toFixed(2);
+        element['totalComission'] = ((element['totalComission'] / 100) * partnerShips).toFixed(2) + '(' + partnerShips + '%)';
       }
-      return elementData;
+      return element;
     }))
 
     response.list = data
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "user.userList" },
+        message: { msg: "fetched" , keys : { name : "User list"}},
         data: response,
       },
       req,
@@ -444,7 +438,7 @@ exports.userSearchList = async (req, res, next) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          message: { msg: "user.userList" },
+          message: { msg: "fetched" , keys : { name : "User list"}},
           data: { users: [],count : 0 },
         },
         req,
@@ -463,7 +457,7 @@ exports.userSearchList = async (req, res, next) => {
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "user.userList" },
+        message: { msg: "fetched" , keys : { name : "User list"}},
         data: response,
       },
       req,
@@ -516,7 +510,7 @@ exports.userBalanceDetails = async (req, res, next) => {
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "user.UserBalanceFetchSuccessfully" },
+        message: { msg: "fetched" , keys : { name : "User balance"}},
         data: { response },
       },
       req,
@@ -530,24 +524,27 @@ exports.userBalanceDetails = async (req, res, next) => {
 exports.setCreditReferrence = async (req, res, next) => {
     try {
   
-      let { userId, amount, transactionPassword, remark, createBy } = req.body;
-      let reqUser = req.user || { id: createBy };
+      let { userId, amount, transactionPassword, remark } = req.body;
+      let reqUser = req.user;
       amount = parseFloat(amount);
   
       let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence","downLevelCreditRefrence", "roleName"]);
+      if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
       let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "creditRefrence", "roleName"]);
       if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
   
       let userBalance = await getUserBalanceDataByUserId(user.id);
       if(!userBalance)
       return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
-      let previousCreditReference = user.creditRefrence
+
+      let previousCreditReference = user.creditRefrence;
       let updateData = {
         creditRefrence: amount
       }
   
       let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
-      let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss })
+      let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss });
       
       let transactionArray = [{
         actionBy: reqUser.id,
@@ -575,7 +572,7 @@ exports.setCreditReferrence = async (req, res, next) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          message: { msg: "userBalance.BalanceAddedSuccessfully" },
+          message: { msg: "updated" , keys : { name : "Credit reference"}},
           data: { user },
         },
         req,
@@ -592,25 +589,9 @@ exports.setCreditReferrence = async (req, res, next) => {
 exports.lockUnlockUser = async (req, res, next) => {
     try {
       // Extract relevant data from the request body and user object
-      const { userId, block, type,transPassword } = req.body;
+      const { userId, block, type } = req.body;
       const { id:loginId } = req.user;
 
-      // const isPasswordMatch = await checkTransactionPassword(
-      //   loginId,
-      //   transPassword
-      // );
-  
-      // if (!isPasswordMatch) {
-      //   return ErrorResponse(
-      //     {
-      //       statusCode: 403,
-      //       message: { msg: "auth.invalidPass", keys: { type: "transaction" } },
-      //     },
-      //     req,
-      //     res
-      //   );
-      // }
-  
       // Fetch user details of the current user, including block information
       const userDetails = await getUserById(loginId, ["userBlock", "betBlock"]);
   
@@ -706,8 +687,7 @@ exports.lockUnlockUser = async (req, res, next) => {
             block,
             type
           };
-          console.log(apiData);
-          resolve()
+          resolve(apiData)
           // await apiCall(apiMethod.post,item.domain+allApiRoutes.lockUnlockUser,apiData)
           // .then(data => {
           //   resolve()
@@ -738,9 +718,9 @@ exports.lockUnlockUser = async (req, res, next) => {
   
 exports.generateTransactionPassword = async (req, res) => {
   const { id } = req.user;
-  const { transPassword } = req.body;
+  const { transactionPassword } = req.body;
 
-  const encryptTransPass = bcrypt.hashSync(transPassword, 10);
+  const encryptTransPass = bcrypt.hashSync(transactionPassword, 10);
   await updateUser(id, {
     transPassword: encryptTransPass,
   });

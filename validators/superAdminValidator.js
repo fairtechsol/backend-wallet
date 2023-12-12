@@ -75,10 +75,12 @@ module.exports.CreateSuperAdmin = Joi.object({
 
 module.exports.updateSuperAdminValid = Joi.object({
     //sessionCommission,matchComissionType,matchCommission,id,createBy
-    sessionCommission: Joi.number(),
-    matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)),
-    matchCommission: Joi.number(),
     id: Joi.string().guid({ version: 'uuidv4' }).required(),
+    fullName: Joi.string().min(3).max(255),
+    phoneNumber: Joi.string().messages({
+        'any.required': 'Phone number is required',
+    }),
+    city: Joi.string().max(255),
     logo: Joi.string(),
     sidebarColor: Joi.string(),
     headerColor: Joi.string(),
@@ -100,6 +102,13 @@ module.exports.setCreditReferValid = Joi.object({
     remark : Joi.string().allow("")
   })
   
+  module.exports.SetSuperAdminBalance = Joi.object({
+    userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+    transactionType: Joi.string().valid(...Object.values(transType)).required(),
+    amount : Joi.number().required(),
+    remark: Joi.string().trim(),
+    transactionPassword: Joi.string(),
+})
 // module.exports.LockUnlockUser = Joi.object({
 //   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 //   transPassword: Joi.string().required().messages({

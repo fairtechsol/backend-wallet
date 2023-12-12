@@ -40,7 +40,7 @@ exports.updateUserBalance = async (req, res) => {
             let newUserBalanceData = await updateUserBalanceByUserid(user.id, updatedUpdateUserBalanceData)
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
         } else {
-            return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+            return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.InvalidTransactionType" } }, req, res);
         }
 
         let newLoginUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedLoginUserBalanceData)
@@ -51,7 +51,7 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? amount : -amount,
             transType: transactionType,
-            currentAmount: insertUserBalanceData.currentBalance,
+            currentAmount: updatedUpdateUserBalanceData.currentBalance,
             description: remark
         }, {
             actionBy: reqUser.id,
@@ -59,7 +59,7 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? -amount : amount,
             transType: transactionType == transType.add ? transType.withDraw : transType.add,
-            currentAmount: newLoginUserBalanceData.currentBalance,
+            currentAmount: updatedLoginUserBalanceData.currentBalance,
             description: remark
         }]
 
@@ -67,7 +67,7 @@ exports.updateUserBalance = async (req, res) => {
         return SuccessResponse(
             {
                 statusCode: 200,
-                message: { msg: "userBalance.BalanceAddedSuccessfully" },
+                message: { msg: "updated",keys : {name : "User Balance"} },
                 data: { user },
             },
             req,

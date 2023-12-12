@@ -1,13 +1,12 @@
-const { userRoleConstant, acceptUserRole, transType, defaultButtonValue, buttonType, walletDescription, blockType } = require('../config/contants');
-const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance, userBlockUnblock } = require('../services/userService');
+const { userRoleConstant,  transType, walletDescription } = require('../config/contants');
+const { getUserById, addUser, getUserByUserName, updateUser, getUser } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
-const { insertButton } = require('../services/buttonService')
 const bcrypt = require("bcryptjs");
 const lodash = require('lodash')
 const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
-const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
+const { getUserBalanceDataByUserId, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
 const { addDomainData, getDomainData, getDomainDataByUserId, getDomainByUserId, updateDomain } = require('../services/domainDataService');
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService")
@@ -140,20 +139,21 @@ exports.createSuperAdmin = async (req, res) => {
         }
 
         //await apiCall(apiMethod.post,domain+allApiRoutes.createSuperAdmin,response)
-        return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
+        return SuccessResponse({ statusCode: 200, message: { msg: "add",keys:{key : "User"} }, data: response }, req, res)
     } catch (err) {
         return ErrorResponse(err, req, res);
     }
 };
 exports.updateSuperAdmin = async (req, res) => {
     try {
-        let { sessionCommission, matchComissionType, matchCommission, id, logo, sidebarColor, headerColor, footerColor } = req.body;
+        let { id, logo, sidebarColor, headerColor, footerColor,fullName,phoneNumber,city } = req.body;
         let reqUser = req.user || {}
-        let updateUser = await getUser({ id, createBy: reqUser.id }, ["id", "createBy", "sessionCommission", "matchComissionType", "matchCommission"])
+        let updateUser = await getUser({ id, createBy: reqUser.id }, ["id", "createBy","fullName","phoneNumber","city" ])
         if (!updateUser) return ErrorResponse({ statusCode: 400, message: { msg: "userNotFound" } }, req, res);
-        updateUser.sessionCommission = sessionCommission ?? updateUser.sessionCommission;
-        updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
-        updateUser.matchComissionType = matchComissionType || updateUser.matchComissionType;
+        
+        updateUser.fullName = fullName ?? updateUser.fullName;
+        updateUser.phoneNumber = phoneNumber ?? updateUser.phoneNumber;
+        updateUser.city = city || updateUser.city;
         updateUser = await addUser(updateUser);
         let domainData = {};
         let response = {};
@@ -172,9 +172,9 @@ exports.updateSuperAdmin = async (req, res) => {
         } else {
             domainData = await getDomainDataByUserId(id, ["domain"])
         }
-        response = { ...response, ...lodash.pick(updateUser, ["sessionCommission", "matchCommission", "matchComissionType", "id"]) }
+        response["user"] = lodash.pick(updateUser, ["createBy","fullName","phoneNumber","city", "id"])
         //await apiCall("post",domainData.domain+allApiRoutes.updateSuperAdmin,response)
-        return SuccessResponse({ statusCode: 200, message: { msg: "login" }, data: response }, req, res)
+        return SuccessResponse({ statusCode: 200, message: { msg: "updated",keys:{name : "User data"} }, data: response }, req, res)
     } catch (err) {
         return ErrorResponse(err, req, res);
     }
@@ -182,12 +182,14 @@ exports.updateSuperAdmin = async (req, res) => {
 
 exports.setExposureLimit = async (req, res, next) => {
     try {
-        let { amount, userId, transPassword } = req.body
+        let { amount, userId, transactionPassword } = req.body
 
         let reqUser = req.user || {}
-        let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"])
-        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "exposureLimit", "roleName"])
+        let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
+
+        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "exposureLimit", "roleName"]);
         if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+
         let domain = await getDomainByUserId(userId);
         if (!domain) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
@@ -238,10 +240,7 @@ exports.setCreditReferrence = async (req, res, next) => {
 
         let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
         let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss })
-        updateUser = await addUser({
-            id: creator.id,
-            downLevelCreditRefrence: parseInt(creditRefrence) + parseInt(creator.downLevelCreditRefrence)
-        })
+
         let transactionArray = [{
             actionBy: reqUser.id,
             searchId: user.id,
@@ -261,15 +260,21 @@ exports.setCreditReferrence = async (req, res, next) => {
         }]
 
         const transactioninserted = await insertTransactions(transactionArray);
+
         await updateUser(user.id, updateData);
         let data = {
             amount, remark, userId
         }
+        let updateLoginUser = {
+            downLevelCreditRefrence: parseInt(loginUser.downLevelCreditRefrence) - previousCreditReference + amount
+          }
+          
+      await updateUser(loginUser.id, updateLoginUser);
         //apiCall(apiMethod.post,domain+allApiRoutes.setCreditReferrence,data)
         return SuccessResponse(
             {
                 statusCode: 200,
-                message: { msg: "userBalance.BalanceAddedSuccessfully" },
+                message:{ msg: "updated" , keys : { name : "Credit reference"}},
                 data: { user },
             },
             req,
@@ -344,7 +349,7 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? amount : -amount,
             transType: transactionType,
-            currentAmount: insertUserBalanceData.currentBalance,
+            currentAmount: updatedUpdateUserBalanceData.currentBalance,
             description: remark
         }, {
             actionBy: reqUser.id,
@@ -352,7 +357,7 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? -amount : amount,
             transType: transactionType == transType.add ? transType.withDraw : transType.add,
-            currentAmount: newLoginUserBalanceData.currentBalance,
+            currentAmount: updatedLoginUserBalanceData.currentBalance,
             description: remark
         }]
 
@@ -360,7 +365,7 @@ exports.updateUserBalance = async (req, res) => {
         return SuccessResponse(
             {
                 statusCode: 200,
-                message: { msg: "userBalance.BalanceAddedSuccessfully" },
+                message: { msg: "updated" ,keys :{name : "User balance"} },
                 data: { user },
             },
             req,

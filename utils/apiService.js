@@ -36,5 +36,6 @@ exports.allApiRoutes = {
     userBalanceDetails: "/user/balance",
     setCreditReferrence: "/fairgameWallet/update/creditReference",
     generateTransactionPassword: "/user/generateTransactionPassword",
-    updateUserBalance:"/fairgameWallet/update/balance"
+    updateUserBalance:"/fairgameWallet/update/balance",
+    lockUnlockSuperAdmin:"/fairgameWallet/lockUnlock"
 }

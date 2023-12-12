@@ -106,9 +106,7 @@ exports.checkTransactionPassword = async (req,res,next) => {
     return ErrorResponse(
       {
         statusCode: 400,
-        message: {
-          msg: "auth.authFailed",
-        },
+        message: { msg: "auth.invalidPass", keys: { type: "transaction" } },
       },
       req,
       res

@@ -10,7 +10,7 @@ const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildPr
 const { ILike } = require('typeorm');
 const {getDomainDataByUserIds } = require('../services/domainDataService');
 const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
-const {calculatePartnership,checkUserCreationHierarchy} = require("../services/commonService")
+const {calculatePartnership,checkUserCreationHierarchy,forceLogoutUser} = require("../services/commonService")
 
 exports.createUser = async (req, res) => {
   try {
@@ -159,14 +159,7 @@ const checkTransactionPassword = async (userId, oldTransactionPass) => {
   return bcrypt.compareSync(oldTransactionPass, user.transPassword);
 };
 
-const forceLogoutUser = async (userId, stopForceLogout) => {
 
-  if (!stopForceLogout) {
-    await forceLogoutIfLogin(userId);
-  }
-  await internalRedis.hdel(userId, "token");
-
-};
 
 // API endpoint for changing password
 exports.changePassword = async (req, res, next) => {
@@ -181,7 +174,7 @@ exports.changePassword = async (req, res, next) => {
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
 
-    // If user is changing its password after login or logging in for the first time
+// If user is changing its password after login or logging in for the first time
     if (oldPassword && !transactionPassword) {
       // Check if the old password is correct
       const userId = req.user.id;

@@ -30,29 +30,18 @@ module.exports.CreateSuperAdmin = Joi.object({
     sidebarColor: Joi.string().required(),
     headerColor: Joi.string().required(),
     footerColor: Joi.string().required(),
-    transactionPassword:Joi.string().required()
+    transactionPassword: Joi.string().required()
 })
 
 
-// module.exports.ChangePassword=Joi.object({
-//   oldPassword:Joi.string(),
-//   newPassword:Joi.string().pattern(passwordRegex).required().label('password').messages({
-//       'string.pattern.base': 'user.passwordMatch',
-//         'any.required': 'Password is required',
-//     }),
-//     userId:Joi.string().guid({ version: 'uuidv4' }),
-//   transactionPassword: Joi.string()
-//     ,
-//   confirmPassword: Joi.string()
-//     .required()
-//     .valid(Joi.ref("newPassword"))
-//     .label("Confirm Password")
-//     .messages({
-//       "string.base": "Confirm Password must be a string",
-//       "any.required": "Confirm Password is required",
-//       "any.only": "Confirm Password must match new password",
-//     }),
-// });
+module.exports.ChangePassword = Joi.object({
+    newPassword: Joi.string().pattern(passwordRegex).required().label('password').messages({
+        'string.pattern.base': 'user.passwordMatch',
+        'any.required': 'Password is required',
+    }),
+    userId: Joi.string().guid({ version: 'uuidv4' }),
+    transactionPassword: Joi.string()
+});
 
 // module.exports.generateTransactionPass = Joi.object({
 //   transPassword: Joi.string()
@@ -89,10 +78,10 @@ module.exports.updateSuperAdminValid = Joi.object({
 })
 
 module.exports.setExposureLimitValid = Joi.object({
-  //sessionCommission,matchComissionType,matchCommission,id,createBy
-  amount: Joi.number().required(),
-  transactionPassword: Joi.string().required(),
-  userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+    //sessionCommission,matchComissionType,matchCommission,id,createBy
+    amount: Joi.number().required(),
+    transactionPassword: Joi.string().required(),
+    userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.setCreditReferValid = Joi.object({
@@ -100,13 +89,13 @@ module.exports.setCreditReferValid = Joi.object({
     amount: Joi.number().required(),
     transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
-    remark : Joi.string().allow("")
-  })
-  
-  module.exports.SetSuperAdminBalance = Joi.object({
+    remark: Joi.string().allow("")
+})
+
+module.exports.SetSuperAdminBalance = Joi.object({
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
     transactionType: Joi.string().valid(...Object.values(transType)).required(),
-    amount : Joi.number().required(),
+    amount: Joi.number().required(),
     remark: Joi.string().trim(),
     transactionPassword: Joi.string().required(),
 })

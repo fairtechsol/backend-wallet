@@ -9,7 +9,7 @@ const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { addDomainData, getDomainData, getDomainDataByUserId, getDomainByUserId, updateDomain } = require('../services/domainDataService');
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService")
-const { calculatePartnership, checkUserCreationHierarchy } = require("../services/commonService")
+const { calculatePartnership, checkUserCreationHierarchy,forceLogoutUser } = require("../services/commonService")
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -435,3 +435,47 @@ exports.updateUserBalance = async (req, res) => {
 
 };
 
+exports.changePassword = async (req, res, next) => {
+  try {
+    // Destructure request body
+    const {
+      newPassword,
+      transactionPassword,
+      userId
+    } = req.body;
+
+    // Hash the new password
+    const password = bcrypt.hashSync(newPassword, 10);
+    let domain = await getDomainByUserId(userId)
+    // try{
+    //   apiCall(apiMethod.post,domain+allApiRoutes.changePassword,{newPassword,userId})
+    // } catch (err) {
+    //   return ErrorResponse(err?.response?.data, req, res);
+    // }
+    // Update loginAt, password, and reset transactionPassword
+    await updateUser(userId, {
+      loginAt: null,
+      password,
+      transPassword: null,
+    });
+    await forceLogoutUser(userId);
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "auth.passwordChanged" },
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    // Log any errors that occur
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+};

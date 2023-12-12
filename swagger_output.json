@@ -899,6 +899,52 @@
         }
       }
     },
+    "/superadmin/changePassword": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "newPassword": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/superadmin/update/exposurelimit": {
       "post": {
         "description": "",

@@ -11,6 +11,14 @@ exports.forceLogoutIfLogin = async (userId) => {
     }
   };
 
+  exports.forceLogoutUser = async (userId, stopForceLogout) => {
+
+    if (!stopForceLogout) {
+      await this.forceLogoutIfLogin(userId);
+    }
+    await internalRedis.hdel(userId, "token");
+  
+  };
   exports.calculatePartnership = async (userData, creator) => {
     if (userData.roleName == userRoleConstant.fairGameWallet) {
       return {};

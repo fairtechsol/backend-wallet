@@ -414,6 +414,8 @@ exports.setCreditReferrence = async (req, res, next) => {
     let reqUser = req.user || {};
     amount = parseFloat(amount);
 
+    let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence", "roleName","downLevelCreditRefrence"]);
+
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
       "creditRefrence",
@@ -452,7 +454,7 @@ exports.setCreditReferrence = async (req, res, next) => {
     try {
       await apiCall(
         apiMethod.post,
-        domain?.domain + allApiRoutes.setCreditReferrence,
+        domain + allApiRoutes.setCreditReferrence,
         data
       );
     } catch (err) {
@@ -469,9 +471,9 @@ exports.setCreditReferrence = async (req, res, next) => {
       profitLoss,
     });
     updateUser = await addUser({
-      id: creator.id,
+      id: loginUser.id,
       downLevelCreditRefrence:
-        parseInt(creditRefrence) + parseInt(creator.downLevelCreditRefrence),
+        parseInt(creditRefrence) + parseInt(loginUser.downLevelCreditRefrence),
     });
     let transactionArray = [
       {
@@ -494,7 +496,7 @@ exports.setCreditReferrence = async (req, res, next) => {
       },
     ];
 
-    const transactioninserted = await insertTransactions(transactionArray);
+     await insertTransactions(transactionArray);
     await updateUser(user.id, updateData);
 
     return SuccessResponse(
@@ -552,13 +554,15 @@ exports.updateUserBalance = async (req, res) => {
       transactionType,
       remark,
     };
-    //let APIDATA = await apiCall(apiMethod.post,domainData+allApiRoutes.updateUserBalance,body)
-    if (APIDATA.statusCode != 200) {
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: APIDATA.data.message } },
-        req,
-        res
+    
+    try {
+      await apiCall(
+        apiMethod.post,
+        domainData + allApiRoutes.updateUserBalance,
+        body
       );
+    } catch (err) {
+      return ErrorResponse(err?.response?.data, req, res);
     }
 
     if (transactionType == transType.add) {

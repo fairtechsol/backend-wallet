@@ -10,6 +10,8 @@ const {
   updateUser,
   getUser,
   deleteUser,
+  userBlockUnblock,
+  betBlockUnblock,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -690,11 +692,11 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
       // Perform the user block/unblock operation
       const blockedUsers = await userBlockUnblock(userId, loginId, userBlock);
       //   if blocktype is user and its block then user would be logout by socket
-      if (userBlock) {
-        blockedUsers?.[0]?.forEach((item) => {
-          forceLogoutUser(item?.id);
-        });
-      }
+      // if (userBlock) {
+      //   blockedUsers?.[0]?.forEach((item) => {
+      //     forceLogoutUser(item?.id);
+      //   });
+      // }
     }
 
     // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
@@ -707,7 +709,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
       userId,
       loginId,
       betBlock,
-      loginId,
+      userBlock,
     };
 
     try {

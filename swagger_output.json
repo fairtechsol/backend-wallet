@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5000",
+      "url": "http://localhost:5050",
       "description": "local host url "
     },
     {
@@ -23,6 +23,15 @@
     "/auth/login": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -55,6 +64,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -72,6 +88,15 @@
     "/auth/dummyFunction": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -86,6 +111,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -153,6 +185,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -195,6 +234,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -213,6 +259,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userId": {
                     "example": "any"
                   },
@@ -220,9 +269,6 @@
                     "example": "any"
                   },
                   "type": {
-                    "example": "any"
-                  },
-                  "transPassword": {
                     "example": "any"
                   }
                 }
@@ -236,6 +282,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -279,6 +332,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -300,10 +360,10 @@
                   "amount": {
                     "example": "any"
                   },
-                  "userid": {
+                  "userId": {
                     "example": "any"
                   },
-                  "transPassword": {
+                  "transactionPassword": {
                     "example": "any"
                   }
                 }
@@ -317,6 +377,13 @@
       "get": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -365,6 +432,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -398,6 +472,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -423,6 +504,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -453,9 +541,6 @@
                   },
                   "remark": {
                     "example": "any"
-                  },
-                  "createBy": {
-                    "example": "any"
                   }
                 }
               }
@@ -468,6 +553,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -487,7 +579,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "transPassword": {
+                  "transactionPassword": {
                     "example": "any"
                   }
                 }
@@ -501,6 +593,13 @@
       "get": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -520,6 +619,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -568,6 +674,13 @@
             }
           },
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -587,6 +700,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -605,6 +725,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userId": {
                     "example": "any"
                   },
@@ -612,9 +735,6 @@
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -631,6 +751,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -716,59 +843,12 @@
         "description": "",
         "parameters": [
           {
-            "name": "authorization",
+            "name": "x-forwarded-for",
             "in": "header",
             "schema": {
               "type": "string"
             }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "sessionCommission": {
-                    "example": "any"
-                  },
-                  "matchComissionType": {
-                    "example": "any"
-                  },
-                  "matchCommission": {
-                    "example": "any"
-                  },
-                  "id": {
-                    "example": "any"
-                  },
-                  "logo": {
-                    "example": "any"
-                  },
-                  "sidebarColor": {
-                    "example": "any"
-                  },
-                  "headerColor": {
-                    "example": "any"
-                  },
-                  "footerColor": {
-                    "example": "any"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/superadmin/update/exposurelimit": {
-      "post": {
-        "description": "",
-        "parameters": [
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -788,6 +868,70 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "id": {
+                    "example": "any"
+                  },
+                  "logo": {
+                    "example": "any"
+                  },
+                  "sidebarColor": {
+                    "example": "any"
+                  },
+                  "headerColor": {
+                    "example": "any"
+                  },
+                  "footerColor": {
+                    "example": "any"
+                  },
+                  "fullName": {
+                    "example": "any"
+                  },
+                  "phoneNumber": {
+                    "example": "any"
+                  },
+                  "city": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/update/exposurelimit": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "amount": {
                     "example": "any"
                   },
@@ -806,6 +950,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -824,6 +975,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userId": {
                     "example": "any"
                   },
@@ -845,6 +999,13 @@
         "description": "",
         "parameters": [
           {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "schema": {
@@ -863,6 +1024,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userId": {
                     "example": "any"
                   },
@@ -870,9 +1034,6 @@
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -888,6 +1049,15 @@
     "/wallet/insert": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -899,6 +1069,13 @@
       "post": {
         "description": "",
         "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "authorization",
             "in": "header",
@@ -942,7 +1119,14 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -978,7 +1162,14 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"

@@ -1,5 +1,5 @@
 const Joi = require('joi')
-const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex } = require('../config/contants')
+const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex, transType } = require('../config/contants')
 
 
 module.exports.CreateSuperAdmin = Joi.object({
@@ -91,14 +91,14 @@ module.exports.updateSuperAdminValid = Joi.object({
 module.exports.setExposureLimitValid = Joi.object({
   //sessionCommission,matchComissionType,matchCommission,id,createBy
   amount: Joi.number().required(),
-  transPassword: Joi.string().required(),
+  transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.setCreditReferValid = Joi.object({
     //sessionCommission,matchComissionType,matchCommission,id,createBy
     amount: Joi.number().required(),
-    transPassword: Joi.string().required(),
+    transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
     remark : Joi.string().allow("")
   })
@@ -108,7 +108,7 @@ module.exports.setCreditReferValid = Joi.object({
     transactionType: Joi.string().valid(...Object.values(transType)).required(),
     amount : Joi.number().required(),
     remark: Joi.string().trim(),
-    transactionPassword: Joi.string(),
+    transactionPassword: Joi.string().required(),
 })
 // module.exports.LockUnlockUser = Joi.object({
 //   userId: Joi.string().guid({ version: 'uuidv4' }).required(),

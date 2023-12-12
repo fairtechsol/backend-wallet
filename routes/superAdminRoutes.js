@@ -14,9 +14,9 @@ router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateSuper
 router.post('/updateUser',isAuthenticate,validator(updateSuperAdminValid),updateSuperAdmin);
 // router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
 // router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
-router.post("/update/exposurelimit",isAuthenticate,validator(setExposureLimitValid),setExposureLimit)
-router.post("/update/creditreferrence",isAuthenticate,validator(setCreditReferValid),setCreditReferrence)
-router.post("/update/balance",isAuthenticate,validator(SetSuperAdminBalance),updateUserBalance)
+router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(setExposureLimitValid),setExposureLimit)
+router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(setCreditReferValid),setCreditReferrence)
+router.post("/update/balance",isAuthenticate,checkTransactionPassword,validator(SetSuperAdminBalance),updateUserBalance)
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

@@ -12,7 +12,7 @@ const doc = {
     },
     servers: [
       {
-        url: 'http://localhost:5000', 
+        url: 'http://localhost:5050', 
         description: 'local host url ' 
       },
       {

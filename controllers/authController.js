@@ -182,6 +182,7 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET || "secret"
     );
 
+
     // checking transition password
     const isTransPasswordCreated = Boolean(user.transPassword);
     const forceChangePassword = !Boolean(user.loginAt);

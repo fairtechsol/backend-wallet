@@ -55,7 +55,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -87,7 +87,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -153,7 +153,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -195,7 +195,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -237,7 +237,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -279,7 +279,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -318,7 +318,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -365,7 +365,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -398,7 +398,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -424,7 +424,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -469,7 +469,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -502,7 +502,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -521,7 +521,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -568,7 +568,7 @@
             }
           },
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -587,7 +587,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -632,7 +632,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -716,7 +716,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -770,7 +770,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -792,9 +792,6 @@
                     "example": "any"
                   },
                   "userId": {
-                    "example": "any"
-                  },
-                  "transPassword": {
                     "example": "any"
                   }
                 }
@@ -809,7 +806,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -831,9 +828,6 @@
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -851,7 +845,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"
@@ -906,7 +900,7 @@
         "description": "",
         "parameters": [
           {
-            "name": "token",
+            "name": "authorization",
             "in": "header",
             "schema": {
               "type": "string"

@@ -7,6 +7,7 @@ exports.apiMethod = {
     delete: "delete"
 }
 exports.apiCall = async (method, url, data, headers) => {
+  console.log(url);
   try {
     let response = await axios({
       method: method,
@@ -16,24 +17,24 @@ exports.apiCall = async (method, url, data, headers) => {
     });
     return response.data;
   } catch (error) {
-    console.log(error);
-    throw new error;
+    throw error;
   }
 };
 
 exports.allApiRoutes = {
     //user routes
     createUser: "/user/add",
-    createSuperAdmin: "/user/create/superadmin",
+    createSuperAdmin: "/fairgameWallet/add/user",
     updateUser: "/user/updateUser",
-    updateSuperAdmin: "/user/update/superadmin",
+    updateSuperAdmin: "/fairgameWallet/update/user",
     lockUnlockUser: "/user/lockUnlockUser",
     insertWallet: "/user/insert/wallet",
     changePassword: "/user/changePassword",
-    setExposureLimit: "/user/update/exposurelimit",
+    setExposureLimit: "/fairgameWallet/update/exposure",
     userList: "/user/list",
     userSearchList: "/user/searchlist",
     userBalanceDetails: "/user/balance",
-    setCreditReferrence: "/user/update/creditreferrence",
+    setCreditReferrence: "/fairgameWallet/update/creditReference",
     generateTransactionPassword: "/user/generateTransactionPassword",
+    updateUserBalance:"/fairgameWallet/update/balance"
 }

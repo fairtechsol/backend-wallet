@@ -30,6 +30,7 @@ module.exports.CreateSuperAdmin = Joi.object({
     sidebarColor: Joi.string().required(),
     headerColor: Joi.string().required(),
     footerColor: Joi.string().required(),
+    transactionPassword:Joi.string().required()
 })
 
 

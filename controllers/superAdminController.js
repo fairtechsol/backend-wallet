@@ -1,19 +1,18 @@
 const { userRoleConstant,  transType, walletDescription } = require('../config/contants');
-const { getUserById, addUser, getUserByUserName, updateUser, getUser } = require('../services/userService');
+const { getUserById, addUser, getUserByUserName, updateUser, getUser,deleteUser } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
 const bcrypt = require("bcryptjs");
-const lodash = require('lodash')
+const lodash = require("lodash");
 const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
-const { ILike } = require('typeorm');
 const { addDomainData, getDomainData, getDomainDataByUserId, getDomainByUserId, updateDomain } = require('../services/domainDataService');
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService")
 const { calculatePartnership, checkUserCreationHierarchy } = require("../services/commonService")
 
 exports.createSuperAdmin = async (req, res) => {
-    try {
+try {
         let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership, creditRefrence, exposureLimit, maxBetLimit, minBetLimit, domain, logo, sidebarColor, headerColor, footerColor } = req.body;
         let reqUser = req.user || {}
         let creator = await getUserById(reqUser.id);
@@ -60,6 +59,45 @@ exports.createSuperAdmin = async (req, res) => {
         let partnerships = await calculatePartnership(userData, creator)
         userData = { ...userData, ...partnerships };
         let insertUser = await addUser(userData);
+
+        let response = lodash.pick(insertUser, [
+          "id",
+          "userName",
+          "fullName",
+          "phoneNumber",
+          "city",
+          "roleName",
+          "userBlock",
+          "betBlock",
+          "creditRefrence",
+          "exposureLimit",
+          "maxBetLimit",
+          "minBetLimit",
+          "fwPartnership",
+          "faPartnership",
+          "saPartnership",
+          "aPartnership",
+          "smPartnership",
+          "mPartnership",
+          "password"
+      ])
+
+      try {
+        await apiCall(
+          apiMethod.post,
+          domain + allApiRoutes.createSuperAdmin,
+          response
+        );
+      } catch (err) {
+        await deleteUser(response?.id);
+        return ErrorResponse(err?.response?.data, req, res);
+      }
+
+      response = {
+          ...response,
+          domain: { domain, logo, sidebarColor, headerColor, footerColor },
+      }
+      
         let updateUser = {}
         if (creditRefrence) {
             updateUser = await addUser({
@@ -105,79 +143,57 @@ exports.createSuperAdmin = async (req, res) => {
             userId: insertUser.id
         }
         let DomainData = await addDomainData(insertDomainData)
-
-        let response = lodash.pick(insertUser, [
-            "id",
-            "userName",
-            "fullName",
-            "phoneNumber",
-            "city",
-            "roleName",
-            "userBlock",
-            "betBlock",
-            "creditRefrence",
-            "exposureLimit",
-            "maxBetLimit",
-            "minBetLimit",
-            "fwPartnership",
-            "faPartnership",
-            "saPartnership",
-            "aPartnership",
-            "smPartnership",
-            "mPartnership",
-            "password"
-        ])
-        response = {
-            ...response,
-            domain: lodash.pick(DomainData, [
-                "domain",
-                "sidebarColor",
-                "headerColor",
-                "footerColor",
-                "logo"
-            ])
-        }
-
-        //await apiCall(apiMethod.post,domain+allApiRoutes.createSuperAdmin,response)
         return SuccessResponse({ statusCode: 200, message: { msg: "add",keys:{key : "User"} }, data: response }, req, res)
     } catch (err) {
-        return ErrorResponse(err, req, res);
+      await deleteUser(response?.id);
+      return ErrorResponse(err?.response?.data, req, res);
     }
 };
 exports.updateSuperAdmin = async (req, res) => {
-    try {
+  try {
         let { id, logo, sidebarColor, headerColor, footerColor,fullName,phoneNumber,city } = req.body;
         let reqUser = req.user || {}
-        let updateUser = await getUser({ id, createBy: reqUser.id }, ["id", "createBy","fullName","phoneNumber","city" ])
+        let updateUser = await getUser({ id, createBy: reqUser.id }, ["id", "fullName","phoneNumber","city" ])
         if (!updateUser) return ErrorResponse({ statusCode: 400, message: { msg: "userNotFound" } }, req, res);
         
         updateUser.fullName = fullName ?? updateUser.fullName;
         updateUser.phoneNumber = phoneNumber ?? updateUser.phoneNumber;
         updateUser.city = city || updateUser.city;
-        updateUser = await addUser(updateUser);
         let domainData = {};
         let response = {};
-        if (logo || sidebarColor || headerColor || footerColor) {
-            let domain = await getDomainDataByUserId(updateUser.id, ["logo", "sidebarColor", "footerColor", "headerColor", "domain"]);
-            if (!domain)
-                return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
-            domainData = {
-                logo: logo || domain.logo,
-                sidebarColor: sidebarColor || domain.sidebarColor,
-                headerColor: headerColor || domain.headerColor,
-                footerColor: footerColor || domain.footerColor,
-            }
-            const update = await updateDomain(updateUser.id, domainData);
-            response["domain"] = domainData
-        } else {
-            domainData = await getDomainDataByUserId(id, ["domain"])
+        
+        let domain = await getDomainDataByUserId(updateUser.id, ["id","logo", "sidebarColor", "footerColor", "headerColor", "domain"]);
+        if (!domain)
+        return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+        
+        domainData = {
+          logo: logo || domain.logo,
+          sidebarColor: sidebarColor || domain.sidebarColor,
+          headerColor: headerColor || domain.headerColor,
+          footerColor: footerColor || domain.footerColor,
         }
-        response["user"] = lodash.pick(updateUser, ["createBy","fullName","phoneNumber","city", "id"])
-        //await apiCall("post",domainData.domain+allApiRoutes.updateSuperAdmin,response)
+        
+        response["domain"] = domainData
+        response["user"] = lodash.pick(updateUser, ["fullName","phoneNumber","city"])
+        response["id"] = updateUser.id
+        
+        
+        try{
+          await apiCall(
+            "post",
+            domain.domain + allApiRoutes.updateSuperAdmin,
+            response
+            );
+          } catch (err) {
+            return ErrorResponse(err?.response?.data, req, res);
+          }
+          updateUser = await addUser(updateUser);
+          const update = await updateDomain(domain.id, domainData);
+
         return SuccessResponse({ statusCode: 200, message: { msg: "updated",keys:{name : "User data"} }, data: response }, req, res)
-    } catch (err) {
-        return ErrorResponse(err, req, res);
-    }
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
 };
 
 exports.setExposureLimit = async (req, res, next) => {
@@ -193,33 +209,47 @@ exports.setExposureLimit = async (req, res, next) => {
         let domain = await getDomainByUserId(userId);
         if (!domain) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
 
-        if (loginUser.exposureLimit < amount) {
-            return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" } }, req, res);
-        }
-        amount = parseInt(amount);
-        user.exposureLimit = amount
-        await addUser(user);
-        let response = lodash.pick(user, ["id", "exposureLimit"])
-        //await apiCall("post",domain+allApiRoutes.setExposureLimit,response)
-        return SuccessResponse(
-            {
-                statusCode: 200,
-                message: { msg: "user.ExposurelimitSet" },
-                data: {
-                    user: response
-                },
-            },
-            req,
-            res
-        );
-    } catch (error) {
-        return ErrorResponse(error, req, res);
+    if (loginUser.exposureLimit < amount) {
+      return ErrorResponse(
+        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
+        req,
+        res
+      );
     }
-}
+    amount = parseInt(amount);
+    user.exposureLimit = amount;
+    let response = lodash.pick(user, ["id", "exposureLimit"]);
 
+    try {
+      await apiCall(
+        apiMethod.post,
+        domain + allApiRoutes.setExposureLimit,
+        response
+      );
+    } catch (err) {
+      return ErrorResponse(err?.response?.data, req, res);
+    }
+
+    await addUser(user);
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "user.ExposurelimitSet" },
+        data: {
+          user: response,
+        },
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    return ErrorResponse(error, req, res);
+  }
+};
 
 exports.setCreditReferrence = async (req, res, next) => {
-    try {
+try {
 
         let { userId, amount, transactionPassword, remark } = req.body;
         let reqUser = req.user || {};
@@ -261,14 +291,14 @@ exports.setCreditReferrence = async (req, res, next) => {
 
         const transactioninserted = await insertTransactions(transactionArray);
 
-        await updateUser(user.id, updateData);
-        let data = {
-            amount, remark, userId
-        }
         let updateLoginUser = {
-            downLevelCreditRefrence: parseInt(loginUser.downLevelCreditRefrence) - previousCreditReference + amount
-          }
-          
+          downLevelCreditRefrence: parseInt(loginUser.downLevelCreditRefrence) - previousCreditReference + amount
+        }
+        let data = {
+          amount, remark, userId
+        }
+        
+      await updateUser(user.id, updateData);
       await updateUser(loginUser.id, updateLoginUser);
         //apiCall(apiMethod.post,domain+allApiRoutes.setCreditReferrence,data)
         return SuccessResponse(
@@ -284,12 +314,10 @@ exports.setCreditReferrence = async (req, res, next) => {
     } catch (error) {
         return ErrorResponse(error, req, res);
     }
-
-}
-
-
+};
 
 exports.updateUserBalance = async (req, res) => {
+
     try {
         let { userId, transactionType, amount, transactionPassword, remark } = req.body
         let reqUser = req.user
@@ -316,10 +344,16 @@ exports.updateUserBalance = async (req, res) => {
             transactionType,
             remark
         }
-        //let APIDATA = await apiCall(apiMethod.post,domainData+allApiRoutes.updateUserBalance,body)
-        if (APIDATA.statusCode != 200) {
-            return ErrorResponse({ statusCode: 400, message: { msg: APIDATA.data.message } }, req, res);
-        }
+        
+       try{
+        await apiCall(
+          apiMethod.post,
+          domainData + allApiRoutes.updateUserBalance,
+          body
+        );
+      } catch (err) {
+        return ErrorResponse(err?.response?.data, req, res);
+      }
 
         if (transactionType == transType.add) {
             if (amount > loginUserBalanceData.currentBalance)
@@ -374,6 +408,6 @@ exports.updateUserBalance = async (req, res) => {
     } catch (error) {
         return ErrorResponse(error, req, res);
     }
-}
 
+};
 

@@ -405,22 +405,9 @@ exports.setCreditReferrence = async (req, res, next) => {
     let reqUser = req.user || {};
     amount = parseFloat(amount);
 
-    let loginUser = await getUserById(reqUser.id, [
-      "id",
-      "creditRefrence",
-      "roleName",
-    ]);
-    let user = await getUser({ id: userId, createBy: reqUser.id }, [
-      "id",
-      "creditRefrence",
-      "roleName",
-    ]);
-    if (!user)
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "invalidData" } },
-        req,
-        res
-      );
+    let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence","downLevelCreditRefrence",  "roleName"]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "creditRefrence", "roleName"]);
+    if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
     let domain = await getDomainByUserId(userId);
     if (!domain)
       return ErrorResponse(
@@ -455,15 +442,14 @@ exports.setCreditReferrence = async (req, res, next) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
 
-    let previousCreditReference = user.creditRefrence;
+
+    let previousCreditReference = parseFloat(user.creditRefrence)
     let updateData = {
       creditRefrence: amount,
     };
 
-    let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserid(user.id, {
-      profitLoss,
-    });
+    let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
+    let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss })
 
     let transactionArray = [
       {
@@ -489,20 +475,18 @@ exports.setCreditReferrence = async (req, res, next) => {
     const transactioninserted = await insertTransactions(transactionArray);
 
     let updateLoginUser = {
-      downLevelCreditRefrence:
-        parseInt(loginUser.downLevelCreditRefrence) -
-        previousCreditReference +
-        amount,
-    };
+      downLevelCreditRefrence: parseFloat(loginUser.downLevelCreditRefrence) - previousCreditReference + amount
+    }
 
     await updateUser(user.id, updateData);
     await updateUser(loginUser.id, updateLoginUser);
+    updateData["id"] = user.id
     //apiCall(apiMethod.post,domain+allApiRoutes.setCreditReferrence,data)
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "updated", keys: { name: "Credit reference" } },
-        data: { user },
+        data: { updateData },
       },
       req,
       res
@@ -643,11 +627,12 @@ exports.updateUserBalance = async (req, res) => {
     ];
 
     const transactioninserted = await insertTransactions(transactionArray);
+    updatedUpdateUserBalanceData["id"] = user.id
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "updated", keys: { name: "User balance" } },
-        data: { user },
+        data: updatedUpdateUserBalanceData,
       },
       req,
       res

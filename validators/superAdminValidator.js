@@ -99,13 +99,13 @@ module.exports.SetSuperAdminBalance = Joi.object({
     remark: Joi.string().trim(),
     transactionPassword: Joi.string().required(),
 })
-// module.exports.LockUnlockUser = Joi.object({
-//   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
-//   transPassword: Joi.string().required().messages({
-//     'string.base': '"Transaction Password" must be a string',
-//     'any.required': '"Transaction Password" is required',
-//     'string.empty': '"Transaction Password" can not be empty.'
-//   }),
-//   block: Joi.boolean().required(),
-//   type: Joi.string().valid(...Object.values(blockType)).required()
-// })
+module.exports.LockUnlockUser = Joi.object({
+  userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+  transactionPassword: Joi.string().required().messages({
+    'string.base': '"Transaction Password" must be a string',
+    'any.required': '"Transaction Password" is required',
+    'string.empty': '"Transaction Password" can not be empty.'
+  }),
+  userBlock: Joi.boolean().required(),
+  betBlock: Joi.boolean().required()
+})

@@ -25,9 +25,9 @@ exports.allApiRoutes = {
     //user routes
     createSuperAdmin: "/fairgameWallet/add/user",
     updateSuperAdmin: "/fairgameWallet/update/user",
-    lockUnlockUser: "/user/lockUnlockUser",
     changePassword: "/fairgameWallet/changePassword",
     setExposureLimit: "/fairgameWallet/update/exposure",
     setCreditReferrence: "/fairgameWallet/update/creditReference",
-    updateUserBalance:"/fairgameWallet/update/balance"
+    updateUserBalance:"/fairgameWallet/update/balance",
+    lockUnlockSuperAdmin:"/fairgameWallet/lockUnlock"
 }

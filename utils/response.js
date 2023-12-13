@@ -4,7 +4,6 @@ module.exports.ErrorResponse = (errorData, req, res) => {
   errorData.statusCode = errorData.statusCode || 500;
   errorData.status = "error";
   const errorMessage = errorData.message || "Internal Server Error";
-  
   // Extracting message code and keys
   const { msg, keys } = errorMessage;
 
@@ -17,7 +16,6 @@ module.exports.ErrorResponse = (errorData, req, res) => {
     stack: errorData.stack,
   };
   res.status(errorData.statusCode).json(errorObj);
-
 };
 
 module.exports.SuccessResponse = (resData, req, res) => {
@@ -27,7 +25,9 @@ module.exports.SuccessResponse = (resData, req, res) => {
   return res.status(resData.statusCode).json({
     status: resData.status,
     statusCode: resData.statusCode,
-    message: resData?.message?__mf(resData?.message?.msg, resData?.message?.keys):null,
+    message: resData?.message
+      ? __mf(resData?.message?.msg, resData?.message?.keys)
+      : null,
     data: resData.data,
     meta: resData.meta,
   });

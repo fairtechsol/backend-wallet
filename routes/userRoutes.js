@@ -2,23 +2,23 @@ const express = require('express');
 const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
-const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid,setExposureLimitValid} = require('../validators/userValidator');
+const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference} = require('../validators/userValidator');
 const {createUser,lockUnlockUser,insertWallet,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence} = require('../controllers/userController');
 
-const { isAuthenticate } = require('../middleware/auth');
+const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
 
 
 
 router.post('/add',isAuthenticate,validator(CreateUser),createUser);
 router.post('/updateUser',isAuthenticate,validator(updateUserValid),updateUser);
-router.post('/lockUnlockUser',isAuthenticate, validator(LockUnlockUser), lockUnlockUser);
+router.post('/lockUnlockUser',isAuthenticate,checkTransactionPassword, validator(LockUnlockUser), lockUnlockUser);
 router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
-router.post("/update/exposurelimit",isAuthenticate,validator(setExposureLimitValid),setExposureLimit)
+router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(SetExposureLimitValid),setExposureLimit)
 router.get("/list",isAuthenticate,userList)
 router.get("/searchlist",isAuthenticate,userSearchList)
 router.get("/balance",isAuthenticate,userBalanceDetails)
-router.post("/update/creditreferrence",isAuthenticate,setCreditReferrence)
+router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(SetCreditReference),setCreditReferrence)
 router.post("/generateTransactionPassword",isAuthenticate,validator(generateTransactionPass),generateTransactionPassword);
 
 module.exports = router;

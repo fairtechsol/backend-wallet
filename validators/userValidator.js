@@ -38,7 +38,6 @@ module.exports.ChangePassword=Joi.object({
   transactionPassword: Joi.string()
     ,
   confirmPassword: Joi.string()
-    .required()
     .valid(Joi.ref("newPassword"))
     .label("Confirm Password")
     .messages({
@@ -49,7 +48,7 @@ module.exports.ChangePassword=Joi.object({
 });
 
 module.exports.generateTransactionPass = Joi.object({
-  transPassword: Joi.string()
+  transactionPassword: Joi.string()
     .required()
     .label("Transaction password")
     .length(6)
@@ -76,17 +75,24 @@ module.exports.updateUserValid = Joi.object({
   id: Joi.string().guid({ version: 'uuidv4' }).required()
 })
 
-module.exports.setExposureLimitValid = Joi.object({
+module.exports.SetExposureLimitValid = Joi.object({
   //sessionCommission,matchComissionType,matchCommission,id,createBy
   amount: Joi.number().required(),
-  transPassword: Joi.string(),
-  userid: Joi.string().guid({ version: 'uuidv4' }).required(),
+  transactionPassword: Joi.string().required(),
+  userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
+module.exports.SetCreditReference = Joi.object({
+  //sessionCommission,matchComissionType,matchCommission,id,createBy
+  amount: Joi.number().required(),
+  transactionPassword: Joi.string().required(),
+  userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+  remark : Joi.string()
+})
 
 module.exports.LockUnlockUser = Joi.object({
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
-  transPassword: Joi.string().required().messages({
+  transactionPassword: Joi.string().required().messages({
     'string.base': '"Transaction Password" must be a string',
     'any.required': '"Transaction Password" is required',
     'string.empty': '"Transaction Password" can not be empty.'

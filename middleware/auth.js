@@ -1,40 +1,11 @@
 const { getUserById } = require("../services/userService");
 const { verifyToken, getUserTokenFromRedis } = require("../utils/authUtils");
 const { ErrorResponse } = require("../utils/response");
-
+const bcrypt=require("bcryptjs");
 exports.isAuthenticate = async (req, res, next) => {
-  try{
-  const { token } = req.headers;
-  if (!token) {
-    return ErrorResponse(
-      {
-        statusCode: 401,
-        message: {
-          msg: "auth.authFailed",
-        },
-      },
-      req,
-      res
-    );
-  }
-
-  if (token) {
-    const decodedUser = verifyToken(token);
-    if (!decodedUser) {
-      return ErrorResponse(
-        {
-          statusCode: 400,
-          message: {
-            msg: "notFound",
-            keys: { name: "User" },
-          },
-        },
-        req,
-        res
-      );
-    }
-    const userTokenRedis = await getUserTokenFromRedis(decodedUser.id);
-    if (userTokenRedis != token) {
+  try {
+    const { authorization } = req.headers;
+    if (!authorization) {
       return ErrorResponse(
         {
           statusCode: 401,
@@ -47,15 +18,46 @@ exports.isAuthenticate = async (req, res, next) => {
       );
     }
 
-    req.user = decodedUser;
-    next();
-  }}
-  catch(err){
+    const token = authorization?.split(" ")[1];
+
+    if (token) {
+      const decodedUser = verifyToken(token);
+      if (!decodedUser) {
+        return ErrorResponse(
+          {
+            statusCode: 400,
+            message: {
+              msg: "notFound",
+              keys: { name: "User" },
+            },
+          },
+          req,
+          res
+        );
+      }
+      const userTokenRedis = await getUserTokenFromRedis(decodedUser.id);
+      if (userTokenRedis != token) {
+        return ErrorResponse(
+          {
+            statusCode: 401,
+            message: {
+              msg: "auth.unauthorize",
+            },
+          },
+          req,
+          res
+        );
+      }
+
+      req.user = decodedUser;
+      next();
+    }
+  } catch (err) {
     return ErrorResponse(
       {
-        statusCode: 500,
+        statusCode: 401,
         message: {
-          msg: "internalServerError"
+          msg: "internalServerError",
         },
       },
       req,

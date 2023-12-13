@@ -1,9 +1,7 @@
 const { userRoleConstant, transType } = require("../config/contants");
-const { forceLogoutUser } = require("../services/commonService");
-const { getDomainDataByUserIds } = require("../services/domainDataService");
 const { insertTransactions } = require("../services/transactionService");
 const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserid } = require("../services/userBalanceService");
-const { getUserByUserName, addUser, getUserById, getChildUser, updateUser, getUsersWithUserBalance, userBlockUnblock } = require("../services/userService");
+const { getUserByUserName, addUser, getUserById, getChildUser, updateUser} = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require('bcryptjs')
 exports.insertWallet = async (req, res) => {

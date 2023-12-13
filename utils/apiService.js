@@ -29,5 +29,10 @@ exports.allApiRoutes = {
     setExposureLimit: "/fairgameWallet/update/exposure",
     setCreditReferrence: "/fairgameWallet/update/creditReference",
     updateUserBalance:"/fairgameWallet/update/balance",
-    lockUnlockSuperAdmin:"/fairgameWallet/lockUnlock"
+    lockUnlockSuperAdmin:"/fairgameWallet/lockUnlock",
+    EXPERTS : {
+      add : "/user/add",
+      update : "/user/update",
+      changePassword : "/user/password"
+    }
 }

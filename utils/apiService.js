@@ -33,6 +33,6 @@ exports.allApiRoutes = {
     EXPERTS : {
       add : "/user/add",
       update : "/user/update",
-      changePassword : "/user/password"
+      changePassword : "/user/admin/password"
     }
 }

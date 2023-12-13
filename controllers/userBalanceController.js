@@ -2,7 +2,7 @@ const { transType } = require('../config/contants');
 const { getUser, } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
-const { getUserBalanceDataByUserIds, updateUserBalanceByUserid, addInitialUserBalance, getUserBalanceDataByUserId } = require('../services/userBalanceService');
+const {  updateUserBalanceByUserid, getUserBalanceDataByUserId } = require('../services/userBalanceService');
 
 exports.updateUserBalance = async (req, res) => {
     try {
@@ -12,13 +12,13 @@ exports.updateUserBalance = async (req, res) => {
         // let loginUser = await getUserById(reqUser.id || createBy)
         // if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
-        if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+        if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "User"} } }, req, res);
 
         let loginUserBalanceData = getUserBalanceDataByUserId(reqUser.id);
         let insertUserBalanceData = getUserBalanceDataByUserId(user.id);
         let usersBalanceData = await Promise.all([loginUserBalanceData, insertUserBalanceData])
         if (!usersBalanceData.length || !usersBalanceData[1])
-            return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+            return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "User balance"} } }, req, res);
         
         loginUserBalanceData = usersBalanceData[0]
         let updatedLoginUserBalanceData = {}

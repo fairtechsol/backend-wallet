@@ -97,6 +97,15 @@ exports.checkTransactionPassword = async (req,res,next) => {
     req,
     res
   );
+  if(!user.transPassword)
+  return ErrorResponse(
+    {
+      statusCode: 400,
+      message: { msg: "auth.invalidPass", keys: { type: "transaction" }},
+    },
+    req,
+    res
+  );
   
   // Compare old transaction password with the stored transaction password
   let check = bcrypt.compareSync(transactionPassword, user.transPassword);

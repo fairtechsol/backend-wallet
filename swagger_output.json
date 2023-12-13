@@ -357,13 +357,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "amount": {
                     "example": "any"
                   },
                   "userId": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   }
                 }
@@ -530,13 +530,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userId": {
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -936,6 +936,55 @@
                     "example": "any"
                   },
                   "userId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/superadmin/lockUnlockUser": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "betBlock": {
+                    "example": "any"
+                  },
+                  "userBlock": {
                     "example": "any"
                   }
                 }

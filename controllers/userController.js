@@ -4,12 +4,9 @@ const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
 const bcrypt = require("bcryptjs");
 const lodash = require('lodash')
-const { forceLogoutIfLogin } = require("../services/commonService");
-const internalRedis = require("../config/internalRedisConnection");
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
 const {getDomainDataByUserIds } = require('../services/domainDataService');
-const {apiCall,apiMethod,allApiRoutes} = require("../utils/apiService")
 const {calculatePartnership,checkUserCreationHierarchy,forceLogoutUser} = require("../services/commonService")
 
 exports.createUser = async (req, res) => {
@@ -467,7 +464,7 @@ exports.userBalanceDetails = async (req, res, next) => {
     let reqUser = req.user || {}
     let { id } = req.query
     let loginUser = await getUserById(id)
-    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "Login user"}} }, req, res);
 
     let firstLevelChildUser = await getFirstLevelChildUser(loginUser.id)
 
@@ -492,7 +489,7 @@ exports.userBalanceDetails = async (req, res, next) => {
     let response = {
       userCreditReference: parseFloat(loginUser.creditRefrence),
       downLevelOccupyBalance: allChildBalanceData.allchildscurrentbalancesum ? parseFloat(allChildBalanceData.allchildscurrentbalancesum) : 0,
-      downLevelCreditReference: loginUser.downLevelCreditReference,
+      downLevelCreditReference: loginUser.downLevelCreditRefrence,
       availableBalance: userBalanceData.currentBalance ? parseFloat(userBalanceData.currentBalance) : 0,
       totalMasterBalance: (userBalanceData.currentBalance ? parseFloat(userBalanceData.currentBalance) : 0) + (allChildBalanceData.allchildscurrentbalancesum ? parseFloat(allChildBalanceData.allchildscurrentbalancesum) : 0),
       upperLevelBalance: userBalanceData.profitLoss ? userBalanceData.profitLoss : 0,
@@ -522,14 +519,14 @@ exports.setCreditReferrence = async (req, res, next) => {
       amount = parseFloat(amount);
   
       let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence","downLevelCreditRefrence", "roleName"]);
-      if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+      if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "Login user"} } }, req, res);
 
       let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "creditRefrence", "roleName"]);
-      if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+      if (!user) return ErrorResponse({ statusCode: 400, message:  { msg: "notFound",keys :{name : "User"} } }, req, res);
   
       let userBalance = await getUserBalanceDataByUserId(user.id);
       if(!userBalance)
-      return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+      return ErrorResponse({ statusCode: 400, message:  { msg: "notFound",keys :{name : "User balance"} } }, req, res);
 
       let previousCreditReference = parseFloat(user.creditRefrence);
       let updateData = {
@@ -732,5 +729,19 @@ exports.generateTransactionPassword = async (req, res) => {
   );
 };
 
+
+exports.getProfile = async (req, res) => {
+  let reqUser = req.user || {};
+  let userId = reqUser?.id
+  if(req.query?.userId){
+    userId = req.query.userId;
+  }
+  let where = {
+    id: userId,
+  };
+  let user = await getUsersWithUserBalance(where);
+  let response = lodash.omit(user, ["password", "transPassword"])
+  return SuccessResponse({ statusCode: 200, message: { msg: "user.profile" }, data: response }, req, res)
+}
  
 

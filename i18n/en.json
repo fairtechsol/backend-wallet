@@ -35,7 +35,9 @@
     "ExposurelimitSet": "Exposure limit update successfully.",
     "UserBalanceFetchSuccessfully": "User balance fetch successfully.",
     "invalidRole": "Invalid role",
-    "domainExist": "Domain or username already exist."
+    "domainExist": "Domain or username already exist.",
+    "profile" : "Profile get successfully.",
+    "userList": "User List Get Success."
   },
   "button": {
     "InvalidUser": "User is invalid"

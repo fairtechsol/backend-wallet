@@ -1,13 +1,14 @@
 const { userRoleConstant, transType, walletDescription,blockType } = require('../config/contants');
-const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance ,userBlockUnblock} = require('../services/userService');
+const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance ,userBlockUnblock, betBlockUnblock} = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
 const bcrypt = require("bcryptjs");
 const lodash = require('lodash')
 const { getUserBalanceDataByUserId, getAllchildsCurrentBalanceSum, getAllChildProfitLossSum, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
 const { ILike } = require('typeorm');
-const {getDomainDataByUserIds } = require('../services/domainDataService');
-const {calculatePartnership,checkUserCreationHierarchy,forceLogoutUser} = require("../services/commonService")
+const {getDomainDataByUserIds, getDomainByUserId } = require('../services/domainDataService');
+const {calculatePartnership,checkUserCreationHierarchy,forceLogoutUser} = require("../services/commonService");
+const { apiMethod, apiCall, allApiRoutes } = require('../utils/apiService');
 
 exports.createUser = async (req, res) => {
   try {
@@ -578,134 +579,128 @@ exports.setCreditReferrence = async (req, res, next) => {
 
 // Controller function for locking/unlocking a user
 exports.lockUnlockUser = async (req, res, next) => {
-    try {
-      // Extract relevant data from the request body and user object
-      const { userId, block, type } = req.body;
-      const { id:loginId } = req.user;
+  try {
+    // Extract relevant data from the request body and user object
+    const { userId, betBlock, userBlock } = req.body;
+    const { id: loginId } = req.user;
 
-      // Fetch user details of the current user, including block information
-      const userDetails = await getUserById(loginId, ["userBlock", "betBlock"]);
   
-      // Fetch details of the user who is performing the block/unblock operation,
-      // including the hierarchy and block information
-      const blockingUserDetail = await getUserById(userId, [
-        "createBy",
-        "userBlock",
-        "betBlock",
-      ]);
-  
-      // Check if the current user is already blocked
-      if (userDetails?.userBlock) {
-        throw new Error("user.userBlockError");
-      }
-  
-      // Check if the block type is 'betBlock' and the user is already bet-blocked
-      if (type == blockType.betBlock && userDetails?.betBlock) {
-        throw new Error("user.betBlockError");
-      }
-  
-      // Check if the user performing the block/unblock operation has the right access
-      if (blockingUserDetail?.createBy != loginId) {
-        return ErrorResponse(
-          {
-            statusCode: 403,
-            message: { msg: "user.blockCantAccess" },
-          },
-          req,
-          res
-        );
-      }
-  
-      // Check if the user is already blocked or unblocked (prevent redundant operations)
-      if (
-        blockingUserDetail?.userBlock === block &&
-        type === blockType.userBlock
-      ) {
-        return ErrorResponse(
-          {
-            statusCode: 400,
-            message: {
-              msg: "user.alreadyBlocked",
-              keys: {
-                name: "User",
-                type: block ? "blocked" : "unblocked",
-              },
-            },
-          },
-          req,
-          res
-        );
-      }
-  
-      // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
-      if (
-        blockingUserDetail?.betBlock === block &&
-        type === blockType.betBlock
-      ) {
-        return ErrorResponse(
-          {
-            statusCode: 400,
-            message: {
-              msg: "user.alreadyBlocked",
-              keys: {
-                name: "Bet",
-                type: block ? "blocked" : "unblocked",
-              },
-            },
-          },
-          req,
-          res
-        );
-      }
-  
-      // Perform the user block/unblock operation
-      const blockedUsers=await userBlockUnblock(userId, loginId, block, type);
-      let blockedUserIds = blockedUsers[0].map(item => item?.id);
-      //   if blocktype is user and its block then user would be logout by socket
-      if(type==blockType.userBlock&&block){
-        blockedUsers?.[0]?.forEach((item)=>{
-          //blockedUserIds.push(item?.id)
-          forceLogoutUser(item?.id);
-        })
-      };
 
-      const usersDomainData = await getDomainDataByUserIds(blockedUserIds) ;
+    // Fetch user details of the current user, including block information
+    const userDetails = await getUserById(loginId, [
+      "userBlock",
+      "betBlock",
+      "roleName",
+    ]);
 
-      await Promise.allSettled(usersDomainData.map((item)=>{
-        return new Promise(async (resolve,reject)=>{
-          let apiData = {
-            userId : item.id,
-            block,
-            type
-          };
-          resolve(apiData)
-          // await apiCall(apiMethod.post,item.domain+allApiRoutes.lockUnlockUser,apiData)
-          // .then(data => {
-          //   resolve()
-          // })
-          // .catch(err =>{
-          //   reject()
-          // })
-        })
-      }));
-      
-      // Return success response
-      return SuccessResponse(
-        { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
+    // Fetch details of the user who is performing the block/unblock operation,
+    // including the hierarchy and block information
+    const blockingUserDetail = await getUserById(userId, [
+      "createBy",
+      "userBlock",
+      "betBlock",
+      "roleName",
+    ]);
+
+    // Check if the current user is already blocked
+    if (userDetails?.userBlock&&blockingUserDetail.roleName!=userRoleConstant.fairGameWallet&&userDetails.roleName!=userRoleConstant.fairGameWallet) {
+      throw new Error("user.userBlockError");
+    }
+
+    // Check if the block type is 'betBlock' and the user is already bet-blocked
+    if (!betBlock && userDetails?.betBlock&&blockingUserDetail.roleName!=userRoleConstant.fairGameWallet&&userDetails.roleName!=userRoleConstant.fairGameWallet) {
+      throw new Error("user.betBlockError");
+    }
+
+    // Check if the user performing the block/unblock operation has the right access
+    if (blockingUserDetail?.createBy != loginId&&blockingUserDetail.roleName!=userRoleConstant.fairGameWallet&& userDetails.roleName!=userRoleConstant.fairGameWallet) {
+      return ErrorResponse(
+        {
+          statusCode: 403,
+          message: { msg: "user.blockCantAccess" },
+        },
         req,
         res
       );
-    } catch (error) {
-        return ErrorResponse(
-            {
-              statusCode: 500,
-              message: error.message,
-            },
-            req,
-            res
-          );
     }
-  };
+
+    // Check if the user is already blocked or unblocked (prevent redundant operations)
+    if (blockingUserDetail?.userBlock != userBlock) {
+      // Perform the user block/unblock operation
+      const blockedUsers = await userBlockUnblock(userId, loginId, userBlock);
+      //   if blocktype is user and its block then user would be logout by socket
+      
+      for (let item of blockedUsers?.[0]) {
+          if (item?.roleName == userRoleConstant.superAdmin) {
+            const body = {
+              userId:item?.id,
+              
+              loginId,
+              betBlock: null,
+              userBlock,
+            };
+            //fetch domain details of user
+            const domain = await getDomainByUserId(item?.id);
+            try {
+              await apiCall(
+                apiMethod.post,
+                domain + allApiRoutes.lockUnlockSuperAdmin,
+                body
+              );
+            } catch (err) {
+              console.log(err)
+            return ErrorResponse(err?.response?.data, req, res);
+            }
+          } else if(userBlock) {
+            forceLogoutUser(item?.id);
+          }
+        };
+      
+    }
+
+    // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
+    if (blockingUserDetail?.betBlock != betBlock) {
+      // Perform the bet block/unblock operation
+
+      const blockedBet = await betBlockUnblock(userId, loginId, betBlock);
+      for (let item of blockedBet?.[0]) {
+        if (item?.roleName == userRoleConstant.superAdmin) {
+          const body = {
+            userId:item?.id,
+            loginId,
+            betBlock,
+            userBlock: null,
+          };
+          //fetch domain details of user
+          const domain = await getDomainByUserId(item?.id);
+          try {
+            await apiCall(
+              apiMethod.post,
+              domain + allApiRoutes.lockUnlockSuperAdmin,
+              body
+            );
+          } catch (err) {
+            return ErrorResponse(err?.response?.data, req, res);
+          }
+        } 
+      }
+      
+    }
+
+    // Return success response
+    return SuccessResponse(
+      { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
+      req,
+      res
+    );
+  } catch (error) {
+      return ErrorResponse(
+          error,
+          req,
+          res
+        );
+  }
+};
   
 exports.generateTransactionPassword = async (req, res) => {
   const { id } = req.user;

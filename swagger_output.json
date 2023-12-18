@@ -418,6 +418,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1223,13 +1230,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "transactionType": {
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -1272,10 +1279,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "amount": {
+                  "transactionPassword": {
                     "example": "any"
                   },
-                  "transactionPassword": {
+                  "amount": {
                     "example": "any"
                   }
                 }
@@ -1315,10 +1322,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "amount": {
+                  "transactionPassword": {
                     "example": "any"
                   },
-                  "transactionPassword": {
+                  "amount": {
                     "example": "any"
                   },
                   "remark": {

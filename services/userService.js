@@ -14,6 +14,7 @@ const internalRedisSubscribe = require("./redis/internalRedisSubscriber");
 const internalRedisPublisher = require("./redis/internalRedisPublisher");
 const { ILike, In, IsNull, LessThanOrEqual, MoreThanOrEqual, Not } = require("typeorm");
 const { userRoleConstant, blockType } = require("../config/contants");
+const ApiFeature = require("../utils/apiFeatures");
 
 // id is required and select is optional parameter is an type or array
 
@@ -168,6 +169,20 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
   return result;
 
 }
+
+exports.getUsersWithUsersBalanceData = async (where, query,select) => {
+  //get all users with user balance according to pagoination
+  let transactionQuery = new ApiFeature(user.createQueryBuilder()
+  .select(select)
+  .where(where)
+  .leftJoinAndMapOne("user.userBal","userBalances", "UB","user.id = UB.userId")
+  ,query).search().filter().sort().paginate().getResult();
+
+    return await transactionQuery;
+
+}
+
+
 exports.getChildUser = async (id) => {
   let query = `WITH RECURSIVE p AS (
     SELECT * FROM "users" WHERE "users"."id" = '${id}'

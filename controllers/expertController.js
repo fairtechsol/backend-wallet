@@ -95,3 +95,50 @@ exports.changePassword = async (req, res) => {
     }
 };
 
+exports.expertList = async (req, res, next) => {
+    try {
+      let { id: loginId } = req.user;
+      let { userName, offset, limit } = req.query;
+
+      let domain = process.env.EXPERT_DOMAIN_URL;
+      let apiResponse = {};
+
+      const queryParams = {
+        userName,
+        offset,
+        limit,
+        loginId,
+      };
+
+      // Construct the URL with query parameters
+      const url = new URL(
+        domain + allApiRoutes.EXPERTS.expertList
+      );
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value) {
+          url.searchParams.append(key, value);
+        }
+      });
+
+      try {
+        apiResponse = await apiCall(
+          apiMethod.get,
+          url
+        );
+      } catch (error) {
+        throw error?.response?.data;
+      }
+
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          message: { msg: "fetched", keys: { name: "Expert list" } },
+          data: apiResponse?.data,
+        },
+        req,
+        res
+      );
+    } catch (error) {
+      return ErrorResponse(error, req, res);
+    }
+  };

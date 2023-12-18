@@ -7,7 +7,6 @@ exports.apiMethod = {
     delete: "delete"
 }
 exports.apiCall = async (method, url, data, headers) => {
-  console.log(url);
   try {
     let response = await axios({
       method: method,
@@ -33,6 +32,7 @@ exports.allApiRoutes = {
     EXPERTS : {
       add : "/user/add",
       update : "/user/update",
-      changePassword : "/user/admin/password"
+      changePassword : "/user/admin/password",
+      expertList:"/user/list"
     }
 }

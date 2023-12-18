@@ -122,7 +122,7 @@ exports.login = async (req, res) => {
         req,
         res
       );
-    } else if (user.userBlock) {
+    } else if (user.userBlock&&user.roleName!=userRoleConstant.fairGameWallet) {
       return ErrorResponse(
         {
           statusCode: 403,

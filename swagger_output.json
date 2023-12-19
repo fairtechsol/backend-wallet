@@ -265,10 +265,10 @@
                   "userId": {
                     "example": "any"
                   },
-                  "block": {
+                  "betBlock": {
                     "example": "any"
                   },
-                  "type": {
+                  "userBlock": {
                     "example": "any"
                   }
                 }
@@ -392,13 +392,6 @@
             }
           },
           {
-            "name": "type",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "userName",
             "in": "query",
             "schema": {
@@ -413,7 +406,7 @@
             }
           },
           {
-            "name": "offset",
+            "name": "page",
             "in": "query",
             "schema": {
               "type": "string"
@@ -421,6 +414,13 @@
           },
           {
             "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
             "in": "query",
             "schema": {
               "type": "string"

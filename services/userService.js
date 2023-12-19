@@ -170,10 +170,9 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
 
 }
 
-exports.getUsersWithUsersBalanceData = async (where, query,select) => {
+exports.getUsersWithUsersBalanceData = async (where, query) => {
   //get all users with user balance according to pagoination
   let transactionQuery = new ApiFeature(user.createQueryBuilder()
-  .select(select)
   .where(where)
   .leftJoinAndMapOne("user.userBal","userBalances", "UB","user.id = UB.userId")
   ,query).search().filter().sort().paginate().getResult();

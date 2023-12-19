@@ -324,16 +324,16 @@ exports.setExposureLimit = async (req, res, next) => {
 exports.userList = async (req, res, next) => {
   try {
     let reqUser = req.user
-    let { userName, roleName, offset, limit,type } = req.query
     // let loginUser = await getUserById(reqUser.id)
     let userRole = reqUser.roleName
     let where = {
       createBy: reqUser.id
     }
-    if(req.query.type){
-      delete req.query.type
-    }
-    let users = await getUsersWithUsersBalanceData(where,req.query)
+
+    const {type,...apiQuery}=req.query;
+
+
+    let users = await getUsersWithUsersBalanceData(where,apiQuery)
 
     let response = {
       count: 0,

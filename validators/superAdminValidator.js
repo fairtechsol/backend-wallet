@@ -96,7 +96,7 @@ module.exports.SetSuperAdminBalance = Joi.object({
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
     transactionType: Joi.string().valid(...Object.values(transType)).required(),
     amount: Joi.number().required(),
-    remark: Joi.string().trim(),
+    remark: Joi.string().trim().allow(""),
     transactionPassword: Joi.string().required(),
 })
 module.exports.LockUnlockUser = Joi.object({

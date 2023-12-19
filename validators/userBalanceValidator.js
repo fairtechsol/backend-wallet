@@ -25,7 +25,7 @@ module.exports.SetWalletExposureLimit = Joi.object({
 
 module.exports.SetWalletCreditRefrence = Joi.object({
     amount : Joi.number().required(),
-    remark: Joi.string().trim(),
+    remark: Joi.string().trim().allow(""),
     transactionPassword: Joi.string().required(),
 })
 

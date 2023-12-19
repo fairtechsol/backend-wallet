@@ -87,7 +87,7 @@ module.exports.SetCreditReference = Joi.object({
   amount: Joi.number().required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
-  remark : Joi.string()
+  remark : Joi.string().trim().allow("")
 })
 
 module.exports.LockUnlockUser = Joi.object({

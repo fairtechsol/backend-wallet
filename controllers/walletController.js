@@ -57,29 +57,33 @@ exports.insertWallet = async (req, res) => {
 
 exports.updateBalance = async (req, res) => {
     try {
-        let { transactionType, amount, transactionPassword, remark } = req.body
-        let reqUser = req.user
-        amount = parseFloat(amount)
+        let { transactionType, amount, transactionPassword, remark } = req.body;
+        let reqUser = req.user;
 
+        if(reqUser.roleName != userRoleConstant.fairGameWallet){
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        }
+
+
+        amount = parseFloat(amount);
         let loginUserBalanceData = await getUserBalanceDataByUserId(reqUser.id);
 
         if (!loginUserBalanceData)
             return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Balance" } } }, req, res);
-
         // let updatedLoginUserBalanceData = {};
         let updatedUpdateUserBalanceData = {};
 
         if (transactionType == transType.add) {
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
-            updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount)
-            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData)
+            updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
+            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData);
         } else if (transactionType == transType.withDraw) {
             if (amount > loginUserBalanceData.currentBalance)
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
 
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) - parseFloat(amount);
-            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData)
+            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData);
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         }
@@ -113,12 +117,16 @@ exports.setExposureLimit = async (req, res, next) => {
     try {
         let { amount, transactionPassword } = req.body
 
-        let reqUser = req.user || {}
-        let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"])
+        let reqUser = req.user || {};
 
+        if(reqUser.roleName != userRoleConstant.fairGameWallet){
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        }
+
+        let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
         amount = parseInt(amount);
-        loginUser.exposureLimit = amount
-        let childUsers = await getChildUser(reqUser.id)
+        loginUser.exposureLimit = amount;
+        let childUsers = await getChildUser(reqUser.id);
 
 
         childUsers.map(async childObj => {
@@ -153,6 +161,10 @@ exports.setCreditReferrence = async (req, res, next) => {
 
         let {  amount, transactionPassword, remark } = req.body;
         let reqUser = req.user;
+
+        if(reqUser.roleName != userRoleConstant.fairGameWallet){
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        }
         amount = parseFloat(amount);
 
         let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence", "roleName"]);

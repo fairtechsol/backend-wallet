@@ -265,10 +265,10 @@
                   "userId": {
                     "example": "any"
                   },
-                  "block": {
+                  "betBlock": {
                     "example": "any"
                   },
-                  "type": {
+                  "userBlock": {
                     "example": "any"
                   }
                 }
@@ -406,7 +406,7 @@
             }
           },
           {
-            "name": "offset",
+            "name": "page",
             "in": "query",
             "schema": {
               "type": "string"
@@ -414,6 +414,13 @@
           },
           {
             "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
             "in": "query",
             "schema": {
               "type": "string"
@@ -1223,13 +1230,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "transactionType": {
                     "example": "any"
                   },
                   "amount": {
-                    "example": "any"
-                  },
-                  "transactionPassword": {
                     "example": "any"
                   },
                   "remark": {
@@ -1272,10 +1279,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "amount": {
+                  "transactionPassword": {
                     "example": "any"
                   },
-                  "transactionPassword": {
+                  "amount": {
                     "example": "any"
                   }
                 }
@@ -1315,10 +1322,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "amount": {
+                  "transactionPassword": {
                     "example": "any"
                   },
-                  "transactionPassword": {
+                  "amount": {
                     "example": "any"
                   },
                   "remark": {

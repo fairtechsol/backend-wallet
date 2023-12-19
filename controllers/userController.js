@@ -1,5 +1,6 @@
-const { userRoleConstant, transType, walletDescription,blockType } = require('../config/contants');
-const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance ,userBlockUnblock, betBlockUnblock} = require('../services/userService');
+const { userRoleConstant, transType, walletDescription,blockType, fileType } = require('../config/contants');
+const FileGenerate  = require("../utils/generateFile");
+const { getUserById, addUser, getUserByUserName, updateUser, getUser, getChildUser, getUsers, getFirstLevelChildUser, getUsersWithUserBalance ,userBlockUnblock,betBlockUnblock, getUsersWithUsersBalanceData} = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
 const bcrypt = require("bcryptjs");
@@ -9,7 +10,6 @@ const { ILike } = require('typeorm');
 const {getDomainDataByUserIds, getDomainByUserId } = require('../services/domainDataService');
 const {calculatePartnership,checkUserCreationHierarchy,forceLogoutUser} = require("../services/commonService");
 const { apiMethod, apiCall, allApiRoutes } = require('../utils/apiService');
-
 exports.createUser = async (req, res) => {
   try {
     let { userName, fullName, password, confirmPassword, phoneNumber, city, roleName, myPartnership,creditRefrence, exposureLimit, maxBetLimit, minBetLimit } = req.body;
@@ -324,17 +324,16 @@ exports.setExposureLimit = async (req, res, next) => {
 exports.userList = async (req, res, next) => {
   try {
     let reqUser = req.user
-    let { userName, roleName, offset, limit } = req.query
     // let loginUser = await getUserById(reqUser.id)
     let userRole = reqUser.roleName
     let where = {
       createBy: reqUser.id
     }
-    if (userName) where.userName = ILike(`%${userName}%`);
-    if (roleName) where.roleName = roleName;
 
-    let relations = ['user']
-    let users = await getUsersWithUserBalance(where, offset, limit)
+    const {type,...apiQuery}=req.query;
+
+
+    let users = await getUsersWithUsersBalanceData(where,apiQuery)
 
     let response = {
       count: 0,
@@ -405,6 +404,63 @@ exports.userList = async (req, res, next) => {
       }
       return element;
     }))
+
+    if (type) {
+      const header = [
+        { excelHeader: "User Name", dbKey: "userName" },
+        { excelHeader: "Role", dbKey: "roleName" },
+        { excelHeader: "Credit Ref", dbKey: "creditRefrence" },
+        { excelHeader: "Balance", dbKey: "balance" },
+        { excelHeader: "Client P/L", dbKey: "profit_loss" },
+        { excelHeader: "% P/L", dbKey: "percentProfitLoss" },
+        { excelHeader: "Comission", dbKey: "TotalComission" },
+        { excelHeader: "Exposure", dbKey: "exposure" },
+        { excelHeader: "Available Balance", dbKey: "availableBalance" },
+        { excelHeader: "UL", dbKey: "userBlock" },
+        { excelHeader: "BL", dbKey: "betBlock" },
+        { excelHeader: "S Com %", dbKey: "sessionCommission" },
+        { excelHeader: "Match Com Type", dbKey: "matchComissionType" },
+        { excelHeader: "M Com %", dbKey: "matchCommission" },
+        { excelHeader: "Exposure Limit", dbKey: "exposureLimit" },
+        ...(type == fileType.excel
+          ? [
+            {
+              excelHeader: "FairGameWallet Partnership",
+              dbKey: "fwPartnership",
+            },
+            {
+              excelHeader: "FairGameAdmin Partnership",
+              dbKey: "faPartnership",
+            },
+            { excelHeader: "SuperAdmin Partnership", dbKey: "saPartnership" },
+            { excelHeader: "Admin Partnership", dbKey: "aPartnership" },
+            {
+              excelHeader: "SuperMaster Partnership",
+              dbKey: "smPartnership",
+            },
+            { excelHeader: "Master Partnership", dbKey: "mPartnership" },
+            { excelHeader: "Full Name", dbKey: "fullName" },
+            { excelHeader: "City", dbKey: "city" },
+            { excelHeader: "Phone Number", dbKey: "phoneNumber" },
+          ]
+          : []),
+      ];
+
+      const fileGenerate = new FileGenerate(type);
+      const file = await fileGenerate.generateReport(data, header);
+      const fileName=`accountList_${new Date()}`
+      
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          message: { msg: "user.userList" },
+          data: {file:file,fileName:fileName},
+        },
+        req,
+        res
+      );
+    }
+
 
     response.list = data
     return SuccessResponse(

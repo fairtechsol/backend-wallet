@@ -518,9 +518,9 @@ exports.userSearchList = async (req, res, next) => {
 
 exports.userBalanceDetails = async (req, res, next) => {
   try {
-    let reqUser = req.user || {}
-    let { id } = req.query
-    let loginUser = await getUserById(id)
+    let reqUser = req.user || {};
+    let { id } = req.query || reqUser.id;
+    let loginUser = await getUserById(id);
     if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "Login user"}} }, req, res);
 
     let firstLevelChildUser = await getFirstLevelChildUser(loginUser.id)

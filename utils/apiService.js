@@ -34,5 +34,9 @@ exports.allApiRoutes = {
       update : "/user/update",
       changePassword : "/user/admin/password",
       expertList:"/user/list"
+    },
+    MATCHES : {
+      matchDetails : "/match/",
+      matchList : "/list"
     }
 }

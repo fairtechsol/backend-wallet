@@ -36,7 +36,7 @@ exports.allApiRoutes = {
       expertList:"/user/list"
     },
     MATCHES : {
-      matchDetails : "/match/",
-      matchList : "/list"
+      matchDetails : "/superAdmin/match/",
+      matchList : "/superAdmin/match/list"
     }
 }

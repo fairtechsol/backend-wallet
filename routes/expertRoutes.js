@@ -5,7 +5,7 @@ const validator = require('../middleware/joi.validator')
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
-const { createUser, updateUser, changePassword, expertList } = require('../controllers/expertController');
+const { createUser, updateUser, changePassword, expertList, getNotification } = require('../controllers/expertController');
 
 
 
@@ -14,5 +14,7 @@ router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateExper
 router.post('/update',isAuthenticate,checkTransactionPassword,validator(UpdateExpertValidate),updateUser);
 router.post('/password',isAuthenticate,checkTransactionPassword,validator(changePasswordExpertValidate),changePassword);
 router.get('/list',isAuthenticate,expertList);
+router.get("/notification", isAuthenticate, getNotification);
+
 
 module.exports = router;

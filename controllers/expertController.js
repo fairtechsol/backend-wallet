@@ -1,6 +1,5 @@
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
-const lodash = require('lodash')
 exports.createUser = async (req, res) => {
     try {
         // Destructuring request body for relevant user information
@@ -142,3 +141,25 @@ exports.expertList = async (req, res, next) => {
       return ErrorResponse(error, req, res);
     }
   };
+
+
+let expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060'
+
+exports.getNotification = async (req, res) => {
+    try {
+        let response = await apiCall(
+            apiMethod.get,
+            expertDomain + allApiRoutes.notification
+        );
+        return SuccessResponse(
+            {
+              statusCode: 200,
+              data: response.data
+            },
+            req,
+            res
+          );
+    } catch (err) { 
+        return ErrorResponse(err?.response?.data, req, res);
+    }
+};

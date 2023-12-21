@@ -7,7 +7,6 @@ exports.matchDetails = async(req, res) => {
         let apiResponse = {};
         try {
             apiResponse = await apiCall(apiMethod.get, domain + allApiRoutes.MATCHES.matchDetails + req.params.id);
-
         } catch (error) {
             throw error?.response?.data;
         }
@@ -23,7 +22,7 @@ exports.listMatch = async (req,res) => {
         let domain = process.env.EXPERT_DOMAIN_URL;
         let apiResponse = {};
         try {
-            apiResponse = await apiCall(apiMethod.get, domain + allApiRoutes.MATCHES.matchList);
+            apiResponse = await apiCall(apiMethod.get, domain + allApiRoutes.MATCHES.matchList,null,req.query);
 
         } catch (error) {
             throw error?.response?.data;

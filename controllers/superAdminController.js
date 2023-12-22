@@ -226,8 +226,7 @@ exports.createSuperAdmin = async (req, res) => {
       res
     );
   } catch (err) {
-    await deleteUser(response?.id);
-    return ErrorResponse(err?.response?.data, req, res);
+    return ErrorResponse(err, req, res);
   }
 };
 exports.updateSuperAdmin = async (req, res) => {

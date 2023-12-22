@@ -36,11 +36,13 @@ exports.allApiRoutes = {
   setCreditReferrence: "/fairgameWallet/update/creditReference",
   updateUserBalance: "/fairgameWallet/update/balance",
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
+
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
     changePassword: "/user/admin/password",
-    expertList: "/user/list"
+    expertList: "/user/list",
+    notification:"/general/notification"
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",

@@ -42,7 +42,10 @@ exports.allApiRoutes = {
     update: "/user/update",
     changePassword: "/user/admin/password",
     expertList: "/user/list",
-    notification:"/general/notification"
+    notification:"/general/notification",
+    getCompetitionList:"/match/competitionList",
+    getDatesByCompetition:"/match/competition/dates",
+    getMatchByCompetitionAndDate:"/match/competition/getMatch",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",

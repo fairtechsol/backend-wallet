@@ -93,3 +93,7 @@ module.exports.walletDescription = {
 }
 
 module.exports.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{6,30}$/;
+
+module.exports.socketData ={
+  userBalanceUpdateEvent : "userBalanceUpdate"
+};

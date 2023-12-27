@@ -75,6 +75,7 @@ module.exports.updateSuperAdminValid = Joi.object({
     sidebarColor: Joi.string(),
     headerColor: Joi.string(),
     footerColor: Joi.string(),
+    transactionPassword: Joi.string().required()
 })
 
 module.exports.setExposureLimitValid = Joi.object({

@@ -11,7 +11,7 @@ const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth
 
 
 router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateSuperAdmin),createSuperAdmin);
-router.post('/updateUser',isAuthenticate,validator(updateSuperAdminValid),updateSuperAdmin);
+router.post('/updateUser',isAuthenticate,checkTransactionPassword,validator(updateSuperAdminValid),updateSuperAdmin);
 // router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);
 router.post('/changePassword',isAuthenticate,checkTransactionPassword,validator(ChangePassword),changePassword);
 router.post('/lockUnlockUser',isAuthenticate, checkTransactionPassword,validator(LockUnlockUser), lockUnlockSuperAdmin);

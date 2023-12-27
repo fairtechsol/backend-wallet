@@ -137,6 +137,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "userName": {
                     "example": "any"
                   },
@@ -210,6 +213,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "sessionCommission": {
                     "example": "any"
                   },
@@ -887,6 +893,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "transactionPassword": {
+                    "example": "any"
+                  },
                   "id": {
                     "example": "any"
                   },

@@ -17,7 +17,8 @@
     "roleNotCorrectLogin": "Please login with correct user.",
     "logoutSuccess": "Logout successfully.",
     "passwordChanged": "Password changed successfully.",
-    "unauthorize": "Unauthorized user"
+    "unauthorize": "Unauthorized user",
+    "TransactionPasswordNotExist" : "Your transaction password not generated. Please contact your administrator."
   },
   "user": {
     "blocked": "There is something wrong with your account. Please contact your administrator.",

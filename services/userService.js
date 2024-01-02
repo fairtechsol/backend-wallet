@@ -188,10 +188,22 @@ exports.getChildUser = async (id) => {
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
-SELECT "id", "userName" FROM p where "deletedAt" IS NULL AND id != '${id}';`
+SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`
 
   return await user.query(query)
 }
+
+exports.getParentUsers = async (id) => {
+  let query = `WITH RECURSIVE p AS (
+    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    UNION
+    SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."id" = p."createBy"
+  )
+SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`;
+
+  return await user.query(query);
+};
+
 
 exports.getFirstLevelChildUser = async (id) => {
   return await user.find({ where : { createBy: id}, select: { id: true, userName:true }})

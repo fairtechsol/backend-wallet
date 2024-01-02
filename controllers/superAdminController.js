@@ -12,6 +12,8 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
+  getChildUser,
+  getParentUsers,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -811,3 +813,31 @@ exports.changePassword = async (req, res, next) => {
     );
   }
 };
+
+exports.getPartnershipId=async(req,res,next)=>{
+  try {
+    // Destructure request body
+    const {userId } = req.params;
+
+   const partnershipIds=await getParentUsers(userId);
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data:partnershipIds
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    // Log any errors that occur
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}

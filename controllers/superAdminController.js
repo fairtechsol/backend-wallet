@@ -12,6 +12,8 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
+  getChildUser,
+  getParentUsers,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -19,10 +21,24 @@ const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
 const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
-const { getUserBalanceDataByUserId, updateUserBalanceByUserid, addInitialUserBalance } = require('../services/userBalanceService');
-const { addDomainData, getDomainData, getDomainDataByUserId, getDomainByUserId, updateDomain } = require('../services/domainDataService');
-const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService")
-const { calculatePartnership, checkUserCreationHierarchy,forceLogoutUser } = require("../services/commonService")
+const {
+  getUserBalanceDataByUserId,
+  updateUserBalanceByUserid,
+  addInitialUserBalance,
+} = require("../services/userBalanceService");
+const {
+  addDomainData,
+  getDomainData,
+  getDomainDataByUserId,
+  getDomainByUserId,
+  updateDomain,
+} = require("../services/domainDataService");
+const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
+const {
+  calculatePartnership,
+  checkUserCreationHierarchy,
+  forceLogoutUser,
+} = require("../services/commonService");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -393,9 +409,23 @@ exports.setCreditReferrence = async (req, res, next) => {
     let reqUser = req.user || {};
     amount = parseFloat(amount);
 
-    let loginUser = await getUserById(reqUser.id, ["id", "creditRefrence","downLevelCreditRefrence",  "roleName"]);
-    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "creditRefrence", "roleName"]);
-    if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+    let loginUser = await getUserById(reqUser.id, [
+      "id",
+      "creditRefrence",
+      "downLevelCreditRefrence",
+      "roleName",
+    ]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, [
+      "id",
+      "creditRefrence",
+      "roleName",
+    ]);
+    if (!user)
+      return ErrorResponse(
+        { statusCode: 400, message: { msg: "invalidData" } },
+        req,
+        res
+      );
     let domain = await getDomainByUserId(userId);
     if (!domain)
       return ErrorResponse(
@@ -430,14 +460,16 @@ exports.setCreditReferrence = async (req, res, next) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
 
-
-    let previousCreditReference = parseFloat(user.creditRefrence)
+    let previousCreditReference = parseFloat(user.creditRefrence);
     let updateData = {
       creditRefrence: amount,
     };
 
-    let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserid(user.id, { profitLoss })
+    let profitLoss =
+      parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
+    let newUserBalanceData = await updateUserBalanceByUserid(user.id, {
+      profitLoss,
+    });
 
     let transactionArray = [
       {
@@ -463,12 +495,15 @@ exports.setCreditReferrence = async (req, res, next) => {
     const transactioninserted = await insertTransactions(transactionArray);
 
     let updateLoginUser = {
-      downLevelCreditRefrence: parseFloat(loginUser.downLevelCreditRefrence) - previousCreditReference + amount
-    }
+      downLevelCreditRefrence:
+        parseFloat(loginUser.downLevelCreditRefrence) -
+        previousCreditReference +
+        amount,
+    };
 
     await updateUser(user.id, updateData);
     await updateUser(loginUser.id, updateLoginUser);
-    updateData["id"] = user.id
+    updateData["id"] = user.id;
     //apiCall(apiMethod.post,domain+allApiRoutes.setCreditReferrence,data)
     return SuccessResponse(
       {
@@ -615,7 +650,7 @@ exports.updateUserBalance = async (req, res) => {
     ];
 
     const transactioninserted = await insertTransactions(transactionArray);
-    updatedUpdateUserBalanceData["id"] = user.id
+    updatedUpdateUserBalanceData["id"] = user.id;
     return SuccessResponse(
       {
         statusCode: 200,
@@ -728,25 +763,26 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     // Destructure request body
-    const {
-      newPassword,
-      transactionPassword,
-      userId
-    } = req.body;
+    const { newPassword, transactionPassword, userId } = req.body;
 
-    let domain = await getDomainByUserId(userId)
-    if(!domain)
-    return ErrorResponse({
-      statusCode: 500,
-      message: { msg: "notFound", keys: { name: "Domain" } },
-    }, req, res);
+    let domain = await getDomainByUserId(userId);
+    if (!domain)
+      return ErrorResponse(
+        {
+          statusCode: 500,
+          message: { msg: "notFound", keys: { name: "Domain" } },
+        },
+        req,
+        res
+      );
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
     let body = {
-      password,userId
-    }
-    try{
-      apiCall(apiMethod.post,domain+allApiRoutes.changePassword,body)
+      password,
+      userId,
+    };
+    try {
+      apiCall(apiMethod.post, domain + allApiRoutes.changePassword, body);
     } catch (err) {
       return ErrorResponse(err?.response?.data, req, res);
     }
@@ -777,3 +813,31 @@ exports.changePassword = async (req, res, next) => {
     );
   }
 };
+
+exports.getPartnershipId=async(req,res,next)=>{
+  try {
+    // Destructure request body
+    const {userId } = req.params;
+
+   const partnershipIds=await getParentUsers(userId);
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data:partnershipIds
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    // Log any errors that occur
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}

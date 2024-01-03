@@ -11,6 +11,7 @@ const error = require("./utils/error.js");
 const i18n = require("./config/i18n");
 const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
+const {WalletMatchBetQueue} = require("./queue/consumer.js")
 
 /**
  * Enable Cross-Origin Resource Sharing (CORS)

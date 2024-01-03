@@ -98,3 +98,21 @@ module.exports.socketData ={
   userBalanceUpdateEvent : "userBalanceUpdate",
   logoutUserForceEvent : "logoutUserForce",
 };
+
+
+module.exports.betType = {
+  YES : "YES",
+  NO : "NO",
+  BACK : "BACK",
+  LAY : "LAY"
+}
+
+module.exports.redisKeys = {
+  userAllExposure : "exposure",
+  userMatchExposure : "matchExposure_",
+  userSessionExposure : "sessionExposure_",
+  userTeamARate : "teamARate_",
+  userTeamBRate : "teamBRate_",
+  userTeamCRate : "teamCRate_",
+  userExposureLimit : "exposureLimit"
+}

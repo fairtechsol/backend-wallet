@@ -597,25 +597,25 @@ exports.userList = async (req, res, next) => {
         { excelHeader: "Exposure Limit", dbKey: "exposureLimit" },
         ...(type == fileType.excel
           ? [
-              {
-                excelHeader: "FairGameWallet Partnership",
-                dbKey: "fwPartnership",
-              },
-              {
-                excelHeader: "FairGameAdmin Partnership",
-                dbKey: "faPartnership",
-              },
-              { excelHeader: "SuperAdmin Partnership", dbKey: "saPartnership" },
-              { excelHeader: "Admin Partnership", dbKey: "aPartnership" },
-              {
-                excelHeader: "SuperMaster Partnership",
-                dbKey: "smPartnership",
-              },
-              { excelHeader: "Master Partnership", dbKey: "mPartnership" },
-              { excelHeader: "Full Name", dbKey: "fullName" },
-              { excelHeader: "City", dbKey: "city" },
-              { excelHeader: "Phone Number", dbKey: "phoneNumber" },
-            ]
+            {
+              excelHeader: "FairGameWallet Partnership",
+              dbKey: "fwPartnership",
+            },
+            {
+              excelHeader: "FairGameAdmin Partnership",
+              dbKey: "faPartnership",
+            },
+            { excelHeader: "SuperAdmin Partnership", dbKey: "saPartnership" },
+            { excelHeader: "Admin Partnership", dbKey: "aPartnership" },
+            {
+              excelHeader: "SuperMaster Partnership",
+              dbKey: "smPartnership",
+            },
+            { excelHeader: "Master Partnership", dbKey: "mPartnership" },
+            { excelHeader: "Full Name", dbKey: "fullName" },
+            { excelHeader: "City", dbKey: "city" },
+            { excelHeader: "Phone Number", dbKey: "phoneNumber" },
+          ]
           : []),
       ];
 
@@ -721,19 +721,15 @@ exports.userBalanceDetails = async (req, res, next) => {
 
     let allChildBalanceData = getAllchildsCurrentBalanceSum(allChildUserIds);
 
-    let AggregateBalanceData = await Promise.all([
+    let AggregateBalanceData = await Promise.allSettled([
       userBalanceData,
       FirstLevelChildBalanceData,
       allChildBalanceData,
     ]);
 
-    userBalanceData = AggregateBalanceData[0] ? AggregateBalanceData[0] : {};
-    FirstLevelChildBalanceData = AggregateBalanceData[1]
-      ? AggregateBalanceData[1]
-      : {};
-    allChildBalanceData = AggregateBalanceData[2]
-      ? AggregateBalanceData[2]
-      : {};
+    userBalanceData = AggregateBalanceData[0] && AggregateBalanceData[0].value   ? AggregateBalanceData[0].value : {};
+    FirstLevelChildBalanceData = AggregateBalanceData[1] && AggregateBalanceData[1].value ? AggregateBalanceData[1].value : {};
+    allChildBalanceData = AggregateBalanceData[2] && AggregateBalanceData[2].value ? AggregateBalanceData[2].value  : {};
 
     let response = {
       userCreditReference: parseFloat(loginUser.creditRefrence),

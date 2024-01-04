@@ -688,10 +688,12 @@ exports.userSearchList = async (req, res, next) => {
 
 exports.userBalanceDetails = async (req, res, next) => {
   try {
-    let reqUser = req.user || {};
-    let { id } = req.query || reqUser.id;
+    let reqUser = req.user;
+    let id = req.query?.id || reqUser.id;
+
     let loginUser = await getUserById(id);
-    if (!loginUser)
+
+    if (!loginUser || id != loginUser.id)
       return ErrorResponse(
         {
           statusCode: 400,

@@ -1,3 +1,4 @@
+const { expertDomain } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -21,7 +22,7 @@ exports.createUser = async (req, res) => {
             sessionMatchPrivilege,
             confirmPassword
         };
-        let domain = process.env.EXPERT_DOMAIN_URL
+        let domain = expertDomain;
         let apiResponse = {}
         try {
             apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.add, userData)
@@ -55,7 +56,7 @@ exports.updateUser = async (req, res) => {
             bookmakerMatchPrivilege,
             sessionMatchPrivilege
         };
-        let domain = process.env.EXPERT_DOMAIN_URL
+        let domain = expertDomain;
         let apiResponse = {}
         try {
             apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.update, userData)
@@ -79,7 +80,7 @@ exports.changePassword = async (req, res) => {
             password, confirmPassword, id,
             createBy: reqUser.id
         };
-        let domain = process.env.EXPERT_DOMAIN_URL
+        let domain = expertDomain;
         let apiResponse = {}
         try {
             apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.changePassword, userData)
@@ -100,7 +101,7 @@ exports.expertList = async (req, res, next) => {
       let { id: loginId } = req.user;
       let { userName, offset, limit } = req.query;
 
-      let domain = process.env.EXPERT_DOMAIN_URL;
+      let domain = expertDomain;
       let apiResponse = {};
 
       const queryParams = {
@@ -142,9 +143,6 @@ exports.expertList = async (req, res, next) => {
       return ErrorResponse(error, req, res);
     }
   };
-
-
-let expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060'
 
 exports.getNotification = async (req, res) => {
     try {

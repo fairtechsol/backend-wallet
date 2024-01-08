@@ -1,9 +1,9 @@
 const Joi = require('joi')
 
 module.exports.MatchBetPlacedValidator = Joi.object({
-    matchId: Joi.guid({ version: "uuidv4" }).required(),
+    matchId: Joi.string().guid({ version: "uuidv4" }).required(),
     deleteReason: Joi.string().required(),
-    urlData: Joi.object.pattern(
+    urlData: Joi.object().pattern(
         Joi.string().required(),
         Joi.array().items(
             Joi.object({

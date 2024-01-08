@@ -232,7 +232,32 @@ exports.calculateExpertRate =async  (teamRates, data, partnership = 100) => {
   return newTeamRates;
 }
 
-
+const calculateProfitLoss = (betData, odds,partnership) => {
+  if (
+    (betData?.betPlacedData?.betType === betType.NO &&
+      odds < betData?.betPlacedData?.odds) ||
+    (betData?.betPlacedData?.betType === betType.YES &&
+      odds >= betData?.betPlacedData?.odds)
+  ) {
+    return partnership
+      ? -parseFloat(
+          (parseFloat(betData?.winAmount) * partnership) / 100
+        ).toFixed(2)
+      : parseFloat(parseFloat(betData?.winAmount).toFixed(2));
+  } else if (
+    (betData?.betPlacedData?.betType === betType.NO &&
+      odds >= betData?.betPlacedData?.odds) ||
+    (betData?.betPlacedData?.betType === betType.YES &&
+      odds < betData?.betPlacedData?.odds)
+  ) {
+    return partnership
+      ? parseFloat(
+          (parseFloat(betData?.loseAmount) * partnership) / 100
+        ).toFixed(2)
+      : -parseFloat(betData.loseAmount);
+  }
+  return 0;
+};
   /**
  * Calculates the profit or loss for a betting session.
  * @param {object} redisProfitLoss - Redis data for profit and loss.
@@ -247,32 +272,7 @@ exports.calculateExpertRate =async  (teamRates, data, partnership = 100) => {
      * @returns {number} - Profit or loss amount.
      */
     let maxLoss = 0;
-    const calculateProfitLoss = (betData, odds,partnership) => {
-      if (
-        (betData?.betPlacedData?.betType === betType.NO &&
-          odds < betData?.betPlacedData?.odds) ||
-        (betData?.betPlacedData?.betType === betType.YES &&
-          odds >= betData?.betPlacedData?.odds)
-      ) {
-        return partnership
-          ? -parseFloat(
-              (parseFloat(betData?.winAmount) * partnership) / 100
-            ).toFixed(2)
-          : parseFloat(parseFloat(betData?.winAmount).toFixed(2));
-      } else if (
-        (betData?.betPlacedData?.betType === betType.NO &&
-          odds >= betData?.betPlacedData?.odds) ||
-        (betData?.betPlacedData?.betType === betType.YES &&
-          odds < betData?.betPlacedData?.odds)
-      ) {
-        return partnership
-          ? parseFloat(
-              (parseFloat(betData?.loseAmount) * partnership) / 100
-            ).toFixed(2)
-          : -parseFloat(betData.loseAmount);
-      }
-      return 0;
-    };
+    
   
     /**
      * Gets the lower limit for the current bet data.

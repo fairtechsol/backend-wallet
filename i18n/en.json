@@ -48,5 +48,6 @@
     "BalanceAddedSuccessfully": "Balance Updated successfully.",
     "InvalidTransactionType" : "Invalid transaction type"
   },
+  "deleteBetError": "{urlData} these url are not update try again with these bet.",
   "wallet": {}
 }

@@ -4,7 +4,7 @@ const { getUserRedisData, updateUserDataRedis } = require('../services/redis/com
 const { getUserBalanceDataByUserId, updateUserBalanceByUserid } = require('../services/userBalanceService');
 const { calculateExpertRate, calculateProfitLossSession } = require('../services/commonService');
 const { logger } = require('../config/logger');
-const { redisKeys, partnershipPrefixByRole } = require('../config/contants');
+const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData } = require('../config/contants');
 const { sendMessageToUser } = require('../sockets/socketManager');
 const walletRedisOption = {
     removeOnSuccess: true,
@@ -31,6 +31,9 @@ const walletRedisOption = {
         return done(null, {});
     }
 });
+
+
+
 
 let calculateRateAmount = async (jobData, userId) => {
   let partnership = JSON.parse(jobData.partnerships);
@@ -75,7 +78,7 @@ let calculateRateAmount = async (jobData, userId) => {
                     data: `My Stake : ${myStake}`
                 })
                 //send Data to socket
-                sendMessageToUser(mPartenerShipId,{jobData});
+                sendMessageToUser(mPartenerShipId,socketData.MatchBetPlaced,{jobData});
             }
         } catch (error) {
             logger.error({
@@ -146,15 +149,16 @@ WalletSessionBetQueue.process(async function (job, done) {
     }
   });
   
+  
   const calculateSessionRateAmount = async (jobData, userId) => {
     // Parse partnerships from userRedisData
-    let partnershipObj = JSON.parse(jobData.partnerShips);
+    let partnershipObj = JSON.parse(jobData.partnership);
   
     // Extract relevant data from jobData
     const placedBetObject = jobData.betPlaceObject;
     let maxLossExposure = placedBetObject.maxLoss;
     let partnerSessionExposure = placedBetObject.diffSessionExp;
-    let stake = placedBetObject.stake;
+    let stake = placedBetObject?.betPlacedData?.stake;
   
   
   
@@ -162,7 +166,7 @@ WalletSessionBetQueue.process(async function (job, done) {
     Object.keys(partnershipPrefixByRole)
       ?.filter(
         (item) =>
-          item == userRoleConstant.fairGameAdmin &&
+          item == userRoleConstant.fairGameAdmin ||
           item == userRoleConstant.fairGameWallet
       )
       ?.map(async (item) => {
@@ -242,6 +246,7 @@ WalletSessionBetQueue.process(async function (job, done) {
                 jobData,
               });
             }
+
           } catch (error) {
             // Log error if any during exposure update
             logger.error({

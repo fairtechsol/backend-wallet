@@ -99,6 +99,8 @@ module.exports.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[
 module.exports.socketData ={
   userBalanceUpdateEvent : "userBalanceUpdate",
   logoutUserForceEvent : "logoutUserForce",
+  SessionBetPlaced:"userSessionBetPlaced",
+  MatchBetPlaced:"userMatchBetPlaced",
 };
 
 

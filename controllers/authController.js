@@ -8,14 +8,16 @@ const internalRedis = require("../config/internalRedisConnection");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { getUserById, getUserByUserName } = require("../services/userService");
+const { getUserById, getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
 const { forceLogoutIfLogin } = require("../services/commonService");
+const { logger } = require("../config/logger");
+const { updateUserDataRedis } = require("../services/redis/commonFunctions");
 
 // Function to validate a user by username and password
 const validateUser = async (userName, password) => {
   // Find user by username and select specific fields
-  const user = await getUserByUserName(userName);
+  const user = await getUserWithUserBalance(userName);
 
   // Check if the user is found
   if (user) {
@@ -39,22 +41,34 @@ const validateUser = async (userName, password) => {
 };
 
 const setUserDetailsRedis = async (user) => {
-  const redisUserPartnerShip = await internalRedis.hget(
-    user.id,
-    "partnerShips"
-  );
-  if (redisUserPartnerShip) {
-    internalRedis.expire(user.id, redisTimeOut);
-    return;
-  }
+  logger.info({ message: "Setting exposure at login time.", data: user });
+  await updateUserDataRedis(user.id, {
+    exposure: user?.userBal?.exposure || 0,
+    totalComission: user?.totalComission || 0,
+    profitLoss: user?.userBal?.profitLoss || 0,
+    myProfitLoss: user?.userBal?.myProfitLoss || 0,
+    userName: user.userName,
+    currentBalance: user?.userBal?.currentBalance || 0,
+    roleName:user.roleName
+  });
+  if (user.roleName == userRoleConstant.user) {
+    const redisUserPartnerShip = await internalRedis.hget(
+      user.id,
+      "partnerShips"
+    );
+    if (redisUserPartnerShip) {
+      internalRedis.expire(user.id, redisTimeOut);
+      return;
+    }
 
-  let partnerShipObject = await findUserPartnerShipObj(user);
-  const userPartnerShipData = {
-    partnerShips: partnerShipObject,
-    userRole: user.roleName,
-  };
-  await internalRedis.hmset(user.id, userPartnerShipData);
-  await internalRedis.expire(user.id, redisTimeOut);
+    let partnerShipObject = await findUserPartnerShipObj(user);
+    const userPartnerShipData = {
+      partnerShips: partnerShipObject,
+      userRole: user.roleName,
+    };
+    await internalRedis.hmset(user.id, userPartnerShipData);
+    await internalRedis.expire(user.id, redisTimeOut);
+  }
 };
 
 const findUserPartnerShipObj = async (user) => {

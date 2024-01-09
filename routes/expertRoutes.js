@@ -5,7 +5,7 @@ const validator = require('../middleware/joi.validator')
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
-const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate } = require('../controllers/expertController');
+const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, declareSessionResult } = require('../controllers/expertController');
 
 
 
@@ -15,6 +15,7 @@ router.post('/update',isAuthenticate,checkTransactionPassword,validator(UpdateEx
 router.post('/password',isAuthenticate,checkTransactionPassword,validator(changePasswordExpertValidate),changePassword);
 router.get('/list',isAuthenticate,expertList);
 router.get("/notification", isAuthenticate, getNotification);
+router.post("/declare/result/session", declareSessionResult);
 
 router.get('/match/competitionList/:type',isAuthenticate,getMatchCompetitionsByType);
 router.get('/match/competition/dates/:competitionId',isAuthenticate,getMatchDatesByCompetitionId);

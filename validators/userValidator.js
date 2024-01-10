@@ -1,17 +1,17 @@
 const Joi = require('joi')
-const { userRoleConstant, blockType ,matchComissionTypeConstant} = require('../config/contants')
+const { userRoleConstant, blockType, matchComissionTypeConstant } = require('../config/contants')
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{6,30}$/;
 
 module.exports.CreateUser = Joi.object({
   userName: Joi.string().trim().required(),
-  fullName: Joi.string().min(3).max(255).allow(""),
+  fullName: Joi.string().trim().allow(null, undefined, "").min(3).max(255),
   password: Joi.string().pattern(passwordRegex).required().label('password').messages({
     'string.pattern.base': 'user.passwordMatch',
     'any.required': 'Password is required',
   }),
-  phoneNumber: Joi.string().allow(""),
-  city: Joi.string().max(255).allow(""),
+  phoneNumber: Joi.string().trim().allow(null, undefined, ""),
+  city: Joi.string().max(255).trim().allow(null, undefined, ""),
   roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
   myPartnership: Joi.number().required(),
   creditRefrence: Joi.number(),
@@ -31,15 +31,14 @@ module.exports.CreateUser = Joi.object({
 })
 
 
-module.exports.ChangePassword=Joi.object({
-  oldPassword:Joi.string(),
-  newPassword:Joi.string().pattern(passwordRegex).required().label('password').messages({
-      'string.pattern.base': 'user.passwordMatch',
-        'any.required': 'Password is required',
-    }),
-    userId:Joi.string().guid({ version: 'uuidv4' }),
-  transactionPassword: Joi.string()
-    ,
+module.exports.ChangePassword = Joi.object({
+  oldPassword: Joi.string(),
+  newPassword: Joi.string().pattern(passwordRegex).required().label('password').messages({
+    'string.pattern.base': 'user.passwordMatch',
+    'any.required': 'Password is required',
+  }),
+  userId: Joi.string().guid({ version: 'uuidv4' }),
+  transactionPassword: Joi.string(),
   confirmPassword: Joi.string()
     .valid(Joi.ref("newPassword"))
     .label("Confirm Password")
@@ -95,7 +94,7 @@ module.exports.SetCreditReference = Joi.object({
   amount: Joi.number().required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
-  remark : Joi.string().trim().allow("")
+  remark: Joi.string().trim().allow("")
 })
 
 module.exports.LockUnlockUser = Joi.object({
@@ -106,5 +105,5 @@ module.exports.LockUnlockUser = Joi.object({
     'string.empty': '"Transaction Password" can not be empty.'
   }),
   betBlock: Joi.boolean().required(),
-  userBlock:  Joi.boolean().required()
+  userBlock: Joi.boolean().required()
 })

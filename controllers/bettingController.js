@@ -16,7 +16,7 @@ exports.deleteMultipleBet = async (req, res) => {
         } catch (error) {
             throw error?.response?.data;
         }
-        if (!object.keys(urlData).length) {
+        if (!Object.keys(urlData).length) {
             return ErrorResponse(
                 { statusCode: 400, message: { msg: "invalid", keys: { name: "url data" } } },
                 req,
@@ -25,18 +25,17 @@ exports.deleteMultipleBet = async (req, res) => {
         }
         let promiseArray = []
         for (let url in urlData) {
-            console.log(key, urlData[url]);
             let promise = apiCall(
                 apiMethod.post,
                 url + allApiRoutes.deleteMultipleBet,
-                urlData[url]
+                { data: urlData[url], deleteReason, matchId }
             );
             promiseArray.push(promise);
         }
         let failedUrl = new Set();
         await Promise.allSettled(promiseArray)
             .then(results => {
-                let urlDataArray = object.keys(urlData);
+                let urlDataArray = Object.keys(urlData);
                 results.forEach((result, index) => {
                     if(result.status === 'rejected'){
                         failedUrl.add(urlDataArray[index]);

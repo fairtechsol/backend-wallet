@@ -1,6 +1,6 @@
 const Joi = require('joi')
 
-module.exports.MatchBetPlacedValidator = Joi.object({
+module.exports.deleteMultipleBetValidator = Joi.object({
     matchId: Joi.string().guid({ version: "uuidv4" }).required(),
     deleteReason: Joi.string().required(),
     urlData: Joi.object().pattern(

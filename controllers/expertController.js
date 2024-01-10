@@ -1,5 +1,6 @@
 const { expertDomain } = require("../config/contants");
 const { logger } = require("../config/logger");
+const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 exports.createUser = async (req, res) => {
@@ -250,3 +251,40 @@ exports.getMatchCompetitionsByType = async (req, res) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
   };
+
+
+  
+exports.declareSessionResult = async (req,res)=>{
+  try {
+
+    const {betId,score,sessionDetails,userId,matchId}=req.body;
+
+    const domainData=await getUserDomainWithFaId();
+
+    for(let i=0;i<domainData?.length;i++){
+      const item=domainData[i];
+      try{
+        await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultSession, {
+          betId,
+          score,
+          sessionDetails,
+          userId,
+          matchId,
+        });
+      }
+      catch(err){
+        console.log(err);
+        continue;
+      }
+    }
+    
+  } catch (error) {
+    logger.error({
+      error: `Error at declare session result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}

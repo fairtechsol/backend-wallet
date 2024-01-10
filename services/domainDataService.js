@@ -67,3 +67,11 @@ exports.getDomainDataByUserName = async (userName, select) => {
     select: select,
   });
 };
+
+exports.getUserDomainWithFaId = async () => {
+  let domainData =await DomainData
+    .createQueryBuilder()
+    .getMany();
+
+  return domainData;
+}

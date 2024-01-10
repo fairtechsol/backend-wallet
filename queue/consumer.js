@@ -9,8 +9,8 @@ const { sendMessageToUser } = require('../sockets/socketManager');
 const walletRedisOption = {
     removeOnSuccess: true,
     redis: {
-      host: process.env.INTERNAL_REDIS_HOST,
-      port: process.env.INTERNAL_REDIS_PORT,
+      port: process.env.EXTERNAL_REDIS_PORT,
+      host: process.env.EXTERNAL_REDIS_HOST
     }
   }
   

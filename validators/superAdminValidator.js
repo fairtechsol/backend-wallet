@@ -4,21 +4,21 @@ const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex, 
 
 module.exports.CreateSuperAdmin = Joi.object({
     userName: Joi.string().trim().required(),
-    fullName: Joi.string().min(3).max(255),
+    fullName: Joi.string().allow("").min(3).max(255),
     password: Joi.string().pattern(passwordRegex).required().label('password').messages({
         'string.pattern.base': 'user.passwordMatch',
         'any.required': 'Password is required',
     }),
-    phoneNumber: Joi.string().messages({
+    phoneNumber: Joi.string().allow("").messages({
         'any.required': 'Phone number is required',
     }),
-    city: Joi.string().max(255),
+    city: Joi.string().allow("").max(255),
     roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
     myPartnership: Joi.number().required(),
-    creditRefrence: Joi.number(),
-    exposureLimit: Joi.number(),
-    maxBetLimit: Joi.number(),
-    minBetLimit: Joi.number(),
+    creditRefrence: Joi.number().allow(""),
+    exposureLimit: Joi.number().allow(""),
+    maxBetLimit: Joi.number().allow(""),
+    minBetLimit: Joi.number().allow(""),
     confirmPassword: Joi.string().required().valid(Joi.ref('password')).label('Confirm Password').messages({
         'string.base': 'Confirm Password must be a string',
         'any.required': 'Confirm Password is required',
@@ -66,15 +66,15 @@ module.exports.ChangePassword = Joi.object({
 module.exports.updateSuperAdminValid = Joi.object({
     //sessionCommission,matchComissionType,matchCommission,id,createBy
     id: Joi.string().guid({ version: 'uuidv4' }).required(),
-    fullName: Joi.string().min(3).max(255),
-    phoneNumber: Joi.string().messages({
+    fullName: Joi.string().allow("").min(3).max(255),
+    phoneNumber: Joi.string().allow("").messages({
         'any.required': 'Phone number is required',
     }),
-    city: Joi.string().max(255),
-    logo: Joi.string(),
-    sidebarColor: Joi.string(),
-    headerColor: Joi.string(),
-    footerColor: Joi.string(),
+    city: Joi.string().allow("").max(255),
+    logo: Joi.string().allow(""),
+    sidebarColor: Joi.string().allow(""),
+    headerColor: Joi.string().allow(""),
+    footerColor: Joi.string().allow(""),
     transactionPassword: Joi.string().required()
 })
 

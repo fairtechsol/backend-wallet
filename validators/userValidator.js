@@ -5,13 +5,13 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#
 
 module.exports.CreateUser = Joi.object({
   userName: Joi.string().trim().required(),
-  fullName: Joi.string().trim().allow(null, undefined, "").min(3).max(255),
+  fullName: Joi.string().trim().allow("").min(3).max(255),
   password: Joi.string().pattern(passwordRegex).required().label('password').messages({
     'string.pattern.base': 'user.passwordMatch',
     'any.required': 'Password is required',
   }),
-  phoneNumber: Joi.string().trim().allow(null, undefined, ""),
-  city: Joi.string().max(255).trim().allow(null, undefined, ""),
+  phoneNumber: Joi.string().trim().allow(""),
+  city: Joi.string().max(255).trim().allow(""),
   roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
   myPartnership: Joi.number().required(),
   creditRefrence: Joi.number(),

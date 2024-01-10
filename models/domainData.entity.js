@@ -11,7 +11,7 @@ const domainDataSchema = new EntitySchema({
       unique: true
     },
     userId : {
-      type: 'varchar',
+      type: 'uuid',
       nullable: false,
       unique: true
     },

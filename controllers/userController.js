@@ -761,7 +761,7 @@ exports.userBalanceDetails = async (req, res, next) => {
         (allChildBalanceData.allchildscurrentbalancesum
           ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
           : 0) +
-        (userBalanceData.profitLoss ? userBalanceData.profitLoss : 0),
+        parseFloat(userBalanceData.profitLoss ? userBalanceData.profitLoss : 0),
       profitLoss: 0,
     };
     return SuccessResponse(

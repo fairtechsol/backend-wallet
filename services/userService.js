@@ -17,6 +17,12 @@ exports.getUserById = async (id, select) => {
   });
 };
 
+exports.getUser = async (where, select) => {
+  return await user.findOne({
+    where: where,
+    select: select,
+  });
+};
 exports.addUser = async (body) => {
   let insertUser = await user.save(body);
   return insertUser;

@@ -4,7 +4,7 @@ const { passwordRegex } = require('../config/contants')
 
 exports.CreateExpertValidate = Joi.object({
     userName: Joi.string().trim().required(),
-    fullName: Joi.string().min(3).max(255),
+    fullName: Joi.string().trim().allow("").min(3).max(255),
     password: Joi.string().pattern(passwordRegex).required().label('password').messages({
         'string.pattern.base': 'user.passwordMatch',
         'any.required': 'Password is required',
@@ -12,7 +12,7 @@ exports.CreateExpertValidate = Joi.object({
     phoneNumber: Joi.string().messages({
         'any.required': 'Phone number is required',
     }),
-    city: Joi.string().max(255),
+    city: Joi.string().trim().allow("").max(255),
     allPrivilege: Joi.boolean(),
     addMatchPrivilege: Joi.boolean(),
     betFairMatchPrivilege: Joi.boolean(),
@@ -28,9 +28,9 @@ exports.CreateExpertValidate = Joi.object({
 
 exports.UpdateExpertValidate = Joi.object({
     id:Joi.string().guid({ version: 'uuidv4' }).required(),
-    fullName: Joi.string().min(3).max(255),
-    phoneNumber: Joi.string(),
-    city: Joi.string().max(255),
+    fullName: Joi.string().trim().allow("").min(3).max(255),
+    phoneNumber: Joi.string().trim().allow(""),
+    city: Joi.string().trim().allow("").max(255),
     allPrivilege: Joi.boolean(),
     addMatchPrivilege: Joi.boolean(),
     betFairMatchPrivilege: Joi.boolean(),

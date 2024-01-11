@@ -565,3 +565,167 @@ exports.declareSessionNoResult = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 };
+
+
+exports.unDeclareSessionResult = async (req,res)=>{
+  try {
+
+    const {betId,sessionDetails,userId,matchId}=req.body;
+
+    const domainData=await getUserDomainWithFaId();
+
+    
+    const fgWallet= await getUser({
+      roleName:userRoleConstant?.fairGameWallet
+    },["id"]);
+
+    let fwProfitLoss=0;
+
+    for(let i=0;i<domainData?.length;i++){
+      const item=domainData[i];
+      let response;
+      try{
+        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultSession, {
+          betId,
+          score,
+          sessionDetails,
+          userId,
+          matchId,
+        });
+        response=response?.data;
+      }
+      catch(err){
+        logger.error({
+          error: `Error at declare session result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        await addResultFailed({
+          matchId:matchId,
+          betId:betId,
+          userId:item?.userId?.id,
+          result:score,
+          createBy:userId
+        })
+        continue;
+      }
+
+      [
+        {
+          id: item?.userId?.createBy,
+        },
+        {
+          id: fgWallet?.id,
+          isWallet: true,
+        },
+      ]?.map(async(items)=>{
+        let parentUser = await getUserBalanceDataByUserId(items?.id);
+
+        let parentUserRedisData = await getUserRedisData(parentUser?.userId);
+
+        let parentProfitLoss = parseFloat(parentUser?.profitLoss || 0);
+        if (parentUserRedisData?.profitLoss) {
+          parentProfitLoss = parseFloat(parentUserRedisData.profitLoss);
+        }
+        let parentMyProfitLoss = parseFloat(parentUser?.myProfitLoss || 0);
+        if (parentUserRedisData?.myProfitLoss) {
+          parentMyProfitLoss = parseFloat(parentUserRedisData.myProfitLoss);
+        }
+        let parentExposure = parseFloat(parentUser?.exposure || 0);
+        if (parentUserRedisData?.exposure) {
+          parentExposure = parseFloat(parentUserRedisData?.exposure);
+        }
+
+        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.myProfitLoss = items?.isWallet
+          ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss)
+          : parseFloat(parentMyProfitLoss) +
+            parseFloat(parseFloat(
+              (parseFloat(response?.faAdminCal?.["profitLoss"]) *
+                parseFloat(response?.faAdminCal?.["fwPartnership"])) /
+                100
+            ).toFixed(2));
+        parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
+        if (parentExposure < 0) {
+          logger.info({
+            message: "Exposure in negative for user: ",
+            data: {
+              betId,
+              matchId,
+              parentUser,
+            },
+          });
+          parentUser.exposure = 0;
+        }
+        addInitialUserBalance(parentUser);
+        logger.info({
+          message: "Declare result db update for parent ",
+          data: {
+            betId,
+            parentUser,
+          },
+        });
+        if (parentUserRedisData?.exposure) {
+          updateUserDataRedis(parentUser.userId, {
+            exposure: parentUser.exposure,
+            profitLoss: parentUser.profitLoss,
+            myProfitLoss: parentUser.myProfitLoss,
+          });
+        }
+        const redisSessionExposureName =
+          redisKeys.userSessionExposure + matchId;
+        let parentRedisUpdateObj = {};
+        let sessionExposure = 0;
+        if (parentUserRedisData?.[redisSessionExposureName]) {
+          sessionExposure =
+            parseFloat(parentUserRedisData[redisSessionExposureName]) || 0;
+        }
+        if (parentUserRedisData?.[betId + "_profitLoss"]) {
+          let redisData = JSON.parse(
+            parentUserRedisData[betId + "_profitLoss"]
+          );
+          sessionExposure = sessionExposure - (redisData.maxLoss || 0);
+          parentRedisUpdateObj[redisSessionExposureName] = sessionExposure;
+        }
+        await deleteKeyFromUserRedis(parentUser.userId, betId + "_profitLoss");
+
+        if (
+          parentUserRedisData?.exposure &&
+          Object.keys(parentRedisUpdateObj).length > 0
+        ) {
+          updateUserDataRedis(parentUser.userId, parentRedisUpdateObj);
+        }
+        sendMessageToUser(parentUser.userId, socketData.sessionResult, {
+          ...parentUser,
+          betId,
+          matchId,
+          sessionExposure: sessionExposure,
+        });
+
+        fwProfitLoss+=parseFloat(response?.fwProfitLoss);
+      });
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "bet.resultDeclared" },
+        data: {profitLoss:fwProfitLoss}
+      },
+      req,
+      res
+    );
+
+
+    
+  } catch (error) {
+    logger.error({
+      error: `Error at declare session result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}

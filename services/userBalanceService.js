@@ -19,6 +19,7 @@ exports.getUserBalanceDataByUserIds = async(userIds,select) =>{
       })
 }
 
+
 exports.addInitialUserBalance = async (body) => {
     let insertUserBalance = await UserBalance.save(body);
     return insertUserBalance;

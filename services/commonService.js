@@ -239,19 +239,19 @@ const calculateProfitLoss = (betData, odds,partnership) => {
     (betData?.betPlacedData?.betType === betType.YES &&
       odds >= betData?.betPlacedData?.odds)
   ) {
-    return partnership!=null||partnership!=undefined
+    return partnership != null || partnership != undefined
       ? -parseFloat(
           (parseFloat(betData?.winAmount) * partnership) / 100
         ).toFixed(2)
-      : parseFloat(parseFloat(betData?.winAmount).toFixed(2));
+      : +parseFloat(parseFloat(betData?.winAmount).toFixed(2));
   } else if (
     (betData?.betPlacedData?.betType === betType.NO &&
       odds >= betData?.betPlacedData?.odds) ||
     (betData?.betPlacedData?.betType === betType.YES &&
       odds < betData?.betPlacedData?.odds)
   ) {
-    return partnership!=null||partnership!=undefined
-      ? parseFloat(
+    return partnership != null || partnership != undefined
+      ? +parseFloat(
           (parseFloat(betData?.loseAmount) * partnership) / 100
         ).toFixed(2)
       : -parseFloat(betData.loseAmount);
@@ -347,7 +347,7 @@ const calculateProfitLoss = (betData, odds,partnership) => {
     } else {
       betProfitloss = betProfitloss?.map((item) => {
         let profitLossVal=calculateProfitLoss(betData, item?.odds,partnership);
-        profitLossVal=(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
+        profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
         if (
           maxLoss <
             Math.abs(

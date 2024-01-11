@@ -1,4 +1,5 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
+module.exports.noResult="No Result";
 
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",

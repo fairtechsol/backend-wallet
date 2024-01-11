@@ -63,11 +63,11 @@ class ApiFeature {
               this.query.andWhere({ [key]: LessThanOrEqual(filterValue) });
               break;
             case "between":
-              if (filterValue?.split(",")?.length === 2) {
+              if (filterValue?.split("|")?.length === 2) {
                 this.query.andWhere({
                   [key]: Between(
-                    filterValue?.split(",")?.[0],
-                    filterValue?.split(",")?.[1]
+                    filterValue?.split("|")?.[0],
+                    filterValue?.split("|")?.[1]
                   ),
                 });
               }

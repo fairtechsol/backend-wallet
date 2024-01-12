@@ -38,6 +38,7 @@ exports.allApiRoutes = {
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
   deleteMultipleBet: "/bet/deleteMultipleBet",
   declareResultSession: "/fairgameWallet/declare/result/session",
+  unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",
   EXPERTS: {
     add: "/user/add",

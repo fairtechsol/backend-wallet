@@ -1,5 +1,6 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
 module.exports.noResult="No Result";
+module.exports.unDeclare="UNDECLARE";
 
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",
@@ -119,5 +120,7 @@ module.exports.redisKeys = {
   userTeamARate : "teamARate_",
   userTeamBRate : "teamBRate_",
   userTeamCRate : "teamCRate_",
-  userExposureLimit : "exposureLimit"
+  userExposureLimit : "exposureLimit",
+  profitLoss:"_profitLoss"
+
 }

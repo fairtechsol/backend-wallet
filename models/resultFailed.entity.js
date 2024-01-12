@@ -36,7 +36,7 @@ const resultFailedSchema = new EntitySchema({
   indices: [
     {
       name: "resultFailed_createBy", // index name should be start with the table name
-      unique: true, // Optional: Set to true if you want a unique index
+      unique: false, // Optional: Set to true if you want a unique index
       columns: ["matchId", "betId", "userId"],
     },
   ],

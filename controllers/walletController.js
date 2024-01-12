@@ -1,6 +1,6 @@
 const { userRoleConstant, transType } = require("../config/contants");
 const { insertTransactions } = require("../services/transactionService");
-const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserid } = require("../services/userBalanceService");
+const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
 const { getUserByUserName, addUser, getUserById, getChildUser, updateUser} = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require('bcryptjs')
@@ -76,14 +76,14 @@ exports.updateBalance = async (req, res) => {
         if (transactionType == transType.add) {
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
-            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData);
+            let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
         } else if (transactionType == transType.withDraw) {
             if (amount > loginUserBalanceData.currentBalance)
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
 
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) - parseFloat(amount);
-            let newUserBalanceData = await updateUserBalanceByUserid(reqUser.id, updatedUpdateUserBalanceData);
+            let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         }
@@ -179,7 +179,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         }
 
         let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
-        let newUserBalanceData = await updateUserBalanceByUserid(loginUser.id, { profitLoss })
+        let newUserBalanceData = await updateUserBalanceByUserId(loginUser.id, { profitLoss })
 
         let transactionArray = [{
             actionBy: reqUser.id,

@@ -23,7 +23,7 @@ const { forceLogoutIfLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const {
   getUserBalanceDataByUserId,
-  updateUserBalanceByUserid,
+  updateUserBalanceByUserId,
   addInitialUserBalance,
 } = require("../services/userBalanceService");
 const {
@@ -467,7 +467,7 @@ exports.setCreditReferrence = async (req, res, next) => {
 
     let profitLoss =
       parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserid(user.id, {
+    let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
       profitLoss,
     });
 
@@ -597,7 +597,7 @@ exports.updateUserBalance = async (req, res) => {
         parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
       updatedUpdateUserBalanceData.profitLoss =
         parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
-      // let newUserBalanceData = await updateUserBalanceByUserid(user.id, updatedUpdateUserBalanceData)
+      // let newUserBalanceData = await updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
       updatedLoginUserBalanceData.currentBalance =
         parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
     } else {
@@ -618,11 +618,11 @@ exports.updateUserBalance = async (req, res) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
 
-    let newUserBalanceData = await updateUserBalanceByUserid(
+    let newUserBalanceData = await updateUserBalanceByUserId(
       user.id,
       updatedUpdateUserBalanceData
     );
-    let newLoginUserBalanceData = await updateUserBalanceByUserid(
+    let newLoginUserBalanceData = await updateUserBalanceByUserId(
       reqUser.id,
       updatedLoginUserBalanceData
     );

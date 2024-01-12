@@ -103,6 +103,7 @@ module.exports.socketData ={
   logoutUserForceEvent : "logoutUserForce",
   SessionBetPlaced:"userSessionBetPlaced",
   MatchBetPlaced:"userMatchBetPlaced",
+  socketSessionEvent: "socketSessionEvent"
 };
 
 

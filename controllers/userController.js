@@ -28,7 +28,7 @@ const {
   getUserBalanceDataByUserId,
   getAllchildsCurrentBalanceSum,
   getAllChildProfitLossSum,
-  updateUserBalanceByUserid,
+  updateUserBalanceByUserId,
   addInitialUserBalance,
 } = require("../services/userBalanceService");
 const { ILike } = require("typeorm");
@@ -833,7 +833,7 @@ exports.setCreditReferrence = async (req, res, next) => {
 
     let profitLoss =
       parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserid(user.id, {
+    let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
       profitLoss,
     });
 

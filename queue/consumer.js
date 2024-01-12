@@ -368,10 +368,9 @@ walletSessionBetDeleteQueue.process((job, done) => {
 
     return done(null, {});
   } catch (error) {
-    logger.info({
+    logger.error({
       file: "error in session bet delete Queue",
       info: `process job for user id ${userId}`,
-
       jobData,
     });
     return done(null, {});

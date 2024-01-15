@@ -9,9 +9,7 @@ exports.CreateExpertValidate = Joi.object({
         'string.pattern.base': 'user.passwordMatch',
         'any.required': 'Password is required',
     }),
-    phoneNumber: Joi.string().messages({
-        'any.required': 'Phone number is required',
-    }),
+    phoneNumber: Joi.string().allow(""),
     city: Joi.string().trim().allow("").max(255),
     allPrivilege: Joi.boolean(),
     addMatchPrivilege: Joi.boolean(),

@@ -105,16 +105,17 @@ exports.changePassword = async (req, res) => {
 exports.expertList = async (req, res, next) => {
     try {
       let { id: loginId } = req.user;
-      let { userName, offset, limit } = req.query;
+      let { offset, limit, searchBy, keyword } = req.query;
 
       let domain = expertDomain;
       let apiResponse = {};
 
       const queryParams = {
-        userName,
         offset,
         limit,
         loginId,
+        searchBy,
+        keyword
       };
 
       // Construct the URL with query parameters
@@ -578,6 +579,8 @@ exports.unDeclareSessionResult = async (req,res)=>{
     },["id"]);
 
     let fwProfitLoss=0;
+    let profitLossDataAdmin=null;
+    let profitLossDataWallet=null;
 
     for(let i=0;i<domainData?.length;i++){
       const item=domainData[i];
@@ -664,7 +667,23 @@ exports.unDeclareSessionResult = async (req,res)=>{
         });
 
         let parentRedisUpdateObj = {};
-        let profitLossData=items?.isWallet?response?.faAdminCal?.profitLossObjWallet:response?.faAdminCal?.profitLossObjAdmin
+
+        // if (items?.isWallet) {
+        //   let newProfitLoss=response?.faAdminCal?.profitLossObjWallet;
+        //   if (!profitLossDataWallet) {
+        //     profitLossDataWallet = newProfitLoss;
+        //   }
+        //   else{
+
+        //   }
+        // } else {
+        //   let newProfitLoss=response?.faAdminCal?.profitLossObjAdmin;
+        //   if (!profitLossDataAdmin) {
+        //     profitLossDataAdmin = newProfitLoss;
+        //   }
+        // }
+
+        
 
         if (parentUserRedisData?.exposure) {
           parentRedisUpdateObj=
@@ -725,3 +744,58 @@ exports.unDeclareSessionResult = async (req,res)=>{
     return ErrorResponse(error, req, res);
   }
 }
+
+
+
+const mergeProfitLoss = (newbetPlaced, oldbetPlaced) => {
+  if (newbetPlaced[0].odds > oldbetPlaced[0].odds) {
+    while (newbetPlaced[0].odds != oldbetPlaced[0].odds) {
+      const newEntry = {
+        odds: newbetPlaced[0].odds - 1,
+        profitLoss: newbetPlaced[0].profitLoss,
+      };
+      newbetPlaced.unshift(newEntry);
+    }
+  }
+  if (newbetPlaced[0].odds < oldbetPlaced[0].odds) {
+    while (newbetPlaced[0].odds != oldbetPlaced[0].odds) {
+      const newEntry = {
+        odds: oldbetPlaced[0].odds - 1,
+        profitLoss: oldbetPlaced[0].profitLoss,
+      };
+      oldbetPlaced.unshift(newEntry);
+    }
+  }
+
+  if (
+    newbetPlaced[newbetPlaced.length - 1].odds >
+    oldbetPlaced[oldbetPlaced.length - 1].odds
+  ) {
+    while (
+      newbetPlaced[newbetPlaced.length - 1].odds !=
+      oldbetPlaced[oldbetPlaced.length - 1].odds
+    ) {
+      const newEntry = {
+        odds: oldbetPlaced[oldbetPlaced.length - 1].odds + 1,
+        profitLoss: oldbetPlaced[oldbetPlaced.length - 1].profitLoss,
+      };
+      oldbetPlaced.push(newEntry);
+    }
+  }
+  if (
+    newbetPlaced[newbetPlaced.length - 1].odds <
+    oldbetPlaced[oldbetPlaced.length - 1].odds
+  ) {
+    while (
+      newbetPlaced[newbetPlaced.length - 1].odds !=
+      oldbetPlaced[oldbetPlaced.length - 1].odds
+    ) {
+      const newEntry = {
+        odds: newbetPlaced[newbetPlaced.length - 1].odds + 1,
+        profitLoss: newbetPlaced[newbetPlaced.length - 1].profitLoss,
+      };
+      newbetPlaced.push(newEntry);
+    }
+  }
+  return { newbetPlaced, oldbetPlaced };
+};

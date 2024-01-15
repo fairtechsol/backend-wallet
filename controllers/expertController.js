@@ -639,10 +639,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
         }
 
         parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
-        parentUser.myProfitLoss = items?.isWallet
-          ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss)
-          : parseFloat(parentMyProfitLoss) -
-            parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
+        parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
         parentUser.exposure = parentExposure + response?.faAdminCal?.["exposure"];
         if (parentExposure < 0) {
           logger.info({
@@ -666,28 +663,28 @@ exports.unDeclareSessionResult = async (req,res)=>{
 
         let parentRedisUpdateObj = {};
         
-        let newProfitLoss=items?.isWallet?response?.faAdminCal?.profitLossObjWallet: response?.faAdminCal?.profitLossObjAdmin;
+        let newProfitLoss=items?.isWallet ? response?.faAdminCal?.profitLossObjWallet : response?.faAdminCal?.profitLossObjAdmin;
 
         if (items?.isWallet) {
          
           if (!profitLossDataWallet) {
-            profitLossDataWallet = newProfitLoss;
+            profitLossDataWallet = {...newProfitLoss};
           } else {
-            let { newProfitLossData, oldProfitLossData } = mergeProfitLoss(
+            mergeProfitLoss(
               newProfitLoss?.betPlaced,
               profitLossDataWallet?.betPlaced
             );
 
             profitLossDataWallet = {
-              upperLimitOdds: newProfitLossData?.[0]?.odds,
-              lowerLimitOdds: newProfitLossData?.[0]?.odds,
+              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length-1]?.odds,
+              lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
 
-              betPlaced: newProfitLossData?.map((item, index) => {
+              betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,
                   profitLoss:
-                    item?.profitLoss + oldProfitLossData?.[index]?.profitLoss,
+                    item?.profitLoss +  profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
                 };
               }),
             };
@@ -695,22 +692,22 @@ exports.unDeclareSessionResult = async (req,res)=>{
         } else {
           
           if (!profitLossDataAdmin) {
-            profitLossDataAdmin = newProfitLoss;
+            profitLossDataAdmin = {...newProfitLoss};
           } else {
-            let { newProfitLossData, oldProfitLossData } = mergeProfitLoss(
+            mergeProfitLoss(
               newProfitLoss?.betPlaced,
               profitLossDataAdmin?.betPlaced
             );
 
             profitLossDataAdmin = {
-              upperLimitOdds: newProfitLossData?.[0]?.odds,
-              lowerLimitOdds: newProfitLossData?.[0]?.odds,
+              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length-1]?.odds,
+              lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataAdmin?.maxLoss + newProfitLoss?.maxLoss,
-              betPlaced: newProfitLossData?.map((item, index) => {
+              betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,
                   profitLoss:
-                    item?.profitLoss + oldProfitLossData?.[index]?.profitLoss,
+                    item?.profitLoss + profitLossDataAdmin?.betPlaced?.[index]?.profitLoss,
                 };
               }),
             };

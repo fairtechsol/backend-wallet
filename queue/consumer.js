@@ -221,7 +221,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
                   masterRedisData?.[
                   `${redisKeys.userSessionExposure}${placedBetObject?.betPlacedData?.matchId}`
                   ] || 0
-                ) + partnerSessionExposure,
+                ) + parseFloat(redisData?.maxLoss||0.0)-parseFloat(redisBetData?.maxLoss||0.0),
             });
 
             // Log information about exposure and stake update

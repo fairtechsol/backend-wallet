@@ -374,3 +374,57 @@ const calculateProfitLoss = (betData, odds,partnership) => {
       maxLoss: parseFloat(maxLoss),
     };
   };
+
+
+exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced) => {
+    if (newbetPlaced[0].odds > oldbetPlaced[0].odds) {
+      while (newbetPlaced[0].odds != oldbetPlaced[0].odds) {
+        const newEntry = {
+          odds: newbetPlaced[0].odds - 1,
+          profitLoss: newbetPlaced[0].profitLoss,
+        };
+        newbetPlaced.unshift(newEntry);
+      }
+    }
+    if (newbetPlaced[0].odds < oldbetPlaced[0].odds) {
+      while (newbetPlaced[0].odds != oldbetPlaced[0].odds) {
+        const newEntry = {
+          odds: oldbetPlaced[0].odds - 1,
+          profitLoss: oldbetPlaced[0].profitLoss,
+        };
+        oldbetPlaced.unshift(newEntry);
+      }
+    }
+  
+    if (
+      newbetPlaced[newbetPlaced.length - 1].odds >
+      oldbetPlaced[oldbetPlaced.length - 1].odds
+    ) {
+      while (
+        newbetPlaced[newbetPlaced.length - 1].odds !=
+        oldbetPlaced[oldbetPlaced.length - 1].odds
+      ) {
+        const newEntry = {
+          odds: oldbetPlaced[oldbetPlaced.length - 1].odds + 1,
+          profitLoss: oldbetPlaced[oldbetPlaced.length - 1].profitLoss,
+        };
+        oldbetPlaced.push(newEntry);
+      }
+    }
+    if (
+      newbetPlaced[newbetPlaced.length - 1].odds <
+      oldbetPlaced[oldbetPlaced.length - 1].odds
+    ) {
+      while (
+        newbetPlaced[newbetPlaced.length - 1].odds !=
+        oldbetPlaced[oldbetPlaced.length - 1].odds
+      ) {
+        const newEntry = {
+          odds: newbetPlaced[newbetPlaced.length - 1].odds + 1,
+          profitLoss: newbetPlaced[newbetPlaced.length - 1].profitLoss,
+        };
+        newbetPlaced.push(newEntry);
+      }
+    }
+    return { newbetPlaced, oldbetPlaced };
+  };

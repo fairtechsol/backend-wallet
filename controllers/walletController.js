@@ -44,9 +44,10 @@ exports.insertWallet = async (req, res) => {
             downLevelBalance: 0,
             exposure: 0
         }
-        insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData)
+        insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData);
+        const {password,...data}=insertUser;
         return SuccessResponse(
-            { statusCode: 200, message: { msg: "add", keys: { key: "Wallet" } }, data: insertUser },
+            { statusCode: 200, message: { msg: "add", keys: { key: "Wallet" } }, data: data },
             req,
             res
         );

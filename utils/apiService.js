@@ -54,4 +54,7 @@ exports.allApiRoutes = {
     matchDetails: "/superAdmin/match/",
     matchList: "/superAdmin/match/list",
   },
+  bets:{
+    placedBet: "/fairgameWallet/getBet"
+  }
 };

@@ -2,7 +2,7 @@ const Queue = require('bee-queue');
 const lodash = require('lodash');
 const { getUserRedisData, updateUserDataRedis } = require('../services/redis/commonFunctions');
 const { getUserBalanceDataByUserId, updateUserBalanceByUserId } = require('../services/userBalanceService');
-const { calculateExpertRate, calculateProfitLossSession } = require('../services/commonService');
+const { calculateExpertRate, calculateProfitLossSession, mergeProfitLoss } = require('../services/commonService');
 const { logger } = require('../config/logger');
 const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData } = require('../config/contants');
 const { sendMessageToUser } = require('../sockets/socketManager');
@@ -275,7 +275,7 @@ walletSessionBetDeleteQueue.process((job, done) => {
     let domainUrl = jobData.domainUrl;
     let betPlacedId = jobData.betPlacedId;
     let redisName = `${betId}_profitLoss`;
-    let redisSesionExposureName = redisKeys.userSessionExposure + matchId
+    let redisSesionExposureName = redisKeys.userSessionExposure + matchId;
 
     // Iterate through partnerships based on role and update exposure
     Object.keys(partnershipPrefixByRole)
@@ -313,7 +313,10 @@ walletSessionBetDeleteQueue.process((job, done) => {
 
               let oldProfitLossParent = JSON.parse(masterRedisData[redisName]);
               let parentPLbetPlaced = oldProfitLossParent?.betPlaced || [];
+              let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;
+              
+              await mergeProfitLoss(userDeleteProfitLoss.betData, parentPLbetPlaced);
 
               userDeleteProfitLoss.betData.map((ob, index) => {
                 let partnershipData = (ob.profitLoss * partnership) / 100;
@@ -326,7 +329,7 @@ walletSessionBetDeleteQueue.process((job, done) => {
               });
               oldProfitLossParent.betPlaced = parentPLbetPlaced;
               oldProfitLossParent.maxLoss = newMaxLossParent;
-              let sessionExposure = parseFloat(masterRedisData[redisSesionExposureName]) - exposureDiff;
+              let sessionExposure = parseFloat(masterRedisData[redisSesionExposureName]) - oldMaxLossParent + newMaxLossParent;
               let redisObj = {
                 [redisName]: JSON.stringify(oldProfitLossParent),
                 exposure: partnerExposure,

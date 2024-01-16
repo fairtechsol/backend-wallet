@@ -121,6 +121,10 @@ module.exports.redisKeys = {
   userTeamARate : "teamARate_",
   userTeamBRate : "teamBRate_",
   userTeamCRate : "teamCRate_",
+  yesRateTie: "yesRateTie_",
+  noRateTie: "noRateTie_",
+  yesRateComplete: "yesRateComplete_",
+  noRateComplete: "noRateComplete_",
   userExposureLimit : "exposureLimit",
   profitLoss:"_profitLoss"
 

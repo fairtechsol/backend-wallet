@@ -1,4 +1,5 @@
-const { expertDomain } = require("../config/contants");
+const { expertDomain, redisKeys } = require("../config/contants");
+const { getUserRedisKeys } = require("../services/redis/commonFunctions");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
@@ -14,11 +15,35 @@ exports.matchDetails = async (req, res) => {
     } catch (error) {
       throw error?.response?.data;
     }
+
+    const redisIds = apiResponse?.data?.sessionBettings?.map((item)=> JSON.parse(item)?.id+redisKeys.profitLoss );
+    redisIds.push(...[`${redisKeys.userTeamARate}${matchId}`,`${redisKeys.userTeamBRate}${matchId}`,`${redisKeys.userTeamCRate}${matchId}`,`${redisKeys.yesRateComplete}${matchId}`,`${redisKeys.noRateComplete}${matchId}`,`${redisKeys.yesRateTie}${matchId}`,`${redisKeys.noRateTie}${matchId}`]);
+
+    let redisData = await getUserRedisKeys(userId, redisIds);
+    let sessionResult = [];
+    let matchResult = {};
+    redisData?.forEach((item, index) => {
+      if (item) {
+        if (index >= redisData?.length - 7) {
+          matchResult[redisIds?.[index]?.split("_")[0]] = item;
+        } else {
+          sessionResult.push({
+            betId: redisIds?.[index]?.split("_")[0],
+            profitLossData: JSON.parse(item),
+          });
+        }
+      }
+    });
+
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "match details", keys: { name: "Match" } },
-        data: apiResponse.data,
+        data: {
+          ...apiResponse.data,
+          profitLossDataSession: sessionResult,
+          profitLossDataMatch: matchResult,
+        },
       },
       req,
       res

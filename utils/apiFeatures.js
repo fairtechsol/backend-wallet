@@ -62,6 +62,9 @@ class ApiFeature {
             case "lte":
               this.query.andWhere({ [key]: LessThanOrEqual(filterValue) });
               break;
+            case "isNull":
+              this.query.andWhere({ [key]: IsNull(filterValue) });
+              break;
             case "between":
               if (filterValue?.split("|")?.length === 2) {
                 this.query.andWhere({
@@ -120,7 +123,7 @@ class ApiFeature {
 
   parseFilterValue(value) {
     // Parse the filter value to extract operator and actual value
-    const operators = ["eq","gte","lte", "gt", "lt", "between"]; // Add more operators as needed
+    const operators = ["eq","gte","lte", "gt", "lt", "between", "isNull"]; // Add more operators as needed
     const [operator] = operators.filter((op) => value?.startsWith(`${op}`));
 
     if (operator) {

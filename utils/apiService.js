@@ -40,6 +40,7 @@ exports.allApiRoutes = {
   declareResultSession: "/fairgameWallet/declare/result/session",
   unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",
+  declareResultMatch: "/fairgameWallet/declare/result/match",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

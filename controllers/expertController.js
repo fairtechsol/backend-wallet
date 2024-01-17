@@ -777,5 +777,140 @@ exports.unDeclareSessionResult = async (req,res)=>{
   }
 }
 
+exports.declareMatchResult = async (req,res)=>{
+  try {
+
+    const { result, matchDetails, userId, matchId, matchOddId, match } = req.body;
+
+    const domainData=await getUserDomainWithFaId();
+
+    
+    const fgWallet= await getUser({
+      roleName:userRoleConstant?.fairGameWallet
+    },["id"]);
+
+    let fwProfitLoss=0;
+
+    for(let i=0;i<domainData?.length;i++){
+      const item=domainData[i];
+      let response;
+      try{
+        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultMatch, {
+          result, matchDetails, userId, matchId, match
+        });
+        response=response?.data;
+      }
+      catch(err){
+        logger.error({
+          error: `Error at declare match result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        await addResultFailed({
+          matchId:matchId,
+          betId:matchOddId,
+          userId:item?.userId?.id,
+          result: result,
+          createBy:userId
+        })
+        continue;
+      }
+
+      [
+        {
+          id: item?.userId?.createBy,
+        },
+        {
+          id: fgWallet?.id,
+          isWallet: true,
+        },
+      ]?.map(async(items)=>{
+        let parentUser = await getUserBalanceDataByUserId(items?.id);
+
+        let parentUserRedisData = await getUserRedisData(parentUser?.userId);
+
+        let parentProfitLoss = parseFloat(parentUser?.profitLoss || 0);
+        if (parentUserRedisData?.profitLoss) {
+          parentProfitLoss = parseFloat(parentUserRedisData.profitLoss);
+        }
+        let parentMyProfitLoss = parseFloat(parentUser?.myProfitLoss || 0);
+        if (parentUserRedisData?.myProfitLoss) {
+          parentMyProfitLoss = parseFloat(parentUserRedisData.myProfitLoss);
+        }
+        let parentExposure = parseFloat(parentUser?.exposure || 0);
+        if (parentUserRedisData?.exposure) {
+          parentExposure = parseFloat(parentUserRedisData?.exposure);
+        }
+
+        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.myProfitLoss = items?.isWallet
+          ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss)
+          : parseFloat(parentMyProfitLoss) +
+            parseFloat(parseFloat(
+              (parseFloat(response?.faAdminCal?.["myProfitLoss"])
+            )).toFixed(2));
+        parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
+        if (parentExposure < 0) {
+          logger.info({
+            message: "Exposure in negative for user: ",
+            data: {
+              betId,
+              matchId,
+              parentUser,
+            },
+          });
+          parentUser.exposure = 0;
+        }
+        addInitialUserBalance(parentUser);
+        logger.info({
+          message: "Declare result db update for parent ",
+          data: {
+            betId,
+            parentUser,
+          },
+        });
+        if (parentUserRedisData?.exposure) {
+          updateUserDataRedis(parentUser.userId, {
+            exposure: parentUser.exposure,
+            profitLoss: parentUser.profitLoss,
+            myProfitLoss: parentUser.myProfitLoss,
+          });
+        }
+      
+        await deleteKeyFromUserRedis(parentUser.userId, redisKeys.userTeamARate + matchId, redisKeys.userTeamBRate + matchId, redisKeys.userTeamCRate + matchId, redisKeys.yesRateTie + matchId, redisKeys.noRateTie + matchId, redisKeys.yesRateComplete + matchId, redisKeys.noRateComplete + matchId);
+
+        sendMessageToUser(parentUser.userId, socketData.matchResult, {
+          ...parentUser,
+          betId,
+          matchId
+        });
+
+        fwProfitLoss+=parseFloat(response?.fwProfitLoss);
+      });
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "bet.resultDeclared" },
+        data: {profitLoss:fwProfitLoss}
+      },
+      req,
+      res
+    );
+
+
+    
+  } catch (error) {
+    logger.error({
+      error: `Error at declare session result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}
 
 

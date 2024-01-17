@@ -94,7 +94,7 @@ let calculateRateAmount = async (jobData, userId) => {
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
               process: `User ID : ${userId} ${item} id ${partnershipId}`,
-              data: `My Stake : ${myStake}`
+              data: `My Stake : ${jobData.myStake}`
             });
 
           }

@@ -48,5 +48,14 @@
     "BalanceAddedSuccessfully": "Balance Updated successfully.",
     "InvalidTransactionType" : "Invalid transaction type"
   },
-  "wallet": {}
+  "deleteBetError": "{urlData} these url are not update try again with these bet.",
+  "wallet": {},
+  "bet":{
+    "notLive": "Bet Is currently not live.",
+    "minAmountViolate": "Amount less then minimun amount.",
+    "maxAmountViolate": "Amount More then maximum amount.",
+    "marketRateChanged": "{marketType} rate has been changed.",
+    "resultDeclared":"Result declared successfully.",
+    "resultUnDeclared":"Result un declared successfully."
+  }
 }

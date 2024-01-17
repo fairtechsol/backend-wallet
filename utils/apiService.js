@@ -36,19 +36,25 @@ exports.allApiRoutes = {
   setCreditReferrence: "/fairgameWallet/update/creditReference",
   updateUserBalance: "/fairgameWallet/update/balance",
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
-
+  deleteMultipleBet: "/bet/deleteMultipleBet",
+  declareResultSession: "/fairgameWallet/declare/result/session",
+  unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
+  declareNoResultSession: "/fairgameWallet/declare/noResult/session",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
     changePassword: "/user/admin/password",
     expertList: "/user/list",
-    notification:"/general/notification",
-    getCompetitionList:"/match/competitionList",
-    getDatesByCompetition:"/match/competition/dates",
-    getMatchByCompetitionAndDate:"/match/competition/getMatch",
+    notification: "/general/notification",
+    getCompetitionList: "/match/competitionList",
+    getDatesByCompetition: "/match/competition/dates",
+    getMatchByCompetitionAndDate: "/match/competition/getMatch",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",
-    matchList: "/superAdmin/match/list"
+    matchList: "/superAdmin/match/list",
+  },
+  bets:{
+    placedBet: "/fairgameWallet/getBet"
   }
-}
+};

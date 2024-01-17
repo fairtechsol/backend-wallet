@@ -11,16 +11,18 @@ const superAdminRoutes = require("../routes/superAdminRoutes");
 const walletRoutes = require("../routes/walletRoutes");
 const expertRoutes = require("./expertRoutes");
 const matchRoutes = require("./matchRoutes");
+const betRoutes = require("./betRoutes.js");
 
 // Define routes
 router.use('/auth', authRoutes);
-router.use('/user',userRoutes);
-router.use('/button',buttonRoutes);
-router.use('/transaction',transactionsRoutes);
-router.use('/balance',userBalanceRoutes);
-router.use("/superadmin",superAdminRoutes);
-router.use("/wallet",walletRoutes);
-router.use("/expert",expertRoutes);
-router.use("/match",matchRoutes);
+router.use('/user', userRoutes);
+router.use('/button', buttonRoutes);
+router.use('/transaction', transactionsRoutes);
+router.use('/balance', userBalanceRoutes);
+router.use("/superadmin", superAdminRoutes);
+router.use("/wallet", walletRoutes);
+router.use("/expert", expertRoutes);
+router.use("/match", matchRoutes);
+router.use("/bet", betRoutes);
 
 module.exports = router;

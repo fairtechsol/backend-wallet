@@ -5,6 +5,8 @@ const {
   LessThan,
   MoreThanOrEqual,
   LessThanOrEqual,
+  Not,
+  IsNull,
 } = require("typeorm");
 
 class ApiFeature {
@@ -62,12 +64,18 @@ class ApiFeature {
             case "lte":
               this.query.andWhere({ [key]: LessThanOrEqual(filterValue) });
               break;
+            case "isNull":
+              this.query.andWhere({ [key]: IsNull() });
+              break;
+            case "notNull":
+              this.query.andWhere({ [key]: Not(IsNull()) });
+              break;
             case "between":
-              if (filterValue?.split(",")?.length === 2) {
+              if (filterValue?.split("|")?.length === 2) {
                 this.query.andWhere({
                   [key]: Between(
-                    filterValue?.split(",")?.[0],
-                    filterValue?.split(",")?.[1]
+                    filterValue?.split("|")?.[0],
+                    filterValue?.split("|")?.[1]
                   ),
                 });
               }
@@ -120,7 +128,7 @@ class ApiFeature {
 
   parseFilterValue(value) {
     // Parse the filter value to extract operator and actual value
-    const operators = ["eq","gte","lte", "gt", "lt", "between"]; // Add more operators as needed
+    const operators = ["eq","gte","lte", "gt", "lt", "between", "isNull", "notNull"]; // Add more operators as needed
     const [operator] = operators.filter((op) => value?.startsWith(`${op}`));
 
     if (operator) {

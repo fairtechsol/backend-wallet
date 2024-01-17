@@ -1,3 +1,7 @@
+module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
+module.exports.noResult="No Result";
+module.exports.unDeclare="UNDECLARE";
+
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",
   fairGameAdmin: "fairGameAdmin",
@@ -97,6 +101,9 @@ module.exports.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[
 module.exports.socketData ={
   userBalanceUpdateEvent : "userBalanceUpdate",
   logoutUserForceEvent : "logoutUserForce",
+  SessionBetPlaced:"userSessionBetPlaced",
+  MatchBetPlaced:"userMatchBetPlaced",
+  socketSessionEvent: "socketSessionEvent"
 };
 
 
@@ -114,5 +121,11 @@ module.exports.redisKeys = {
   userTeamARate : "teamARate_",
   userTeamBRate : "teamBRate_",
   userTeamCRate : "teamCRate_",
-  userExposureLimit : "exposureLimit"
+  yesRateTie: "yesRateTie_",
+  noRateTie: "noRateTie_",
+  yesRateComplete: "yesRateComplete_",
+  noRateComplete: "noRateComplete_",
+  userExposureLimit : "exposureLimit",
+  profitLoss:"_profitLoss"
+
 }

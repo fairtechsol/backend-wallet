@@ -1189,6 +1189,32 @@
         }
       }
     },
+    "/superadmin/bets": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/wallet/insert": {
       "post": {
         "description": "",
@@ -1554,13 +1580,6 @@
             }
           },
           {
-            "name": "userName",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "offset",
             "in": "query",
             "schema": {
@@ -1569,6 +1588,20 @@
           },
           {
             "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
             "in": "query",
             "schema": {
               "type": "string"
@@ -1604,6 +1637,135 @@
         "responses": {
           "default": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/expert/declare/result/session": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "betId": {
+                    "example": "any"
+                  },
+                  "score": {
+                    "example": "any"
+                  },
+                  "sessionDetails": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "matchId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expert/declare/noResult/session": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "betId": {
+                    "example": "any"
+                  },
+                  "score": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "matchId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expert/unDeclare/result/session": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "betId": {
+                    "example": "any"
+                  },
+                  "sessionDetails": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "matchId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1718,6 +1880,25 @@
         }
       }
     },
+    "/expert/bets": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/match/list": {
       "get": {
         "description": "",
@@ -1774,6 +1955,52 @@
         "responses": {
           "default": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/bet/deleteMultipleBet": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "matchId": {
+                    "example": "any"
+                  },
+                  "deleteReason": {
+                    "example": "any"
+                  },
+                  "urlData": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }

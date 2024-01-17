@@ -67,3 +67,12 @@ exports.getDomainDataByUserName = async (userName, select) => {
     select: select,
   });
 };
+
+exports.getUserDomainWithFaId = async () => {
+  let domainData =await DomainData
+    .createQueryBuilder()
+    .leftJoinAndMapOne("domainData.userId", "user", 'user', 'domainData.userId = user.id')
+    .getMany();
+
+  return domainData;
+}

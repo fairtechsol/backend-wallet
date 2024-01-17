@@ -5,15 +5,7 @@ const userBalanceSchema = require("../models/userBalance.entity");
 const user = AppDataSource.getRepository(userSchema);
 const UserBalance = AppDataSource.getRepository(userBalanceSchema);
 const userBlockSchema = require("../models/userBlock.entity");
-const userBlockRepo = AppDataSource.getRepository(userBlockSchema);
-const internalRedis = require("../config/internalRedisConnection");
-const externalRedis = require("../config/externalRedisConnection");
-const publisherService = require("./redis/externalRedisPublisher");
-const subscribeService = require("./redis/externalRedisSubscriber");
-const internalRedisSubscribe = require("./redis/internalRedisSubscriber");
-const internalRedisPublisher = require("./redis/internalRedisPublisher");
-const { ILike, In, IsNull, LessThanOrEqual, MoreThanOrEqual, Not } = require("typeorm");
-const { userRoleConstant, blockType } = require("../config/contants");
+const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
 
 // id is required and select is optional parameter is an type or array
@@ -25,6 +17,12 @@ exports.getUserById = async (id, select) => {
   });
 };
 
+exports.getUser = async (where, select) => {
+  return await user.findOne({
+    where: where,
+    select: select,
+  });
+};
 exports.addUser = async (body) => {
   let insertUser = await user.save(body);
   return insertUser;
@@ -216,4 +214,20 @@ exports.getUserBalanceDataByUserIds = async (userIds, select) => {
     where: { userId: In(userIds) },
     select: select
   })
+}
+
+
+exports.getUserWithUserBalance = async (userName) => {
+  let userData = user
+    .createQueryBuilder()
+    .where({ userName: ILike(userName) })
+    .leftJoinAndMapOne(
+      "user.userBal",
+      "userBalances",
+      "UB",
+      "user.id = UB.userId"
+    )
+    .getOne();
+
+  return userData;
 }

@@ -37,7 +37,7 @@ WalletMatchBetQueue.process(async function (job, done) {
 
 
 let calculateRateAmount = async (jobData, userId) => {
-  let partnership = JSON.parse(jobData.partnerships);
+  let partnershipObj = JSON.parse(jobData.partnerships);
   let userCurrentExposure = jobData.newUserExposure;
   let userOldExposure = jobData.userPreviousExposure
   let teamRates = jobData.teamRates;
@@ -54,7 +54,7 @@ let calculateRateAmount = async (jobData, userId) => {
   Object.keys(partnershipPrefixByRole)
     ?.filter(
       (item) =>
-        item == userRoleConstant.fairGameAdmin &&
+        item == userRoleConstant.fairGameAdmin ||
         item == userRoleConstant.fairGameWallet
     )
     ?.map(async (item) => {
@@ -88,8 +88,8 @@ let calculateRateAmount = async (jobData, userId) => {
               ...(jobData.teamCrateRedisKey ? { [jobData.teamCrateRedisKey]: teamData.teamC } : {})
             }
             await updateUserDataRedis(partnershipId, userRedisObj);
-            let myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
-            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisData, jobData })
+            jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData })
             // Log information about exposure and stake update
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
@@ -100,14 +100,15 @@ let calculateRateAmount = async (jobData, userId) => {
           }
         } catch (error) {
           logger.error({
-            context: "error in master exposure update",
-            process: `User ID : ${userId} and master id ${mPartenerShipId}`,
+            context: `error in ${item} exposure update`,
+            process: `User ID : ${userId} and ${item} id ${partnershipId}`,
             error: error.message,
             stake: error.stack
           })
         }
       }
-    });
+    }
+    );
 }
 
 

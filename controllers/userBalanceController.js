@@ -30,7 +30,7 @@ exports.updateUserBalance = async (req, res) => {
             insertUserBalanceData = usersBalanceData[1]
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount)
-            let newUserBalanceData = await updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
+            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
         } else if (transactionType == transType.withDraw) {
             insertUserBalanceData = usersBalanceData[1]
@@ -38,13 +38,13 @@ exports.updateUserBalance = async (req, res) => {
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
-            let newUserBalanceData = await updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
+            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.InvalidTransactionType" } }, req, res);
         }
 
-        let newLoginUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
+        updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
 
         let transactionArray = [{
             actionBy: reqUser.id,
@@ -52,7 +52,7 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? amount : -amount,
             transType: transactionType,
-            currentAmount: updatedUpdateUserBalanceData.currentBalance,
+            closingBalance: updatedUpdateUserBalanceData.currentBalance,
             description: remark
         }, {
             actionBy: reqUser.id,
@@ -60,11 +60,11 @@ exports.updateUserBalance = async (req, res) => {
             userId: user.id,
             amount: transactionType == transType.add ? -amount : amount,
             transType: transactionType == transType.add ? transType.withDraw : transType.add,
-            currentAmount: updatedLoginUserBalanceData.currentBalance,
+            closingBalance: updatedLoginUserBalanceData.currentBalance,
             description: remark
         }]
         sendMessageToUser(userId,socketData.userBalanceUpdateEvent,updatedUpdateUserBalanceData);
-        const transactioninserted = await insertTransactions(transactionArray);
+        insertTransactions(transactionArray);
         updatedUpdateUserBalanceData["id"] = user.id
         return SuccessResponse(
             {

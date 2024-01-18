@@ -799,7 +799,7 @@ exports.declareMatchResult = async (req,res)=>{
       const item=domainData[i];
       let response;
       try{
-        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultMatch, {
+        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultMatch, {
           result, matchDetails, userId, matchId, match
         });
         response=response?.data;

@@ -397,8 +397,8 @@ exports.declareSessionResult = async (req,res)=>{
           sessionExposure: sessionExposure,
         });
 
-        fwProfitLoss+=parseFloat(response?.fwProfitLoss);
       };
+      fwProfitLoss+=parseFloat(response?.fwProfitLoss);
     }
 
     return SuccessResponse(
@@ -755,8 +755,8 @@ exports.unDeclareSessionResult = async (req,res)=>{
           parentRedisUpdateObj
         });
 
-        fwProfitLoss += parseFloat(response?.fwProfitLoss);
       };
+      fwProfitLoss += parseFloat(response?.fwProfitLoss);
 
     };
 
@@ -891,8 +891,8 @@ exports.declareMatchResult = async (req,res)=>{
           matchId
         });
 
-        fwProfitLoss+=parseFloat(response?.fwProfitLoss);
       };
+      fwProfitLoss+=parseFloat(response?.fwProfitLoss);
     }
 
     return SuccessResponse(

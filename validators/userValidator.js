@@ -57,7 +57,7 @@ module.exports.generateTransactionPass = Joi.object({
     .message("Transaction password must be 6 characters long"),
   confirmTransPassword: Joi.string()
     .required()
-    .valid(Joi.ref("transPassword"))
+    .valid(Joi.ref("transactionPassword"))
     .label("Confirm transaction password")
     .messages({
       "string.base": "Confirm transaction Password must be a string",

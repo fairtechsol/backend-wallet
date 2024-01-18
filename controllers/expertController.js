@@ -301,11 +301,11 @@ exports.declareSessionResult = async (req,res)=>{
           userId:item?.userId?.id,
           result:score,
           createBy:userId
-        })
+        });
         continue;
       }
 
-      [
+      let userData= [
         {
           id: item?.userId?.createBy,
         },
@@ -313,7 +313,9 @@ exports.declareSessionResult = async (req,res)=>{
           id: fgWallet?.id,
           isWallet: true,
         },
-      ]?.map(async(items)=>{
+      ];
+    
+          for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -396,7 +398,7 @@ exports.declareSessionResult = async (req,res)=>{
         });
 
         fwProfitLoss+=parseFloat(response?.fwProfitLoss);
-      });
+      };
     }
 
     return SuccessResponse(
@@ -469,7 +471,7 @@ exports.declareSessionNoResult = async (req, res) => {
         continue;
       }
 
-      [
+      let userData= [
         {
           id: item?.userId?.createBy,
         },
@@ -477,7 +479,10 @@ exports.declareSessionNoResult = async (req, res) => {
           id: fgWallet?.id,
           isWallet: true,
         },
-      ]?.map(async (items) => {
+      ];
+    
+          for (let items of userData) {
+
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -544,7 +549,7 @@ exports.declareSessionNoResult = async (req, res) => {
           matchId,
           sessionExposure: sessionExposure,
         });
-      });
+      };
     }
 
     return SuccessResponse(
@@ -584,18 +589,13 @@ exports.unDeclareSessionResult = async (req,res)=>{
     let profitLossDataWallet=null;
 
     for(let i=0;i<domainData?.length;i++){
-      const item=domainData[i];
-      let response;
-      try{
-        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultSession, {
-          betId,
-          sessionDetails,
-          userId,
-          matchId,
-        });
-        response=response?.data;
-      }
-      catch(err){
+      let item=domainData[i];
+      let response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultSession, {
+        betId,
+        sessionDetails,
+        userId,
+        matchId,
+      }).then((data) => data).catch(async (err) => {
         logger.error({
           error: `Error at un Declare session result for the domain ${item?.domain}.`,
           stack: err.stack,
@@ -603,24 +603,27 @@ exports.unDeclareSessionResult = async (req,res)=>{
         });
 
         await addResultFailed({
-          matchId:matchId,
-          betId:betId,
-          userId:item?.userId?.id,
-          result:unDeclare,
-          createBy:userId
+          matchId: matchId,
+          betId: betId,
+          userId: item?.userId?.id,
+          result: unDeclare,
+          createBy: userId
         })
-        continue;
-      }
+        return;
+      });
+      response = response?.data;
+    
+  let userData= [
+    {
+      id: item?.userId?.createBy,
+    },
+    {
+      id: fgWallet?.id,
+      isWallet: true,
+    },
+  ];
 
-      [
-        {
-          id: item?.userId?.createBy,
-        },
-        {
-          id: fgWallet?.id,
-          isWallet: true,
-        },
-      ]?.map(async(items)=>{
+      for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -652,7 +655,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
           });
           parentUser.exposure = 0;
         }
-        addInitialUserBalance(parentUser);
+        await addInitialUserBalance(parentUser);
         logger.info({
           message: "Un declare result db update for parent ",
           data: {
@@ -662,13 +665,13 @@ exports.unDeclareSessionResult = async (req,res)=>{
         });
 
         let parentRedisUpdateObj = {};
-        
-        let newProfitLoss=items?.isWallet ? response?.faAdminCal?.profitLossObjWallet : response?.faAdminCal?.profitLossObjAdmin;
+
+        let newProfitLoss = items?.isWallet ? response?.faAdminCal?.profitLossObjWallet : response?.faAdminCal?.profitLossObjAdmin;
 
         if (items?.isWallet) {
-         
+
           if (!profitLossDataWallet) {
-            profitLossDataWallet = {...newProfitLoss};
+            profitLossDataWallet = { ...newProfitLoss };
           } else {
             mergeProfitLoss(
               newProfitLoss?.betPlaced,
@@ -676,7 +679,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
             );
 
             profitLossDataWallet = {
-              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length-1]?.odds,
+              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
 
@@ -684,15 +687,15 @@ exports.unDeclareSessionResult = async (req,res)=>{
                 return {
                   odds: item?.odds,
                   profitLoss:
-                    item?.profitLoss +  profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
+                    item?.profitLoss + profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
                 };
               }),
             };
           }
         } else {
-          
+
           if (!profitLossDataAdmin) {
-            profitLossDataAdmin = {...newProfitLoss};
+            profitLossDataAdmin = { ...newProfitLoss };
           } else {
             mergeProfitLoss(
               newProfitLoss?.betPlaced,
@@ -700,7 +703,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
             );
 
             profitLossDataAdmin = {
-              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length-1]?.odds,
+              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataAdmin?.maxLoss + newProfitLoss?.maxLoss,
               betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
@@ -714,7 +717,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
           }
         }
 
-        
+
 
         if (parentUserRedisData?.exposure) {
           parentRedisUpdateObj = {
@@ -733,16 +736,16 @@ exports.unDeclareSessionResult = async (req,res)=>{
           sessionExposure =
             parseFloat(parentUserRedisData[redisSessionExposureName]) || 0;
         }
-          
-          sessionExposure = sessionExposure + (newProfitLoss?.maxLoss || 0);
-          parentRedisUpdateObj[redisSessionExposureName] = sessionExposure;
-        
+
+        sessionExposure = sessionExposure + (newProfitLoss?.maxLoss || 0);
+        parentRedisUpdateObj[redisSessionExposureName] = sessionExposure;
+
 
         if (
           parentUserRedisData?.exposure &&
           Object.keys(parentRedisUpdateObj).length > 0
         ) {
-          updateUserDataRedis(parentUser.userId, parentRedisUpdateObj);
+          await updateUserDataRedis(parentUser.userId, parentRedisUpdateObj);
         }
         sendMessageToUser(parentUser.userId, socketData.sessionResult, {
           ...parentUser,
@@ -752,9 +755,10 @@ exports.unDeclareSessionResult = async (req,res)=>{
           parentRedisUpdateObj
         });
 
-        fwProfitLoss+=parseFloat(response?.fwProfitLoss);
-      });
-    }
+        fwProfitLoss += parseFloat(response?.fwProfitLoss);
+      };
+
+    };
 
     return SuccessResponse(
       {
@@ -817,7 +821,7 @@ exports.declareMatchResult = async (req,res)=>{
         continue;
       }
 
-      [
+      let userData= [
         {
           id: item?.userId?.createBy,
         },
@@ -825,7 +829,9 @@ exports.declareMatchResult = async (req,res)=>{
           id: fgWallet?.id,
           isWallet: true,
         },
-      ]?.map(async(items)=>{
+      ];
+    
+          for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -855,7 +861,7 @@ exports.declareMatchResult = async (req,res)=>{
           logger.info({
             message: "Exposure in negative for user: ",
             data: {
-              betId,
+              matchOddId,
               matchId,
               parentUser,
             },
@@ -866,7 +872,7 @@ exports.declareMatchResult = async (req,res)=>{
         logger.info({
           message: "Declare result db update for parent ",
           data: {
-            betId,
+            matchOddId,
             parentUser,
           },
         });
@@ -882,12 +888,11 @@ exports.declareMatchResult = async (req,res)=>{
 
         sendMessageToUser(parentUser.userId, socketData.matchResult, {
           ...parentUser,
-          betId,
           matchId
         });
 
         fwProfitLoss+=parseFloat(response?.fwProfitLoss);
-      });
+      };
     }
 
     return SuccessResponse(

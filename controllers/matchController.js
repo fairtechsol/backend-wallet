@@ -5,6 +5,7 @@ const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
 exports.matchDetails = async (req, res) => {
   try {
+    const userId=req.user.id;
     let domain = expertDomain;
     let apiResponse = {};
     try {
@@ -15,7 +16,7 @@ exports.matchDetails = async (req, res) => {
     } catch (error) {
       throw error?.response?.data;
     }
-
+    let matchId = req.params.id;
     const redisIds = apiResponse?.data?.sessionBettings?.map((item)=> JSON.parse(item)?.id+redisKeys.profitLoss );
     redisIds.push(...[`${redisKeys.userTeamARate}${matchId}`,`${redisKeys.userTeamBRate}${matchId}`,`${redisKeys.userTeamCRate}${matchId}`,`${redisKeys.yesRateComplete}${matchId}`,`${redisKeys.noRateComplete}${matchId}`,`${redisKeys.yesRateTie}${matchId}`,`${redisKeys.noRateTie}${matchId}`]);
 

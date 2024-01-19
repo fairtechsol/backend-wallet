@@ -109,6 +109,8 @@ module.exports.socketData ={
   sessionResultUnDeclare:"sessionResultUnDeclare",
   matchResult:"matchResult",
   matchResultUnDeclare:"matchResultUnDeclare",
+  sessionDeleteBet: "sessionDeleteBet",
+  matchDeleteBet: "matchDeleteBet"
 };
 
 

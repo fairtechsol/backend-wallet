@@ -325,7 +325,7 @@ walletSessionBetDeleteQueue.process((job, done) => {
               });
 
               // Send data to socket for session bet placement
-              sendMessageToUser(partnershipId, socketData.socketSessionEvent, {
+              sendMessageToUser(partnershipId, socketData.sessionDeleteBet, {
                 exposure: redisObj?.exposure,
                 sessionExposure: redisObj[redisSesionExposureName],
                 profitLoss: oldProfitLossParent,

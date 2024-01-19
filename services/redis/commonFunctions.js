@@ -13,7 +13,7 @@ exports.getUserRedisData = async (userId)=>{
     await internalRedis.hmset(userId, value);
   };
   
-  exports.deleteKeyFromUserRedis = async (userId,key) => {
+  exports.deleteKeyFromUserRedis = async (userId,...key) => {
     return await internalRedis.hdel(userId,key);
   }
 

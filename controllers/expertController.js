@@ -333,10 +333,10 @@ exports.declareSessionResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
         parentUser.myProfitLoss = items?.isWallet
-          ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss)
-          : parseFloat(parentMyProfitLoss) +
+          ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss)
+          : parseFloat(parentMyProfitLoss) -
             parseFloat(parseFloat(
               (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
@@ -641,8 +641,8 @@ exports.unDeclareSessionResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
-        parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
+        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
         parentUser.exposure = parentExposure + response?.faAdminCal?.["exposure"];
         if (parentExposure < 0) {
           logger.info({
@@ -849,10 +849,10 @@ exports.declareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
         parentUser.myProfitLoss = items?.isWallet
-          ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss)
-          : parseFloat(parentMyProfitLoss) +
+          ? parseFloat(parentMyProfitLoss) - parseFloat(response?.faAdminCal?.["profitLoss"])
+          : parseFloat(parentMyProfitLoss) -
             parseFloat(parseFloat(
               (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
@@ -989,8 +989,8 @@ exports.unDeclareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
-        parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
+        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
         parentUser.exposure = parentExposure + response?.faAdminCal?.["exposure"];
         if (parentExposure < 0) {
           logger.info({

@@ -1818,6 +1818,51 @@
         }
       }
     },
+    "/expert/unDeclare/result/match": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "matchOddId": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  },
+                  "matchId": {
+                    "example": "any"
+                  },
+                  "match": {
+                    "example": "any"
+                  },
+                  "matchBetting": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/expert/match/competitionList/{type}": {
       "get": {
         "description": "",

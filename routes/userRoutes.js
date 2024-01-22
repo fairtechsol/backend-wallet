@@ -8,8 +8,6 @@ const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, up
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
 
-
-
 router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateUser),createUser);
 router.post('/updateUser',isAuthenticate,checkTransactionPassword,validator(updateUserValid),updateUser);
 router.post('/lockUnlockUser',isAuthenticate,checkTransactionPassword, validator(LockUnlockUser), lockUnlockUser);

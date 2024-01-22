@@ -8,8 +8,6 @@ const {createSuperAdmin,updateSuperAdmin,setExposureLimit,setCreditReferrence, u
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
 
-
-
 router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateSuperAdmin),createSuperAdmin);
 router.post('/updateUser',isAuthenticate,checkTransactionPassword,validator(updateSuperAdminValid),updateSuperAdmin);
 // router.post('/lockUnlockUser', validator(LockUnlockUser), lockUnlockUser);

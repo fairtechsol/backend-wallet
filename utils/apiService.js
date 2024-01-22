@@ -49,6 +49,7 @@ exports.allApiRoutes = {
     getCompetitionList: "/match/competitionList",
     getDatesByCompetition: "/match/competition/dates",
     getMatchByCompetitionAndDate: "/match/competition/getMatch",
+    lockUnlockUser: "/user/lockUnlockUser",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",

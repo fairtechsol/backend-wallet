@@ -28,7 +28,7 @@ router.get('/match/competitionList/:type',isAuthenticate,getMatchCompetitionsByT
 router.get('/match/competition/dates/:competitionId',isAuthenticate,getMatchDatesByCompetitionId);
 router.get('/match/competition/getMatch/:competitionId/:date',isAuthenticate,getMatchDatesByCompetitionIdAndDate);
 router.get("/bets", getPlacedBets);
-router.post("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
+router.put("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
 
 
 module.exports = router;

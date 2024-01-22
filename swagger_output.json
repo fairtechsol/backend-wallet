@@ -1993,7 +1993,7 @@
       }
     },
     "/expert/lockUnlockExpert": {
-      "post": {
+      "put": {
         "description": "",
         "parameters": [
           {

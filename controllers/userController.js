@@ -713,6 +713,7 @@ exports.userBalanceDetails = async (req, res, next) => {
       "id",
       "currentBalance",
       "profitLoss",
+      "myProfitLoss"
     ]);
 
     let FirstLevelChildBalanceData = getAllChildProfitLossSum(
@@ -748,20 +749,20 @@ exports.userBalanceDetails = async (req, res, next) => {
           ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
           : 0),
       upperLevelBalance: userBalanceData.profitLoss
-        ? userBalanceData.profitLoss
+        ? -userBalanceData.profitLoss
         : 0,
       downLevelProfitLoss:
         FirstLevelChildBalanceData.firstlevelchildsprofitlosssum
-          ? FirstLevelChildBalanceData.firstlevelchildsprofitlosssum
+          ? -FirstLevelChildBalanceData.firstlevelchildsprofitlosssum
           : 0,
       availableBalanceWithProfitLoss:
         (userBalanceData.currentBalance
           ? parseFloat(userBalanceData.currentBalance)
           : 0) +
-        (allChildBalanceData.allchildscurrentbalancesum
-          ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-          : 0) +
-        parseFloat(userBalanceData.profitLoss ? userBalanceData.profitLoss : 0),
+        // (allChildBalanceData.allchildscurrentbalancesum
+        //   ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
+        //   : 0) +
+        parseFloat(userBalanceData.myProfitLoss ? userBalanceData.myProfitLoss : 0),
       profitLoss: 0,
     };
     return SuccessResponse(

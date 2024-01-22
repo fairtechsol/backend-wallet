@@ -1101,7 +1101,7 @@ exports.lockUnlockExpert = async (req, res) => {
     } catch (error) {
       throw error?.response?.data
     }
-    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } }, data: apiResponse.data }, req, res
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } }, data: apiResponse }, req, res
     );
 
   } catch (err) {

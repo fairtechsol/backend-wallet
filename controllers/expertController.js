@@ -1,7 +1,7 @@
 const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
-const { mergeProfitLoss } = require("../services/commonService");
+const { mergeProfitLoss, settingBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId } = require("../services/userBalanceService");
@@ -170,8 +170,6 @@ exports.getNotification = async (req, res) => {
         return ErrorResponse(err?.response?.data, req, res);
     }
 };
-
-
 
 exports.getMatchCompetitionsByType = async (req, res) => {
     try {
@@ -570,7 +568,6 @@ exports.declareSessionNoResult = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 };
-
 
 exports.unDeclareSessionResult = async (req,res)=>{
   try {
@@ -1084,3 +1081,42 @@ exports.unDeclareMatchResult = async (req,res)=>{
   }
 }
 
+exports.getWalletBetsData = async (req, res) => {
+  try {
+    const user = await getUser({
+      roleName: userRoleConstant.fairGameWallet
+    });
+
+    let result = {};
+
+    const betData = await getUserRedisData(user.id);
+    if (betData) {
+      Object.keys(betData)?.forEach((item) => {
+        if (item.endsWith(redisKeys.profitLoss) || item.startsWith(redisKeys.userTeamARate) || item.startsWith(redisKeys.userTeamBRate) || item.startsWith(redisKeys.userTeamCRate) || item.startsWith(redisKeys.yesRateTie) || item.startsWith(redisKeys.noRateTie) || item.startsWith(redisKeys.yesRateComplete) || item.startsWith(redisKeys.noRateComplete)) {
+          result[item] = betData[item];
+        }
+      })
+    }
+    else {
+      result = await settingBetsDataAtLogin(user);
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: result
+      },
+      req,
+      res
+    );
+  }
+  catch (error) {
+    logger.error({
+      error: `Error at getting bet data from wallet.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}

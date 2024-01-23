@@ -50,6 +50,13 @@ exports.getDomainData = async (where, select) => {
   });
 };
 
+exports.getDomainDataByFaId = async (id, select) => {
+  return await DomainData.find({
+    where: { createBy: id },
+    select: select,
+  });
+};
+
 exports.addDomainData = async (body) => {
   let insertDomain = await DomainData.save(body);
   return insertDomain;

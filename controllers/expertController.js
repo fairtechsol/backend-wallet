@@ -1083,4 +1083,30 @@ exports.unDeclareMatchResult = async (req,res)=>{
     return ErrorResponse(error, req, res);
   }
 }
+exports.lockUnlockExpert = async (req, res) => {
+  try {
+
+    let { userId, userBlock } = req.body
+    const loginId = req.user
+
+    let userData = {
+      userId,
+      userBlock,
+      blockBy: loginId.id,
+    };
+    let domain = expertDomain;
+    let apiResponse = {}
+    try {
+      apiResponse = await apiCall(apiMethod.put, domain + allApiRoutes.EXPERTS.lockUnlockUser, userData)
+    } catch (error) {
+      throw error?.response?.data
+    }
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } }, data: apiResponse }, req, res
+    );
+
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+
+}
 

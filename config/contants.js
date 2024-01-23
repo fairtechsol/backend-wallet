@@ -136,3 +136,37 @@ module.exports.redisKeys = {
   profitLoss:"_profitLoss"
 
 }
+
+module.exports.betResultStatus = {
+  UNDECLARE : "UNDECLARE",
+  PENDING : "PENDING",
+  WIN : "WIN",
+  LOSS : "LOSS",
+  TIE : "TIE"
+}
+
+module.exports.matchBettingType = {
+  matchOdd: "matchOdd",
+  bookmaker: "bookmaker",
+  quickbookmaker1: "quickbookmaker1",
+  quickbookmaker2: "quickbookmaker2",
+  quickbookmaker3: "quickbookmaker3",
+  tiedMatch1: "tiedMatch1",
+  tiedMatch2: "tiedMatch2",
+  completeMatch: "completeMatch",
+};
+
+exports.marketBetType = {
+  SESSION: "SESSION",
+  MATCHBETTING: "MATCHBETTING",
+};
+
+module.exports.resultType = {
+  tie: "Tie",
+  noResult: "No Result",
+};
+
+module.exports.tiedManualTeamName = {
+  yes: "YES",
+  no: "NO"
+}

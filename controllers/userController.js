@@ -143,7 +143,7 @@ exports.createUser = async (req, res) => {
         userId: insertUser.id,
         amount: 0,
         transType: transType.add,
-        currentAmount: insertUser.creditRefer,
+        closingBalance: insertUser.creditRefer,
         description: walletDescription.userCreate,
       },
     ];
@@ -154,7 +154,7 @@ exports.createUser = async (req, res) => {
         userId: insertUser.id,
         amount: 0,
         transType: transType.withDraw,
-        currentAmount: insertUser.creditRefer,
+        closingBalance: insertUser.creditRefer,
         description: walletDescription.userCreate,
       });
     }
@@ -848,7 +848,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         userId: user.id,
         amount: previousCreditReference,
         transType: transType.creditRefer,
-        currentAmount: amount,
+        closingBalance: amount,
         description: "CREDIT REFRENCE " + remark,
       },
       {
@@ -857,7 +857,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         userId: user.id,
         amount: previousCreditReference,
         transType: transType.creditRefer,
-        currentAmount: amount,
+        closingBalance: amount,
         description: "CREDIT REFRENCE " + remark,
       },
     ];

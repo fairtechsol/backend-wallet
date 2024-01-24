@@ -100,7 +100,7 @@ exports.addMatch = async (req, res) => {
     await Promise.allSettled(promiseArray)
       .catch(error => {
         throw error;
-      });;
+      });
 
     return SuccessResponse(
       {

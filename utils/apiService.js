@@ -42,6 +42,9 @@ exports.allApiRoutes = {
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",
   declareResultMatch: "/fairgameWallet/declare/result/match",
   unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
+  addMatch:"/match/add",
+  profitLoss: "/fairgameWallet/total/profitLoss",
+  matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
@@ -56,9 +59,9 @@ exports.allApiRoutes = {
   MATCHES: {
     matchDetails: "/superAdmin/match/",
     matchList: "/superAdmin/match/list",
-    MatchBettingDetail : "/superAdmin/matchBetting/",
+    MatchBettingDetail: "/superAdmin/matchBetting/",
   },
-  bets:{
+  bets: {
     placedBet: "/fairgameWallet/getBet"
   }
 };

@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticate } = require('../middleware/auth');
-const { matchDetails, listMatch } = require('../controllers/matchController');
+const { matchDetails, listMatch, addMatch } = require('../controllers/matchController');
 
 
 
 
 router.get('/list',isAuthenticate,listMatch);
 router.get('/:id',isAuthenticate,matchDetails);
+router.post('/add', addMatch);
 
 module.exports = router;

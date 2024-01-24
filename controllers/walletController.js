@@ -95,7 +95,7 @@ exports.updateBalance = async (req, res) => {
             userId: reqUser.id,
             amount: transactionType == transType.add ? amount : -amount,
             transType: transactionType,
-            currentAmount: updatedUpdateUserBalanceData.currentBalance,
+            closingBalance: updatedUpdateUserBalanceData.currentBalance,
             description: remark
         }]
 
@@ -188,7 +188,7 @@ exports.setCreditReferrence = async (req, res, next) => {
             userId: loginUser.id,
             amount: previousCreditReference,
             transType: transType.creditRefer,
-            currentAmount: updateData.creditRefrence,
+            closingBalance: updateData.creditRefrence,
             description: "CREDIT REFRENCE " + remark
         }]
 

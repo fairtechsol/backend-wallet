@@ -35,6 +35,8 @@ const { ILike } = require("typeorm");
 const {
   getDomainDataByUserIds,
   getDomainByUserId,
+  getDomainDataByFaId,
+  getUserDomainWithFaId,
 } = require("../services/domainDataService");
 const {
   calculatePartnership,
@@ -42,6 +44,7 @@ const {
   forceLogoutUser,
 } = require("../services/commonService");
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
+const { logger } = require("../config/logger");
 exports.createUser = async (req, res) => {
   try {
     let {
@@ -1051,3 +1054,105 @@ exports.getProfile = async (req, res) => {
     res
   );
 };
+
+exports.getTotalProfitLoss = async (req, res) => {
+  try {
+    const { id: userId, roleName } = req.user;
+    const { startDate, endDate } = req.query;
+    let domainData;
+    if (roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getDomainDataByFaId(userId);
+    }
+    else {
+      domainData = await getUserDomainWithFaId();
+    }
+
+    let profitLoss = [];
+
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.profitLoss, {
+        user: req.user, startDate: startDate, endDate: endDate
+      }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} getting profitloss`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+      data.data = (data?.data || [])?.map((item) => {
+        return {
+          ...item,
+          domainUrl: url?.domain
+        }
+      });
+      profitLoss.push(...(data?.data || []));
+    }
+
+    const resultArray = Object.values(profitLoss.reduce((accumulator, currentValue) => {
+      const eventType = currentValue.eventType;
+
+      accumulator[eventType] = accumulator[eventType] || {
+        eventType,
+        totalLoss: 0,
+        totalBet: 0,
+        domainData: []
+      };
+
+      accumulator[eventType].totalLoss += parseFloat(currentValue.totalLoss);
+      accumulator[eventType].totalBet += parseFloat(currentValue.totalBet);
+      accumulator[eventType].domainData.push(currentValue);
+
+      return accumulator;
+    }, {}));
+
+    return SuccessResponse(
+      { statusCode: 200, data: resultArray },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get total profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+};
+
+exports.getDomainProfitLoss = async (req, res) => {
+  try {
+    const { startDate, endDate, url, type, page, limit } = req.query;
+
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, page: page, limit: limit }, {})
+      .then((data) => data)
+      .catch((err) => {
+        logger.error({
+          context: `error in ${url?.domain} getting profit loss for specific domain.`,
+          process: `User ID : ${req.user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+        throw err;
+      });
+
+    return SuccessResponse(
+      { statusCode: 200, data: data },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get total domain wise profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}

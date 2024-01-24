@@ -480,7 +480,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         userId: user.id,
         amount: previousCreditReference,
         transType: transType.creditRefer,
-        currentAmount: user.creditRefrence,
+        currentAmount: amount,
         description: "CREDIT REFRENCE " + remark,
       },
       {
@@ -489,7 +489,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         userId: user.id,
         amount: previousCreditReference,
         transType: transType.creditRefer,
-        currentAmount: user.creditRefrence,
+        currentAmount: amount,
         description: "CREDIT REFRENCE " + remark,
       },
     ];

@@ -1133,7 +1133,7 @@ exports.getDomainProfitLoss = async (req, res) => {
       .then((data) => data)
       .catch((err) => {
         logger.error({
-          context: `error in ${url?.domain} getting profit loss for specific domain.`,
+          context: `error in ${url} getting profit loss for specific domain.`,
           process: `User ID : ${req.user.id} `,
           error: err.message,
           stake: err.stack,
@@ -1150,6 +1150,71 @@ exports.getDomainProfitLoss = async (req, res) => {
   } catch (error) {
     logger.error({
       context: `error in get total domain wise profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+
+exports.getResultBetProfitLoss = async (req, res) => {
+  try {
+    const { matchId, betId, isSession, url } = req.query;
+
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true' }, {})
+      .then((data) => data)
+      .catch((err) => {
+        logger.error({
+          context: `error in ${url} getting profit loss for all bets.`,
+          process: `User ID : ${req.user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+        throw err;
+      });
+
+    return SuccessResponse(
+      { statusCode: 200, data: data },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get all bets profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getSessionBetProfitLoss = async (req, res) => {
+  try {
+    const { matchId, url } = req.query;
+
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId }, {})
+      .then((data) => data)
+      .catch((err) => {
+        logger.error({
+          context: `error in ${url} getting profit loss for session bets.`,
+          process: `User ID : ${req.user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+        throw err;
+      });
+
+    return SuccessResponse(
+      { statusCode: 200, data: data },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get session bets profit loss`,
       error: error.message,
       stake: error.stack,
     });

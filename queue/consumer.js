@@ -309,6 +309,7 @@ walletSessionBetDeleteQueue.process((job, done) => {
               });
               oldProfitLossParent.betPlaced = parentPLbetPlaced;
               oldProfitLossParent.maxLoss = newMaxLossParent;
+              oldProfitLossParent.totalBet = oldProfitLossParent.totalBet - userDeleteProfitLoss.total_bet;
               let sessionExposure = parseFloat(masterRedisData[redisSesionExposureName]) - oldMaxLossParent + newMaxLossParent;
               let redisObj = {
                 [redisName]: JSON.stringify(oldProfitLossParent),

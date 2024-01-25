@@ -679,7 +679,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
               upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
-
+              totalBet: newProfitLoss.totalBet + profitLossDataWallet.totalBet,
               betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,
@@ -703,6 +703,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
               upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataAdmin?.maxLoss + newProfitLoss?.maxLoss,
+              totalBet: newProfitLoss.totalBet + profitLossDataAdmin.totalBet,
               betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,

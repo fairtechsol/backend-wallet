@@ -47,6 +47,7 @@ exports.allApiRoutes = {
   matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
   betWiseProfitLoss:"/fairgameWallet/total/bet/profitLoss",
   sessionBetProfitLoss:"/fairgameWallet/total/session/profitLoss",
+  isUserExist:"/fairgameWallet/user/exist",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
@@ -57,6 +58,7 @@ exports.allApiRoutes = {
     getDatesByCompetition: "/match/competition/dates",
     getMatchByCompetitionAndDate: "/match/competition/getMatch",
     lockUnlockUser: "/user/lockUnlockUser",
+    isUserExist: "/user/exist",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",

@@ -4,6 +4,7 @@ const {
   walletDescription,
   blockType,
   fileType,
+  expertDomain,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -227,6 +228,40 @@ exports.updateUser = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
+
+exports.isUserExist = async (req, res) => {
+  try {
+    let { userName } = req.query;
+    let isExist = false;
+
+    const isUserExist = await getUser({ userName: userName });
+    isExist = Boolean(isUserExist);
+
+    let data = await apiCall(apiMethod.get, expertDomain + allApiRoutes.EXPERTS.isUserExist, null, {}, {
+      userName: userName
+    }).then((data) => data).catch((err) => {
+      logger.error({
+        context: `error in expert is user exist`,
+        error: err.message,
+        stake: err.stack,
+      });
+      throw err;
+    });
+
+    if (data?.data?.isExist) {
+      isExist = true;
+    }
+
+    return SuccessResponse({ statusCode: 200, data: { isUserExist: isExist } }, req, res);
+  }
+  catch (err) {
+    logger.error({
+      message: err.message,
+      stake: err.stack
+    });
+    return ErrorResponse(err, req, res);
+  }
+}
 
 const generateTransactionPass = () => {
   const randomNumber = Math.floor(100000 + Math.random() * 900000);

@@ -236,6 +236,9 @@ exports.isUserExist = async (req, res) => {
 
     const isUserExist = await getUser({ userName: userName });
     isExist = Boolean(isUserExist);
+    if(isExist){
+      return SuccessResponse({ statusCode: 200, data: { isUserExist: isExist } }, req, res);
+    }
 
     let data = await apiCall(apiMethod.get, expertDomain + allApiRoutes.EXPERTS.isUserExist, null, {}, {
       userName: userName

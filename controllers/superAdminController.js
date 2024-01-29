@@ -163,6 +163,7 @@ exports.createSuperAdmin = async (req, res) => {
       "aPartnership",
       "smPartnership",
       "mPartnership",
+      "agPartnership",
       "password",
     ]);
 

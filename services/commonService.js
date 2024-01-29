@@ -34,6 +34,7 @@ exports.calculatePartnership = async (userData, creator) => {
   let aPartnership = creator.aPartnership;
   let smPartnership = creator.smPartnership;
   let mPartnership = creator.mPartnership;
+  let agPartnership = creator.agPartnership;
 
   switch (creator.roleName) {
     case (userRoleConstant.fairGameWallet): {
@@ -58,6 +59,10 @@ exports.calculatePartnership = async (userData, creator) => {
     }
     case (userRoleConstant.master): {
       mPartnership = creator.myPartnership;
+      break;
+    }
+    case (userRoleConstant.agent): {
+      agPartnership = creator.myPartnership;
       break;
     }
   }
@@ -85,6 +90,10 @@ exports.calculatePartnership = async (userData, creator) => {
           mPartnership = 100 - parseInt(creator.myPartnership);
           break;
         }
+        case (userRoleConstant.agent): {
+          agPartnership = 100 - parseInt(creator.myPartnership);
+          break;
+        }
       }
     }
       break;
@@ -106,6 +115,10 @@ exports.calculatePartnership = async (userData, creator) => {
           mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
           break;
         }
+        case (userRoleConstant.agent): {
+          agPartnership = 100 - parseInt(creator.myPartnership + fwPartnership);
+          break;
+        }
       }
     }
       break;
@@ -123,6 +136,10 @@ exports.calculatePartnership = async (userData, creator) => {
           mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership);
           break;
         }
+        case (userRoleConstant.agent): {
+          agPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership);
+          break;
+        }
       }
     }
       break;
@@ -136,6 +153,10 @@ exports.calculatePartnership = async (userData, creator) => {
           mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership);
           break;
         }
+        case (userRoleConstant.agent): {
+          agPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership);
+          break;
+        }
       }
     }
       break;
@@ -145,12 +166,26 @@ exports.calculatePartnership = async (userData, creator) => {
           mPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership + aPartnership);
           break;
         }
+        case (userRoleConstant.agent): {
+          agPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership + aPartnership);
+          break;
+        }
       }
     }
       break;
+      case (userRoleConstant.master): {
+        switch (userData.roleName) {
+         
+          case (userRoleConstant.agent): {
+            agPartnership = 100 - parseInt(creator.myPartnership + fwPartnership + faPartnership + saPartnership + aPartnership + smPartnership);
+            break;
+          }
+        }
+      }
+        break;
   }
 
-  if (userData.roleName != userRoleConstant.expert && fwPartnership + faPartnership + saPartnership + aPartnership + smPartnership + mPartnership != 100) {
+  if (userData.roleName != userRoleConstant.expert && fwPartnership + faPartnership + saPartnership + aPartnership + smPartnership + mPartnership + agPartnership != 100) {
     throw new Error("user.partnershipNotValid");
   }
   return {
@@ -159,7 +194,8 @@ exports.calculatePartnership = async (userData, creator) => {
     saPartnership,
     aPartnership,
     smPartnership,
-    mPartnership
+    mPartnership,
+    agPartnership
   }
 }
 

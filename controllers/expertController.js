@@ -303,7 +303,7 @@ exports.declareSessionResult = async (req,res)=>{
         continue;
       }
 
-      let balance = await getUserBalanceDataByUserId(item?.userId);
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
       balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
       balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
@@ -618,7 +618,7 @@ exports.unDeclareSessionResult = async (req, res) => {
       response = response?.data;
 
 
-      let balance = await getUserBalanceDataByUserId(item?.userId);
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
       balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
       balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);
@@ -834,7 +834,7 @@ exports.declareMatchResult = async (req,res)=>{
         continue;
       }
       
-      let balance = await getUserBalanceDataByUserId(item?.userId);
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
       balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
       balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
@@ -981,7 +981,7 @@ exports.unDeclareMatchResult = async (req,res)=>{
       });
       response = response?.data;
 
-      let balance = await getUserBalanceDataByUserId(item?.userId);
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
       balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
       balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);

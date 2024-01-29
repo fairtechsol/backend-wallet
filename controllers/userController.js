@@ -235,7 +235,7 @@ exports.isUserExist = async (req, res) => {
     let { userName } = req.query;
     let isExist = false;
 
-    const isUserExist = await getUser({ userName: userName });
+    const isUserExist = await getUserByUserName(userName);
     isExist = Boolean(isUserExist);
     if(isExist){
       return SuccessResponse({ statusCode: 200, data: { isUserExist: isExist } }, req, res);

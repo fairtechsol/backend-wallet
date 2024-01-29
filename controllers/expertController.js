@@ -4,7 +4,7 @@ const { addResultFailed } = require("../services/betService");
 const { mergeProfitLoss, settingBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis } = require("../services/redis/commonFunctions");
-const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId } = require("../services/userBalanceService");
+const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
 const { getUsersWithUserBalance, getUser } = require("../services/userService");
 const { sendMessageToUser } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
@@ -303,7 +303,14 @@ exports.declareSessionResult = async (req,res)=>{
         continue;
       }
 
-      let userData= [
+      let balance = await getUserBalanceDataByUserId(item?.userId);
+
+      balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
+
+      let userData = [
         {
           id: item?.userId?.createBy,
         },
@@ -312,8 +319,8 @@ exports.declareSessionResult = async (req,res)=>{
           isWallet: true,
         },
       ];
-    
-          for (let items of userData) {
+
+      for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -335,8 +342,8 @@ exports.declareSessionResult = async (req,res)=>{
         parentUser.myProfitLoss = items?.isWallet
           ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss)
           : parseFloat(parentMyProfitLoss) -
-            parseFloat(parseFloat(
-              (parseFloat(response?.faAdminCal?.["myProfitLoss"])
+          parseFloat(parseFloat(
+            (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
         parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
         if (parentExposure < 0) {
@@ -396,7 +403,7 @@ exports.declareSessionResult = async (req,res)=>{
         });
 
       };
-      fwProfitLoss+=parseFloat(response?.fwProfitLoss);
+      fwProfitLoss += parseFloat(response?.fwProfitLoss);
     }
 
     return SuccessResponse(
@@ -569,24 +576,24 @@ exports.declareSessionNoResult = async (req, res) => {
   }
 };
 
-exports.unDeclareSessionResult = async (req,res)=>{
+exports.unDeclareSessionResult = async (req, res) => {
   try {
 
-    const {betId,sessionDetails,userId,matchId}=req.body;
+    const { betId, sessionDetails, userId, matchId } = req.body;
 
-    const domainData=await getUserDomainWithFaId();
+    const domainData = await getUserDomainWithFaId();
 
-    
-    const fgWallet= await getUser({
-      roleName:userRoleConstant?.fairGameWallet
-    },["id"]);
 
-    let fwProfitLoss=0;
-    let profitLossDataAdmin=null;
-    let profitLossDataWallet=null;
+    const fgWallet = await getUser({
+      roleName: userRoleConstant?.fairGameWallet
+    }, ["id"]);
 
-    for(let i=0;i<domainData?.length;i++){
-      let item=domainData[i];
+    let fwProfitLoss = 0;
+    let profitLossDataAdmin = null;
+    let profitLossDataWallet = null;
+
+    for (let i = 0; i < domainData?.length; i++) {
+      let item = domainData[i];
       let response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultSession, {
         betId,
         sessionDetails,
@@ -609,16 +616,24 @@ exports.unDeclareSessionResult = async (req,res)=>{
         return;
       });
       response = response?.data;
-    
-  let userData= [
-    {
-      id: item?.userId?.createBy,
-    },
-    {
-      id: fgWallet?.id,
-      isWallet: true,
-    },
-  ];
+
+
+      let balance = await getUserBalanceDataByUserId(item?.userId);
+
+      balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
+      
+      let userData = [
+        {
+          id: item?.userId?.createBy,
+        },
+        {
+          id: fgWallet?.id,
+          isWallet: true,
+        },
+      ];
 
       for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
@@ -762,7 +777,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
       {
         statusCode: 200,
         message: { msg: "bet.resultUnDeclared" },
-        data: {profitLoss:fwProfitLoss,profitLossObj:profitLossDataWallet}
+        data: { profitLoss: fwProfitLoss, profitLossObj: profitLossDataWallet }
       },
       req,
       res
@@ -777,7 +792,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
     // Handle any errors and return an error response
     return ErrorResponse(error, req, res);
   }
-}
+};
 
 exports.declareMatchResult = async (req,res)=>{
   try {
@@ -818,6 +833,13 @@ exports.declareMatchResult = async (req,res)=>{
         })
         continue;
       }
+      
+      let balance = await getUserBalanceDataByUserId(item?.userId);
+
+      balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
 
       let userData= [
         {
@@ -958,6 +980,13 @@ exports.unDeclareMatchResult = async (req,res)=>{
         return;
       });
       response = response?.data;
+
+      let balance = await getUserBalanceDataByUserId(item?.userId);
+
+      balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
 
       let userData = [
         {

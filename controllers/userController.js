@@ -514,6 +514,17 @@ exports.userList = async (req, res, next) => {
     }
     response.count = users[1];
     let partnershipCol = [];
+    if (userRole == userRoleConstant.agent) {
+      partnershipCol = [
+        "agPartnership",
+        "mPartnership",
+        "smPartnership",
+        "aPartnership",
+        "saPartnership",
+        "faPartnership",
+        "fwPartnership",
+      ];
+    }
     if (userRole == userRoleConstant.master) {
       partnershipCol = [
         "mPartnership",
@@ -654,6 +665,7 @@ exports.userList = async (req, res, next) => {
               dbKey: "smPartnership",
             },
             { excelHeader: "Master Partnership", dbKey: "mPartnership" },
+            { excelHeader: "Agent Partnership", dbKey: "agPartnership" },
             { excelHeader: "Full Name", dbKey: "fullName" },
             { excelHeader: "City", dbKey: "city" },
             { excelHeader: "Phone Number", dbKey: "phoneNumber" },
@@ -676,7 +688,6 @@ exports.userList = async (req, res, next) => {
       );
     }
     
-
     response.list = data;
     let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.exposure) as "totalExposure"`;
 
@@ -704,6 +715,10 @@ exports.userList = async (req, res, next) => {
       }
       case (userRoleConstant.master): {
         queryColumns = queryColumns + `, ROUND(SUM(UB.profitLoss / 100 * (user.mPartnership + user.smPartnership + user.aPartnership + user.saPartnership + user.faPartnership + user.fwPartnership )), 2) as percentProfitLoss`;
+        break;
+      }
+      case (userRoleConstant.agent): {
+        queryColumns = queryColumns + `, ROUND(SUM(UB.profitLoss / 100 * (user.mPartnership + user.mPartnership + user.smPartnership + user.aPartnership + user.saPartnership + user.faPartnership + user.fwPartnership )), 2) as percentProfitLoss`;
         break;
       }
     }

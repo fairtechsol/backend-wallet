@@ -22,6 +22,7 @@ exports.insertWallet = async (req, res) => {
             aPartnership: 0,
             smPartnership: 0,
             mPartnership: 0,
+            agPartnership: 0,
         };
         let user = await getUserByUserName(wallet.userName);
         if (user)

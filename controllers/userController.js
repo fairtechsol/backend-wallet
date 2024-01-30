@@ -1217,9 +1217,9 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    const { startDate, endDate, url, type, page, limit } = req.query;
+    const { startDate, endDate, url, type } = req.query;
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, page: page, limit: limit }, {})
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({

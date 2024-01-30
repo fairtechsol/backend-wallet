@@ -62,6 +62,7 @@ exports.createSuperAdmin = async (req, res) => {
       sidebarColor,
       headerColor,
       footerColor,
+      isOldFairGame
     } = req.body;
     let reqUser = req.user || {};
     let creator = await getUserById(reqUser.id);
@@ -139,6 +140,7 @@ exports.createSuperAdmin = async (req, res) => {
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
       isUrl: true,
+      isOldFairGame: isOldFairGame
     };
     let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };

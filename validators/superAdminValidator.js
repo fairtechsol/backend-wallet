@@ -24,6 +24,7 @@ module.exports.CreateSuperAdmin = Joi.object({
         'any.required': 'Confirm Password is required',
         'any.only': 'Confirm Password must match Password',
     }),
+    isOldFairGame: Joi.boolean(),
     //domain,logo,sidebarColor,headerColor,footerColor
     domain: Joi.string().required(),
     logo: Joi.string().required(),

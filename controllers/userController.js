@@ -62,6 +62,9 @@ exports.createUser = async (req, res) => {
       exposureLimit,
       maxBetLimit,
       minBetLimit,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     } = req.body;
     let reqUser = req.user || {};
     let creator = await getUserById(reqUser.id);
@@ -126,6 +129,9 @@ exports.createUser = async (req, res) => {
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     };
     let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };

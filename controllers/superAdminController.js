@@ -63,7 +63,10 @@ exports.createSuperAdmin = async (req, res) => {
       sidebarColor,
       headerColor,
       footerColor,
-      isOldFairGame
+      isOldFairGame,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     } = req.body;
 
     if (isOldFairGame) {
@@ -147,8 +150,12 @@ exports.createSuperAdmin = async (req, res) => {
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
-      isUrl: true
-      
+      isUrl: true,
+      ...(isOldFairGame ? {
+        sessionCommission,
+        matchComissionType,
+        matchCommission
+      } : {})
     };
     let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };
@@ -175,6 +182,9 @@ exports.createSuperAdmin = async (req, res) => {
       "mPartnership",
       "agPartnership",
       "password",
+      ...(isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
 
     response = {
@@ -190,8 +200,8 @@ exports.createSuperAdmin = async (req, res) => {
       );
     } catch (err) {
       logger.error({
-        message:"Error at creating user on super admin side",
-        context:err?.message,
+        message: "Error at creating user on super admin side",
+        context: err?.message,
         stake: err?.stack
       });
       await deleteUser(response?.id);
@@ -263,8 +273,8 @@ exports.createSuperAdmin = async (req, res) => {
     );
   } catch (err) {
     logger.error({
-      message:"Error at creating user on super admin side",
-      context:err?.message,
+      message: "Error at creating user on super admin side",
+      context: err?.message,
       stake: err?.stack
     });
     return ErrorResponse(err, req, res);
@@ -281,7 +291,10 @@ exports.updateSuperAdmin = async (req, res) => {
       fullName,
       phoneNumber,
       city,
-      isOldFairGame
+      isOldFairGame,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     } = req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
@@ -289,6 +302,9 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
+      (isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
     if (!updateUser)
       return ErrorResponse(
@@ -300,6 +316,14 @@ exports.updateSuperAdmin = async (req, res) => {
     updateUser.fullName = fullName ?? updateUser.fullName;
     updateUser.phoneNumber = phoneNumber ?? updateUser.phoneNumber;
     updateUser.city = city || updateUser.city;
+
+    updateUser = {
+      ...updateUser, ...(isOldFairGame ? {
+        sessionCommission: sessionCommission || updateUser.sessionCommission,
+        matchComissionType: matchComissionType || updateUser.matchComissionType,
+        matchCommission: matchCommission || updateUser.matchCommission
+      } : {})
+    }
     let domainData = {};
     let response = {};
 
@@ -330,6 +354,9 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
+      (isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
     response["id"] = updateUser.id;
     response["isOldFairGame"] = isOldFairGame;
@@ -841,17 +868,17 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-exports.getPartnershipId=async(req, res, next)=>{
+exports.getPartnershipId = async (req, res, next) => {
   try {
     // Destructure request body
     const { userId } = req.params;
 
-   const partnershipIds=await getParentUsers(userId);
+    const partnershipIds = await getParentUsers(userId);
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data:partnershipIds
+        data: partnershipIds
       },
       req,
       res
@@ -869,24 +896,24 @@ exports.getPartnershipId=async(req, res, next)=>{
   }
 }
 
-exports.getPlacedBets=async (req,res,next)=>{
+exports.getPlacedBets = async (req, res, next) => {
   try {
     const domainData = await getUserDomainWithFaId();
-    let result=[];
+    let result = [];
 
     let promiseArray = []
 
     for (let url of domainData) {
-      let promise = apiCall( apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{}, req.query);
+      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, req.query);
       promiseArray.push(promise);
-  }
-  await Promise.allSettled(promiseArray)
-      .then(  results => {
-          results.forEach( (item) => {
-            if(item?.status=="fulfilled"){
-             result.push(...item?.value?.data?.rows);
-            }
-          });
+    }
+    await Promise.allSettled(promiseArray)
+      .then(results => {
+        results.forEach((item) => {
+          if (item?.status == "fulfilled") {
+            result.push(...item?.value?.data?.rows);
+          }
+        });
       })
       .catch(error => {
         logger.error({
@@ -895,7 +922,7 @@ exports.getPlacedBets=async (req,res,next)=>{
           message: error.message,
         });
       });
-   
+
 
     return SuccessResponse(
       {

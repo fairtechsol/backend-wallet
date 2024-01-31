@@ -2,6 +2,7 @@ const {
   userRoleConstant,
   transType,
   walletDescription,
+  oldBetFairDomain,
 } = require("../config/contants");
 const {
   getUserById,
@@ -62,8 +63,16 @@ exports.createSuperAdmin = async (req, res) => {
       sidebarColor,
       headerColor,
       footerColor,
-      isOldFairGame
+      isOldFairGame,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     } = req.body;
+
+    if (isOldFairGame) {
+      domain = oldBetFairDomain;
+    }
+
     let reqUser = req.user || {};
     let creator = await getUserById(reqUser.id);
     if (!creator)
@@ -74,8 +83,8 @@ exports.createSuperAdmin = async (req, res) => {
       );
 
     if (
-      roleName !== userRoleConstant.superAdmin ||
-      creator.roleName != userRoleConstant.fairGameAdmin
+      (roleName !== userRoleConstant.superAdmin ||
+        creator.roleName != userRoleConstant.fairGameAdmin) && !isOldFairGame
     )
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.invalidRole" } },
@@ -83,17 +92,19 @@ exports.createSuperAdmin = async (req, res) => {
         res
       );
 
-    let checkDomainData = await getDomainData(
-      [{ domain }, { userName }],
-      ["id", "userName", "domain"]
-    );
-    if (checkDomainData)
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.domainExist" } },
-        req,
-        res
+    if (!isOldFairGame) {
+      let checkDomainData = await getDomainData(
+        [{ domain }, { userName }],
+        ["id", "userName", "domain"]
       );
-
+      if (checkDomainData) {
+        return ErrorResponse(
+          { statusCode: 400, message: { msg: "user.domainExist" } },
+          req,
+          res
+        );
+      }
+    }
     if (!checkUserCreationHierarchy(creator, roleName))
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.InvalidHierarchy" } },
@@ -140,7 +151,11 @@ exports.createSuperAdmin = async (req, res) => {
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
       isUrl: true,
-      isOldFairGame: isOldFairGame
+      ...(isOldFairGame ? {
+        sessionCommission,
+        matchComissionType,
+        matchCommission
+      } : {})
     };
     let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };
@@ -167,10 +182,14 @@ exports.createSuperAdmin = async (req, res) => {
       "mPartnership",
       "agPartnership",
       "password",
+      ...(isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
 
     response = {
       ...response,
+      isOldFairGame: isOldFairGame,
       domain: { domain, logo, sidebarColor, headerColor, footerColor },
     };
     try {
@@ -180,6 +199,11 @@ exports.createSuperAdmin = async (req, res) => {
         response
       );
     } catch (err) {
+      logger.error({
+        message: "Error at creating user on super admin side",
+        context: err?.message,
+        stake: err?.stack
+      });
       await deleteUser(response?.id);
       return ErrorResponse(err?.response?.data, req, res);
     }
@@ -236,7 +260,8 @@ exports.createSuperAdmin = async (req, res) => {
       createBy: creator.id,
       userId: insertUser.id,
     };
-    let DomainData = await addDomainData(insertDomainData);
+    response = lodash.omit(response, ["password", "transPassword"])
+    await addDomainData(insertDomainData);
     return SuccessResponse(
       {
         statusCode: 200,
@@ -247,6 +272,11 @@ exports.createSuperAdmin = async (req, res) => {
       res
     );
   } catch (err) {
+    logger.error({
+      message: "Error at creating user on super admin side",
+      context: err?.message,
+      stake: err?.stack
+    });
     return ErrorResponse(err, req, res);
   }
 };
@@ -261,6 +291,10 @@ exports.updateSuperAdmin = async (req, res) => {
       fullName,
       phoneNumber,
       city,
+      isOldFairGame,
+      sessionCommission,
+      matchComissionType,
+      matchCommission
     } = req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
@@ -268,6 +302,9 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
+      (isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
     if (!updateUser)
       return ErrorResponse(
@@ -279,6 +316,14 @@ exports.updateSuperAdmin = async (req, res) => {
     updateUser.fullName = fullName ?? updateUser.fullName;
     updateUser.phoneNumber = phoneNumber ?? updateUser.phoneNumber;
     updateUser.city = city || updateUser.city;
+
+    updateUser = {
+      ...updateUser, ...(isOldFairGame ? {
+        sessionCommission: sessionCommission || updateUser.sessionCommission,
+        matchComissionType: matchComissionType || updateUser.matchComissionType,
+        matchCommission: matchCommission || updateUser.matchCommission
+      } : {})
+    }
     let domainData = {};
     let response = {};
 
@@ -309,8 +354,12 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
+      (isOldFairGame ? ["sessionCommission",
+        "matchComissionType",
+        "matchCommission"] : [])
     ]);
     response["id"] = updateUser.id;
+    response["isOldFairGame"] = isOldFairGame;
 
     try {
       await apiCall(
@@ -635,7 +684,7 @@ exports.updateUserBalance = async (req, res) => {
     let transactionArray = [
       {
         actionBy: reqUser.id,
-        searchId: reqUser.id,
+        searchId: user.id,
         userId: user.id,
         amount: transactionType == transType.add ? amount : -amount,
         transType: transactionType,
@@ -644,7 +693,7 @@ exports.updateUserBalance = async (req, res) => {
       },
       {
         actionBy: reqUser.id,
-        searchId: user.id,
+        searchId: reqUser.id,
         userId: user.id,
         amount: transactionType == transType.add ? -amount : amount,
         transType:
@@ -819,17 +868,17 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-exports.getPartnershipId=async(req, res, next)=>{
+exports.getPartnershipId = async (req, res, next) => {
   try {
     // Destructure request body
     const { userId } = req.params;
 
-   const partnershipIds=await getParentUsers(userId);
+    const partnershipIds = await getParentUsers(userId);
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data:partnershipIds
+        data: partnershipIds
       },
       req,
       res
@@ -847,25 +896,24 @@ exports.getPartnershipId=async(req, res, next)=>{
   }
 }
 
-
-exports.getPlacedBets=async (req,res,next)=>{
+exports.getPlacedBets = async (req, res, next) => {
   try {
     const domainData = await getUserDomainWithFaId();
-    let result=[];
+    let result = [];
 
     let promiseArray = []
 
     for (let url of domainData) {
-      let promise = apiCall( apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{}, req.query);
+      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, req.query);
       promiseArray.push(promise);
-  }
-  await Promise.allSettled(promiseArray)
-      .then(  results => {
-          results.forEach( (item) => {
-            if(item?.status=="fulfilled"){
-             result.push(...item?.value?.data?.rows);
-            }
-          });
+    }
+    await Promise.allSettled(promiseArray)
+      .then(results => {
+        results.forEach((item) => {
+          if (item?.status == "fulfilled") {
+            result.push(...item?.value?.data?.rows);
+          }
+        });
       })
       .catch(error => {
         logger.error({
@@ -874,7 +922,7 @@ exports.getPlacedBets=async (req,res,next)=>{
           message: error.message,
         });
       });
-   
+
 
     return SuccessResponse(
       {

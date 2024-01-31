@@ -305,8 +305,8 @@ exports.declareSessionResult = async (req,res)=>{
 
       let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
-      balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
-      balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
+      balance.profitLoss = parseFloat(balance.profitLoss) - parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) - parseFloat(response?.superAdminData?.myProfitLoss);
 
       addInitialUserBalance(balance);
 
@@ -620,8 +620,8 @@ exports.unDeclareSessionResult = async (req, res) => {
 
       let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
-      balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
-      balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);
+      balance.profitLoss = parseFloat(balance.profitLoss) + parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) + parseFloat(response?.superAdminData?.myProfitLoss);
 
       addInitialUserBalance(balance);
       
@@ -836,8 +836,8 @@ exports.declareMatchResult = async (req,res)=>{
       
       let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
-      balance.profitLoss -= parseFloat(response?.superAdminData?.profitLoss);
-      balance.myProfitLoss -= parseFloat(response?.superAdminData?.myProfitLoss);
+      balance.profitLoss = parseFloat(balance.profitLoss) - parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) - parseFloat(response?.superAdminData?.myProfitLoss);
 
       addInitialUserBalance(balance);
 
@@ -869,14 +869,14 @@ exports.declareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
-        parentUser.myProfitLoss = items?.isWallet
+            parentUser.profitLoss = parseFloat(parentProfitLoss) - parseFloat(response?.faAdminCal?.["profitLoss"]);
+            parentUser.myProfitLoss = items?.isWallet
           ? parseFloat(parentMyProfitLoss) - parseFloat(response?.faAdminCal?.["profitLoss"])
           : parseFloat(parentMyProfitLoss) -
             parseFloat(parseFloat(
               (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
-        parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
+            parentUser.exposure = parseFloat(parentExposure) - parseFloat(response?.faAdminCal?.["exposure"]);
         if (parentExposure < 0) {
           logger.info({
             message: "Exposure in negative for user: ",
@@ -983,8 +983,8 @@ exports.unDeclareMatchResult = async (req,res)=>{
 
       let balance = await getUserBalanceDataByUserId(item?.userId?.id);
 
-      balance.profitLoss += parseFloat(response?.superAdminData?.profitLoss);
-      balance.myProfitLoss += parseFloat(response?.superAdminData?.myProfitLoss);
+      balance.profitLoss = parseFloat(balance.profitLoss) + parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) + parseFloat(response?.superAdminData?.myProfitLoss);
 
       addInitialUserBalance(balance);
 
@@ -1016,9 +1016,9 @@ exports.unDeclareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.profitLoss = parseFloat(parentProfitLoss) + parseFloat(response?.faAdminCal?.["profitLoss"]);
         parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
-        parentUser.exposure = parentExposure + response?.faAdminCal?.["exposure"];
+        parentUser.exposure = parseFloat(parentExposure) + parseFloat(response?.faAdminCal?.["exposure"]);
         if (parentExposure < 0) {
           logger.info({
             message: "Exposure in negative for user: ",

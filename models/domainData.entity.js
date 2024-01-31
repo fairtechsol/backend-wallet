@@ -18,23 +18,22 @@ const domainDataSchema = new EntitySchema({
     domain: {
       type: 'varchar',
       nullable: false,
-      unique: true
     },
     logo: {
       type: 'varchar',
-      nullable: false
+      nullable: true
     },
     headerColor: {
       type: 'varchar',
-      nullable: false
+      nullable: true
     },
     sidebarColor: {
       type: 'varchar',
-      nullable: false
+      nullable: true
     },
     footerColor: {
       type: 'varchar',
-      nullable: false
+      nullable: true
     },
   },
   orderBy: {

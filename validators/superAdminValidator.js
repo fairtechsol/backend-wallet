@@ -25,13 +25,30 @@ module.exports.CreateSuperAdmin = Joi.object({
         'any.only': 'Confirm Password must match Password',
     }),
     isOldFairGame: Joi.boolean(),
-    //domain,logo,sidebarColor,headerColor,footerColor
-    domain: Joi.string().required(),
-    logo: Joi.string().required(),
-    sidebarColor: Joi.string().required(),
-    headerColor: Joi.string().required(),
-    footerColor: Joi.string().required(),
-    transactionPassword: Joi.string().required()
+    domain: Joi.string().when('isOldFairGame', {
+        is: Joi.valid(false),
+        then: Joi.required(),
+    }),
+    logo: Joi.string().when('isOldFairGame', {
+        is: Joi.valid(false),
+        then: Joi.required(),
+    }),
+    sidebarColor: Joi.string().when('isOldFairGame', {
+        is: Joi.valid(false),
+        then: Joi.required(),
+    }),
+    headerColor: Joi.string().when('isOldFairGame', {
+        is: Joi.valid(false),
+        then: Joi.required(),
+    }),
+    footerColor: Joi.string().when('isOldFairGame', {
+        is: Joi.valid(false),
+        then: Joi.required(),
+    }),
+    transactionPassword: Joi.string().required(),
+    sessionCommission: Joi.number(),
+    matchComissionType: Joi.number().valid(...Object.values(matchComissionTypeConstant)),
+    matchCommission: Joi.number(),
 })
 
 
@@ -76,7 +93,11 @@ module.exports.updateSuperAdminValid = Joi.object({
     sidebarColor: Joi.string().allow(""),
     headerColor: Joi.string().allow(""),
     footerColor: Joi.string().allow(""),
-    transactionPassword: Joi.string().required()
+    transactionPassword: Joi.string().required(),
+    isOldFairGame: Joi.boolean(),
+    sessionCommission: Joi.number(),
+    matchComissionType: Joi.number().valid(...Object.values(matchComissionTypeConstant)),
+    matchCommission: Joi.number(),
 })
 
 module.exports.setExposureLimitValid = Joi.object({

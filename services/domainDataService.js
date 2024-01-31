@@ -50,9 +50,9 @@ exports.getDomainData = async (where, select) => {
   });
 };
 
-exports.getDomainDataByFaId = async (id, select) => {
+exports.getDomainDataByFaId = async (id, select,where={}) => {
   return await DomainData.find({
-    where: { createBy: id },
+    where: { createBy: id, ...where },
     select: select,
   });
 };
@@ -75,9 +75,10 @@ exports.getDomainDataByUserName = async (userName, select) => {
   });
 };
 
-exports.getUserDomainWithFaId = async () => {
+exports.getUserDomainWithFaId = async (where={}) => {
   let domainData =await DomainData
     .createQueryBuilder()
+    .where(where)
     .leftJoinAndMapOne("domainData.userId", "user", 'user', 'domainData.userId = user.id')
     .getMany();
 

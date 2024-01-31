@@ -1148,13 +1148,20 @@ exports.getProfile = async (req, res) => {
 exports.getTotalProfitLoss = async (req, res) => {
   try {
     const { id: userId, roleName } = req.user;
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, id } = req.query;
     let domainData;
+    let where={};
+
+    if(id) {
+      where = {
+        userId: id
+      }
+    }
     if (roleName == userRoleConstant.fairGameAdmin) {
-      domainData = await getDomainDataByFaId(userId);
+      domainData = await getDomainDataByFaId(userId, null, where);
     }
     else {
-      domainData = await getUserDomainWithFaId();
+      domainData = await getUserDomainWithFaId(where);
     }
 
     let profitLoss = [];

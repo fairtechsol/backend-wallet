@@ -10,7 +10,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getUserById, getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
-const { forceLogoutIfLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, settingBetsDataAtLogin } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { updateUserDataRedis } = require("../services/redis/commonFunctions");
 
@@ -42,32 +42,38 @@ const validateUser = async (userName, password) => {
 
 const setUserDetailsRedis = async (user) => {
   logger.info({ message: "Setting exposure at login time.", data: user });
-  await updateUserDataRedis(user.id, {
-    exposure: user?.userBal?.exposure || 0,
-    totalComission: user?.totalComission || 0,
-    profitLoss: user?.userBal?.profitLoss || 0,
-    myProfitLoss: user?.userBal?.myProfitLoss || 0,
-    userName: user.userName,
-    currentBalance: user?.userBal?.currentBalance || 0,
-    roleName:user.roleName
-  });
-  if (user.roleName == userRoleConstant.user) {
-    const redisUserPartnerShip = await internalRedis.hget(
-      user.id,
-      "partnerShips"
-    );
-    if (redisUserPartnerShip) {
-      internalRedis.expire(user.id, redisTimeOut);
-      return;
-    }
+  
+  // Fetch user details from Redis
+  const redisUserData = await internalRedis.hget(user.id, "userName");
 
-    let partnerShipObject = await findUserPartnerShipObj(user);
-    const userPartnerShipData = {
-      partnerShips: partnerShipObject,
-      userRole: user.roleName,
-    };
-    await internalRedis.hmset(user.id, userPartnerShipData);
+  if (!redisUserData) {
+    // Fetch and set betting data at login
+    let betData = await settingBetsDataAtLogin(user);
+
+    // Set user details and partnerships in Redis
+    await updateUserDataRedis(user.id, {
+      exposure: user?.userBal?.exposure || 0,
+      totalComission: user?.totalComission || 0,
+      profitLoss: user?.userBal?.profitLoss || 0,
+      myProfitLoss: user?.userBal?.myProfitLoss || 0,
+      userName: user.userName,
+      currentBalance: user?.userBal?.currentBalance || 0,
+      roleName: user.roleName,
+      ...(betData || {}),
+      ...(user.roleName === userRoleConstant.user
+        ? {
+          partnerShips: await findUserPartnerShipObj(user),
+          userRole: user.roleName,
+        }
+        : {}),
+    });
+
+    // Expire user data in Redis
     await internalRedis.expire(user.id, redisTimeOut);
+  }
+  else{
+     // Expire user data in Redis
+     await internalRedis.expire(user.id, redisTimeOut);
   }
 };
 

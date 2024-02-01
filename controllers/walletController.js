@@ -22,6 +22,7 @@ exports.insertWallet = async (req, res) => {
             aPartnership: 0,
             smPartnership: 0,
             mPartnership: 0,
+            agPartnership: 0,
         };
         let user = await getUserByUserName(wallet.userName);
         if (user)
@@ -95,7 +96,7 @@ exports.updateBalance = async (req, res) => {
             userId: reqUser.id,
             amount: transactionType == transType.add ? amount : -amount,
             transType: transactionType,
-            currentAmount: updatedUpdateUserBalanceData.currentBalance,
+            closingBalance: updatedUpdateUserBalanceData.currentBalance,
             description: remark
         }]
 
@@ -188,7 +189,7 @@ exports.setCreditReferrence = async (req, res, next) => {
             userId: loginUser.id,
             amount: previousCreditReference,
             transType: transType.creditRefer,
-            currentAmount: updateData.creditRefrence,
+            closingBalance: updateData.creditRefrence,
             description: "CREDIT REFRENCE " + remark
         }]
 

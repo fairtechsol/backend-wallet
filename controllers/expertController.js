@@ -1,10 +1,10 @@
 const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
-const { mergeProfitLoss } = require("../services/commonService");
+const { mergeProfitLoss, settingBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis } = require("../services/redis/commonFunctions");
-const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId } = require("../services/userBalanceService");
+const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
 const { getUsersWithUserBalance, getUser } = require("../services/userService");
 const { sendMessageToUser } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
@@ -171,8 +171,6 @@ exports.getNotification = async (req, res) => {
     }
 };
 
-
-
 exports.getMatchCompetitionsByType = async (req, res) => {
     try {
       const { type } = req.params;
@@ -305,7 +303,14 @@ exports.declareSessionResult = async (req,res)=>{
         continue;
       }
 
-      let userData= [
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
+
+      balance.profitLoss = parseFloat(balance.profitLoss) - parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) - parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
+
+      let userData = [
         {
           id: item?.userId?.createBy,
         },
@@ -314,8 +319,8 @@ exports.declareSessionResult = async (req,res)=>{
           isWallet: true,
         },
       ];
-    
-          for (let items of userData) {
+
+      for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
 
         let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -337,8 +342,8 @@ exports.declareSessionResult = async (req,res)=>{
         parentUser.myProfitLoss = items?.isWallet
           ? parseFloat(response?.faAdminCal?.["profitLoss"]) - parseFloat(parentMyProfitLoss)
           : parseFloat(parentMyProfitLoss) -
-            parseFloat(parseFloat(
-              (parseFloat(response?.faAdminCal?.["myProfitLoss"])
+          parseFloat(parseFloat(
+            (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
         parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
         if (parentExposure < 0) {
@@ -398,7 +403,7 @@ exports.declareSessionResult = async (req,res)=>{
         });
 
       };
-      fwProfitLoss+=parseFloat(response?.fwProfitLoss);
+      fwProfitLoss += parseFloat(response?.fwProfitLoss);
     }
 
     return SuccessResponse(
@@ -571,25 +576,24 @@ exports.declareSessionNoResult = async (req, res) => {
   }
 };
 
-
-exports.unDeclareSessionResult = async (req,res)=>{
+exports.unDeclareSessionResult = async (req, res) => {
   try {
 
-    const {betId,sessionDetails,userId,matchId}=req.body;
+    const { betId, sessionDetails, userId, matchId } = req.body;
 
-    const domainData=await getUserDomainWithFaId();
+    const domainData = await getUserDomainWithFaId();
 
-    
-    const fgWallet= await getUser({
-      roleName:userRoleConstant?.fairGameWallet
-    },["id"]);
 
-    let fwProfitLoss=0;
-    let profitLossDataAdmin=null;
-    let profitLossDataWallet=null;
+    const fgWallet = await getUser({
+      roleName: userRoleConstant?.fairGameWallet
+    }, ["id"]);
 
-    for(let i=0;i<domainData?.length;i++){
-      let item=domainData[i];
+    let fwProfitLoss = 0;
+    let profitLossDataAdmin = null;
+    let profitLossDataWallet = null;
+
+    for (let i = 0; i < domainData?.length; i++) {
+      let item = domainData[i];
       let response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultSession, {
         betId,
         sessionDetails,
@@ -612,16 +616,24 @@ exports.unDeclareSessionResult = async (req,res)=>{
         return;
       });
       response = response?.data;
-    
-  let userData= [
-    {
-      id: item?.userId?.createBy,
-    },
-    {
-      id: fgWallet?.id,
-      isWallet: true,
-    },
-  ];
+
+
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
+
+      balance.profitLoss = parseFloat(balance.profitLoss) + parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) + parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
+      
+      let userData = [
+        {
+          id: item?.userId?.createBy,
+        },
+        {
+          id: fgWallet?.id,
+          isWallet: true,
+        },
+      ];
 
       for (let items of userData) {
         let parentUser = await getUserBalanceDataByUserId(items?.id);
@@ -682,7 +694,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
               upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
-
+              totalBet: newProfitLoss.totalBet + profitLossDataWallet.totalBet,
               betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,
@@ -706,6 +718,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
               upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
               maxLoss: profitLossDataAdmin?.maxLoss + newProfitLoss?.maxLoss,
+              totalBet: newProfitLoss.totalBet + profitLossDataAdmin.totalBet,
               betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
                 return {
                   odds: item?.odds,
@@ -764,7 +777,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
       {
         statusCode: 200,
         message: { msg: "bet.resultUnDeclared" },
-        data: {profitLoss:fwProfitLoss,profitLossObj:profitLossDataWallet}
+        data: { profitLoss: fwProfitLoss, profitLossObj: profitLossDataWallet }
       },
       req,
       res
@@ -779,7 +792,7 @@ exports.unDeclareSessionResult = async (req,res)=>{
     // Handle any errors and return an error response
     return ErrorResponse(error, req, res);
   }
-}
+};
 
 exports.declareMatchResult = async (req,res)=>{
   try {
@@ -820,6 +833,13 @@ exports.declareMatchResult = async (req,res)=>{
         })
         continue;
       }
+      
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
+
+      balance.profitLoss = parseFloat(balance.profitLoss) - parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) - parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
 
       let userData= [
         {
@@ -849,14 +869,14 @@ exports.declareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss - response?.faAdminCal?.["profitLoss"];
-        parentUser.myProfitLoss = items?.isWallet
+            parentUser.profitLoss = parseFloat(parentProfitLoss) - parseFloat(response?.faAdminCal?.["profitLoss"]);
+            parentUser.myProfitLoss = items?.isWallet
           ? parseFloat(parentMyProfitLoss) - parseFloat(response?.faAdminCal?.["profitLoss"])
           : parseFloat(parentMyProfitLoss) -
             parseFloat(parseFloat(
               (parseFloat(response?.faAdminCal?.["myProfitLoss"])
             )).toFixed(2));
-        parentUser.exposure = parentExposure - response?.faAdminCal?.["exposure"];
+            parentUser.exposure = parseFloat(parentExposure) - parseFloat(response?.faAdminCal?.["exposure"]);
         if (parentExposure < 0) {
           logger.info({
             message: "Exposure in negative for user: ",
@@ -961,6 +981,13 @@ exports.unDeclareMatchResult = async (req,res)=>{
       });
       response = response?.data;
 
+      let balance = await getUserBalanceDataByUserId(item?.userId?.id);
+
+      balance.profitLoss = parseFloat(balance.profitLoss) + parseFloat(response?.superAdminData?.profitLoss);
+      balance.myProfitLoss = parseFloat(balance.myProfitLoss) + parseFloat(response?.superAdminData?.myProfitLoss);
+
+      addInitialUserBalance(balance);
+
       let userData = [
         {
           id: item?.userId?.createBy,
@@ -989,9 +1016,9 @@ exports.unDeclareMatchResult = async (req,res)=>{
           parentExposure = parseFloat(parentUserRedisData?.exposure);
         }
 
-        parentUser.profitLoss = parentProfitLoss + response?.faAdminCal?.["profitLoss"];
+        parentUser.profitLoss = parseFloat(parentProfitLoss) + parseFloat(response?.faAdminCal?.["profitLoss"]);
         parentUser.myProfitLoss = items?.isWallet ? parseFloat(response?.faAdminCal?.["profitLoss"]) + parseFloat(parentMyProfitLoss) : parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(response?.faAdminCal?.["myProfitLoss"])).toFixed(2));
-        parentUser.exposure = parentExposure + response?.faAdminCal?.["exposure"];
+        parentUser.exposure = parseFloat(parentExposure) + parseFloat(response?.faAdminCal?.["exposure"]);
         if (parentExposure < 0) {
           logger.info({
             message: "Exposure in negative for user: ",
@@ -1083,4 +1110,69 @@ exports.unDeclareMatchResult = async (req,res)=>{
     return ErrorResponse(error, req, res);
   }
 }
+exports.lockUnlockExpert = async (req, res) => {
+  try {
 
+    let { userId, userBlock } = req.body
+    const loginId = req.user
+
+    let userData = {
+      userId,
+      userBlock,
+      blockBy: loginId.id,
+    };
+    let domain = expertDomain;
+    let apiResponse = {}
+    try {
+      apiResponse = await apiCall(apiMethod.put, domain + allApiRoutes.EXPERTS.lockUnlockUser, userData)
+    } catch (error) {
+      throw error?.response?.data
+    }
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } }, data: apiResponse }, req, res
+    );
+
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+
+}
+
+exports.getWalletBetsData = async (req, res) => {
+  try {
+    const user = await getUser({
+      roleName: userRoleConstant.fairGameWallet
+    });
+
+    let result = {};
+
+    const betData = await getUserRedisData(user.id);
+    if (betData) {
+      Object.keys(betData)?.forEach((item) => {
+        if (item.endsWith(redisKeys.profitLoss) || item.startsWith(redisKeys.userTeamARate) || item.startsWith(redisKeys.userTeamBRate) || item.startsWith(redisKeys.userTeamCRate) || item.startsWith(redisKeys.yesRateTie) || item.startsWith(redisKeys.noRateTie) || item.startsWith(redisKeys.yesRateComplete) || item.startsWith(redisKeys.noRateComplete)) {
+          result[item] = betData[item];
+        }
+      })
+    }
+    else {
+      result = await settingBetsDataAtLogin(user);
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: result
+      },
+      req,
+      res
+    );
+  }
+  catch (error) {
+    logger.error({
+      error: `Error at getting bet data from wallet.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}

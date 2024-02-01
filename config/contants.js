@@ -1,4 +1,5 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
+module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
 
@@ -9,6 +10,7 @@ module.exports.userRoleConstant = {
   admin: "admin",
   superMaster: "superMaster",
   master: "master",
+  agent: "agent",
   expert: "expert",
   user: "user",
 };
@@ -64,6 +66,7 @@ module.exports.transType = {
 };
 
 module.exports.partnershipPrefixByRole = {
+  [this.userRoleConstant.agent]: "ag",
   [this.userRoleConstant.master]: "m",
   [this.userRoleConstant.superMaster]: "sm",
   [this.userRoleConstant.admin]: "a",
@@ -78,6 +81,7 @@ module.exports.differLoginTypeByRoles = {
     this.userRoleConstant.superAdmin,
     this.userRoleConstant.master,
     this.userRoleConstant.superMaster,
+    this.userRoleConstant.agent,
   ],
   wallet:[
     this.userRoleConstant.fairGameAdmin,
@@ -135,4 +139,38 @@ module.exports.redisKeys = {
   userExposureLimit : "exposureLimit",
   profitLoss:"_profitLoss"
 
+}
+
+module.exports.betResultStatus = {
+  UNDECLARE : "UNDECLARE",
+  PENDING : "PENDING",
+  WIN : "WIN",
+  LOSS : "LOSS",
+  TIE : "TIE"
+}
+
+module.exports.matchBettingType = {
+  matchOdd: "matchOdd",
+  bookmaker: "bookmaker",
+  quickbookmaker1: "quickbookmaker1",
+  quickbookmaker2: "quickbookmaker2",
+  quickbookmaker3: "quickbookmaker3",
+  tiedMatch1: "tiedMatch1",
+  tiedMatch2: "tiedMatch2",
+  completeMatch: "completeMatch",
+};
+
+exports.marketBetType = {
+  SESSION: "SESSION",
+  MATCHBETTING: "MATCHBETTING",
+};
+
+module.exports.resultType = {
+  tie: "Tie",
+  noResult: "No Result",
+};
+
+module.exports.tiedManualTeamName = {
+  yes: "YES",
+  no: "NO"
 }

@@ -140,7 +140,7 @@ exports.createUser = async (req, res) => {
         userId: insertUser.id,
         amount: 0,
         transType: transType.add,
-        currentAmount: insertUser.creditRefer,
+        currentAmount: insertUser.creditRefrence,
         description: walletDescription.userCreate,
       },
     ];
@@ -151,7 +151,7 @@ exports.createUser = async (req, res) => {
         userId: insertUser.id,
         amount: 0,
         transType: transType.withDraw,
-        currentAmount: insertUser.creditRefer,
+        currentAmount: insertUser.creditRefrence,
         description: walletDescription.userCreate,
       });
     }

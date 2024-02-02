@@ -1,5 +1,5 @@
 const { EntitySchema } = require('typeorm');
-const { baseColumnsSchemaPart, matchComissionTypeConstant } = require("../config/contants");
+const { baseColumnsSchemaPart, matchComissionTypeConstant, betType } = require("../config/contants");
 const { ColumnNumericTransformer } = require('../services/commonService');
 
 const commissionSchema = new EntitySchema({
@@ -18,6 +18,32 @@ const commissionSchema = new EntitySchema({
       type: 'uuid',
       nullable: false,
     },
+    teamName: {
+      type:'varchar',
+      nullable:false
+    },
+    betPlaceDate: {
+      type:'timestamp with time zone',
+    },
+    odds: {
+      type:'decimal',
+      nullable:false,
+      precision: 13,
+      default: 0,
+      transformer:new ColumnNumericTransformer(),
+
+    },
+    betType: {
+      type:"enum",
+      enum:betType,
+    },
+    stake: {
+      type:'decimal',
+      transformer:new ColumnNumericTransformer(),
+      nullable:true,
+      precision: 13,
+      default: 0,
+    },
     commissionAmount: {
       type: 'decimal',
       precision: 13,
@@ -29,6 +55,10 @@ const commissionSchema = new EntitySchema({
       type: 'enum',
       enum: Object.values(matchComissionTypeConstant),
       nullable: true
+    },
+    parentId:{
+      type: 'uuid',
+      nullable: false,
     }
   }
 });

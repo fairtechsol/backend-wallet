@@ -145,13 +145,7 @@ const userSchema = new EntitySchema({
       nullable: false,
       default: 0
     },
-    totalComission: {
-      type: 'decimal',
-      nullable: false,
-      precision: 13,
-      scale: 2,
-      default: 0
-    },
+    
     isUrl: {
       type: 'boolean',
       nullable: false,

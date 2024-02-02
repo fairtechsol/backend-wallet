@@ -85,18 +85,19 @@ exports.createSuperAdmin = async (req, res) => {
     if (
       (roleName !== userRoleConstant.superAdmin ||
         creator.roleName != userRoleConstant.fairGameAdmin) && !isOldFairGame
-    )
+    ) {
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.invalidRole" } },
         req,
         res
       );
-
+    }
+    let checkDomainData = await getDomainData(
+      [{ domain }, { userName }],
+      ["id", "userName", "domain"]
+    );
     if (!isOldFairGame) {
-      let checkDomainData = await getDomainData(
-        [{ domain }, { userName }],
-        ["id", "userName", "domain"]
-      );
+
       if (checkDomainData) {
         return ErrorResponse(
           { statusCode: 400, message: { msg: "user.domainExist" } },
@@ -105,29 +106,32 @@ exports.createSuperAdmin = async (req, res) => {
         );
       }
     }
-    if (!checkUserCreationHierarchy(creator, roleName))
+    if (!checkUserCreationHierarchy(creator, roleName)) {
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.InvalidHierarchy" } },
         req,
         res
       );
+    }
 
     creator.myPartnership = parseInt(myPartnership);
     userName = userName.toUpperCase();
     let userExist = await getUserByUserName(userName);
-    if (userExist)
+    if (userExist) {
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.userExist" } },
         req,
         res
       );
+    }
 
-    if (exposureLimit && exposureLimit > creator.exposureLimit)
+    if (exposureLimit && exposureLimit > creator.exposureLimit) {
       return ErrorResponse(
         { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
         req,
         res
       );
+    }
 
     password = await bcrypt.hash(password, process.env.BCRYPTSALT);
 
@@ -190,6 +194,8 @@ exports.createSuperAdmin = async (req, res) => {
     response = {
       ...response,
       isOldFairGame: isOldFairGame,
+      superParentType: creator.roleName,
+      superParentId: creator.id,
       domain: { domain, logo, sidebarColor, headerColor, footerColor },
     };
     try {
@@ -260,8 +266,12 @@ exports.createSuperAdmin = async (req, res) => {
       createBy: creator.id,
       userId: insertUser.id,
     };
-    response = lodash.omit(response, ["password", "transPassword"])
-    await addDomainData(insertDomainData);
+    response = lodash.omit(response, ["password", "transPassword"]);
+
+
+    if (!checkDomainData) {
+      await addDomainData(insertDomainData);
+    }
     return SuccessResponse(
       {
         statusCode: 200,

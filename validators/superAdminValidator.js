@@ -47,7 +47,7 @@ module.exports.CreateSuperAdmin = Joi.object({
     }),
     transactionPassword: Joi.string().required(),
     sessionCommission: Joi.number(),
-    matchComissionType: Joi.number().valid(...Object.values(matchComissionTypeConstant)),
+    matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
 })
 
@@ -96,7 +96,7 @@ module.exports.updateSuperAdminValid = Joi.object({
     transactionPassword: Joi.string().required(),
     isOldFairGame: Joi.boolean(),
     sessionCommission: Joi.number(),
-    matchComissionType: Joi.number().valid(...Object.values(matchComissionTypeConstant)),
+    matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
 })
 

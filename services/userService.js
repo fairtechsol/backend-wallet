@@ -4,10 +4,8 @@ const userSchema = require("../models/user.entity");
 const userBalanceSchema = require("../models/userBalance.entity");
 const user = AppDataSource.getRepository(userSchema);
 const UserBalance = AppDataSource.getRepository(userBalanceSchema);
-const userBlockSchema = require("../models/userBlock.entity");
 const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
-const { userRoleConstant } = require("../config/contants");
 
 // id is required and select is optional parameter is an type or array
 

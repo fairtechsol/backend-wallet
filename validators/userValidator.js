@@ -29,7 +29,8 @@ module.exports.CreateUser = Joi.object({
     'string.empty': '"Transaction Password" can not be empty.'
   }),
   sessionCommission: Joi.number(),
-  matchComissionType: Joi.number().valid(...Object.values(matchComissionTypeConstant)),
+  matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
+
   matchCommission: Joi.number(),
 });
 
@@ -75,7 +76,7 @@ module.exports.generateTransactionPass = Joi.object({
 module.exports.updateUserValid = Joi.object({
   //sessionCommission,matchComissionType,matchCommission,id,createBy
   sessionCommission: Joi.number(),
-  matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)),
+  matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
   matchCommission: Joi.number(),
   id: Joi.string().guid({ version: 'uuidv4' }).required(),
   transactionPassword: Joi.string().required().messages({

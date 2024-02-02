@@ -48,6 +48,13 @@ const userBalanceSchema = new EntitySchema({
             scale: 2,
             default: 0
         },
+        totalCommission: {
+            type: 'decimal',
+            nullable: false,
+            precision: 13,
+            scale: 2,
+            default: 0
+          },
     },
     relations: {
         user: {

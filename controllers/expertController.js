@@ -1611,6 +1611,7 @@ exports.unDeclareMatchResult = async (req, res) => {
       matchId,
       profitLossDataWallet
     });
+    deleteCommission(matchOddId);
 
     return SuccessResponse(
       {

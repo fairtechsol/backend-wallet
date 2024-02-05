@@ -1,9 +1,10 @@
 const { MigrationInterface, QueryRunner } = require("typeorm");
 
-module.exports = class Commission1707134132608 {
-    name = 'Commission1707134132608'
+module.exports = class Commission1707135275798 {
+    name = 'Commission1707135275798'
 
     async up(queryRunner) {
+        await queryRunner.query(`ALTER TABLE "commissions" ADD "partnerShip" integer DEFAULT '100'`);
         await queryRunner.query(`ALTER TABLE "resultFaileds" DROP CONSTRAINT "FK_0c6dfa5539787ad66e424bab5ca"`);
         await queryRunner.query(`ALTER TABLE "resultFaileds" DROP CONSTRAINT "REL_0c6dfa5539787ad66e424bab5c"`);
         await queryRunner.query(`ALTER TABLE "commissions" ALTER COLUMN "betPlaceId" DROP NOT NULL`);
@@ -25,5 +26,6 @@ module.exports = class Commission1707134132608 {
         await queryRunner.query(`ALTER TABLE "commissions" ALTER COLUMN "betPlaceId" SET NOT NULL`);
         await queryRunner.query(`ALTER TABLE "resultFaileds" ADD CONSTRAINT "REL_0c6dfa5539787ad66e424bab5c" UNIQUE ("userId")`);
         await queryRunner.query(`ALTER TABLE "resultFaileds" ADD CONSTRAINT "FK_0c6dfa5539787ad66e424bab5ca" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "commissions" DROP COLUMN "partnerShip"`);
     }
 }

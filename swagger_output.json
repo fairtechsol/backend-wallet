@@ -175,6 +175,15 @@
                   },
                   "minBetLimit": {
                     "example": "any"
+                  },
+                  "sessionCommission": {
+                    "example": "any"
+                  },
+                  "matchComissionType": {
+                    "example": "any"
+                  },
+                  "matchCommission": {
+                    "example": "any"
                   }
                 }
               }
@@ -678,6 +687,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1079,6 +1095,15 @@
                   },
                   "isOldFairGame": {
                     "example": "any"
+                  },
+                  "sessionCommission": {
+                    "example": "any"
+                  },
+                  "matchComissionType": {
+                    "example": "any"
+                  },
+                  "matchCommission": {
+                    "example": "any"
                   }
                 }
               }
@@ -1145,6 +1170,15 @@
                     "example": "any"
                   },
                   "isOldFairGame": {
+                    "example": "any"
+                  },
+                  "sessionCommission": {
+                    "example": "any"
+                  },
+                  "matchComissionType": {
+                    "example": "any"
+                  },
+                  "matchCommission": {
                     "example": "any"
                   }
                 }

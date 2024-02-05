@@ -25,7 +25,7 @@ const resultFailedSchema = new EntitySchema({
   },
   relations: {
     user: {
-      type: "one-to-one",
+      type: "many-to-one",
       target: "user",
       joinColumn: {
         name: "userId",

@@ -16,18 +16,19 @@ const commissionSchema = new EntitySchema({
     },
     betPlaceId: {
       type: 'uuid',
-      nullable: false,
+      nullable: true,
     },
     teamName: {
       type:'varchar',
-      nullable:false
+      nullable:true
     },
     betPlaceDate: {
       type:'timestamp with time zone',
+      nullable:true,
     },
     odds: {
       type:'decimal',
-      nullable:false,
+      nullable:true,
       precision: 13,
       default: 0,
       transformer:new ColumnNumericTransformer(),
@@ -36,6 +37,7 @@ const commissionSchema = new EntitySchema({
     betType: {
       type:"enum",
       enum:betType,
+      nullable:true,
     },
     stake: {
       type:'decimal',
@@ -59,6 +61,11 @@ const commissionSchema = new EntitySchema({
     parentId:{
       type: 'uuid',
       nullable: false,
+    },
+    partnerShip:{
+      type:"int",
+      default:100,
+      nullable:true
     }
   }
 });

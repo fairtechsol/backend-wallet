@@ -48,6 +48,8 @@ exports.allApiRoutes = {
   betWiseProfitLoss:"/fairgameWallet/total/bet/profitLoss",
   sessionBetProfitLoss:"/fairgameWallet/total/session/profitLoss",
   isUserExist:"/fairgameWallet/user/exist",
+  commissionReportsMatches:"/fairgameWallet/commissionMatch/",
+  commissionReportsBetPlaced:"/fairgameWallet/commissionBetPlaced/",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

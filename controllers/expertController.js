@@ -1400,14 +1400,14 @@ exports.unDeclareMatchResult = async (req, res) => {
 
     const fgWallet = await getUser({
       roleName: userRoleConstant?.fairGameWallet
-    }, ["id", , "matchComissionType", "matchCommission"]);
+    }, ["id", "matchComissionType", "matchCommission"]);
 
     let fwProfitLoss = 0;
     let profitLossDataAdmin = {};
     let profitLossDataWallet = {};
     let exposure = 0;
 
-    const commissionData = await getCombinedCommission(betId);
+    const commissionData = await getCombinedCommission(matchOddId);
     let fwData = new Set();
 
     for (let i = 0; i < domainData?.length; i++) {

@@ -1,13 +1,13 @@
-const { expertDomain, redisKeys } = require("../config/contants");
+const { expertDomain, redisKeys, marketBetType, userRoleConstant, betResultStatus } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getUserDomainWithFaId } = require("../services/domainDataService");
+const { getUserDomainWithFaId, getDomainDataByFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
 exports.matchDetails = async (req, res) => {
   try {
-    const userId=req.user.id;
+    const userId = req.user.id;
     let domain = expertDomain;
     let apiResponse = {};
     try {
@@ -85,6 +85,7 @@ exports.matchDetails = async (req, res) => {
 
 exports.listMatch = async (req, res) => {
   try {
+    let user = req.user;
     let domain = expertDomain;
     let apiResponse = {};
     try {
@@ -98,6 +99,44 @@ exports.listMatch = async (req, res) => {
     } catch (error) {
       throw error?.response?.data;
     }
+
+    let domainData;
+    if (user.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getDomainDataByFaId(user.id);
+    }
+    else {
+      domainData = await getUserDomainWithFaId();
+    }
+
+    let bets = [];
+    
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, {
+        deleteReason: "isNull",
+        result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`,
+      }).then((data) => data).catch((err) => {
+        logger.error({
+          context: `error in ${url?.domain} setting bet placed redis`,
+          process: `User ID : ${user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+      });
+      bets.push(...(data?.data?.rows ?? []));
+    }
+
+    for (let i = 0; i < apiResponse.data?.matches?.length; i++) {
+      let matchDetail = apiResponse.data?.matches[i];
+      apiResponse.data.matches[i].totalBet = bets?.filter((item) => item?.matchId == matchDetail.id && item.marketBetType == marketBetType.MATCHBETTING)?.length;
+
+      const redisIds = [`${redisKeys.userTeamARate}${matchDetail?.id}`, `${redisKeys.userTeamBRate}${matchDetail?.id}`];
+
+      let redisData = await getUserRedisKeys(user.id, redisIds);
+
+      apiResponse.data.matches[i].teamARate = redisData?.[0];
+      apiResponse.data.matches[i].teamBRate = redisData?.[1];
+    }
+
     return SuccessResponse(
       {
         statusCode: 200,
@@ -120,7 +159,7 @@ exports.addMatch = async (req, res) => {
     let promiseArray = []
 
     for (let url of domainData) {
-     const promise= apiCall(apiMethod.post, url?.domain + allApiRoutes.addMatch, req.body).then();
+      const promise = apiCall(apiMethod.post, url?.domain + allApiRoutes.addMatch, req.body).then();
       promiseArray.push(promise);
     }
 
@@ -139,7 +178,7 @@ exports.addMatch = async (req, res) => {
     );
   } catch (err) {
     logger.error({
-      context:"Error in add match user side.",
+      context: "Error in add match user side.",
       message: err.message,
       stake: err.stack
     });

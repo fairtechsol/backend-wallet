@@ -154,6 +154,7 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
   .select()
   .where(where)
   .leftJoinAndMapOne("user.userBal","userBalances", "UB","user.id = UB.userId")
+  .leftJoinAndMapOne("user.domainData","domainData","domainData","user.id = domainData.userId")
 
   if (offset) {
     Query = Query.offset(parseInt(offset));

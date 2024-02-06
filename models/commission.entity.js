@@ -66,6 +66,14 @@ const commissionSchema = new EntitySchema({
       type:"int",
       default:100,
       nullable:true
+    },
+    matchName:{
+      type:"varchar",
+      nullable:true
+    },
+    matchStartDate:{
+      type: "time with time zone",
+      nullable: true
     }
   }
 });

@@ -83,7 +83,10 @@ module.exports.updateUserValid = Joi.object({
     'string.base': '"Transaction Password" must be a string',
     'any.required': '"Transaction Password" is required',
     'string.empty': '"Transaction Password" can not be empty.'
-  })
+  }),
+  fullName: Joi.string().trim().allow("").min(3).max(255),
+  phoneNumber: Joi.string().trim().allow(""),
+  city: Joi.string().max(255).trim().allow(""),
 })
 
 module.exports.SetExposureLimitValid = Joi.object({

@@ -66,7 +66,8 @@ exports.createUser = async (req, res) => {
       minBetLimit,
       sessionCommission,
       matchComissionType,
-      matchCommission
+      matchCommission,
+      remark
     } = req.body;
     let reqUser = req.user || {};
     let creator = await getUserById(reqUser.id);
@@ -133,7 +134,8 @@ exports.createUser = async (req, res) => {
       minBetLimit: minBetLimit,
       sessionCommission,
       matchComissionType,
-      matchCommission
+      matchCommission,
+      remark
     };
     let partnerships = await calculatePartnership(userData, creator);
     userData = { ...userData, ...partnerships };
@@ -196,7 +198,7 @@ exports.createUser = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
   try {
-    let { sessionCommission, matchComissionType, matchCommission, id } =
+    let { sessionCommission, matchComissionType, matchCommission, id ,remark} =
       req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
@@ -217,6 +219,7 @@ exports.updateUser = async (req, res) => {
     updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
     updateUser.matchComissionType =
       matchComissionType || updateUser.matchComissionType;
+    updateUser.remark = remark || updateUser.remark;
     updateUser = await addUser(updateUser);
     let response = lodash.pick(updateUser, [
       "id",
@@ -455,13 +458,6 @@ exports.setExposureLimit = async (req, res, next) => {
         res
       );
 
-    if (loginUser.exposureLimit < amount) {
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
-        req,
-        res
-      );
-    }
     amount = parseInt(amount);
     user.exposureLimit = amount;
     let childUsers = await getChildUser(user.id);

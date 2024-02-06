@@ -10,6 +10,7 @@ module.exports.CreateUser = Joi.object({
     'string.pattern.base': 'user.passwordMatch',
     'any.required': 'Password is required',
   }),
+  remark:Joi.string().allow("").trim(),
   phoneNumber: Joi.string().trim().allow(""),
   city: Joi.string().max(255).trim().allow(""),
   roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
@@ -78,6 +79,7 @@ module.exports.updateUserValid = Joi.object({
   sessionCommission: Joi.number(),
   matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
   matchCommission: Joi.number(),
+  remark:Joi.string().allow("").trim(),
   id: Joi.string().guid({ version: 'uuidv4' }).required(),
   transactionPassword: Joi.string().required().messages({
     'string.base': '"Transaction Password" must be a string',

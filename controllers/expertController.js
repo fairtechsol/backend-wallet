@@ -13,7 +13,7 @@ const { SuccessResponse, ErrorResponse } = require("../utils/response");
 exports.createUser = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
-    let { userName, fullName, password, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege, confirmPassword } = req.body;
+    let { userName,remark, fullName, password, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege, confirmPassword } = req.body;
     let reqUser = req.user;
 
     let userData = {
@@ -28,7 +28,8 @@ exports.createUser = async (req, res) => {
       betFairMatchPrivilege,
       bookmakerMatchPrivilege,
       sessionMatchPrivilege,
-      confirmPassword
+      confirmPassword,
+      remark
     };
     let domain = expertDomain;
     let apiResponse = {}
@@ -49,7 +50,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
-    let { id, fullName, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege } = req.body;
+    let { id, fullName,remark, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege } = req.body;
     let reqUser = req.user;
 
     let userData = {
@@ -62,7 +63,8 @@ exports.updateUser = async (req, res) => {
       addMatchPrivilege,
       betFairMatchPrivilege,
       bookmakerMatchPrivilege,
-      sessionMatchPrivilege
+      sessionMatchPrivilege,
+      remark
     };
     let domain = expertDomain;
     let apiResponse = {}

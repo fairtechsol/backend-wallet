@@ -66,7 +66,8 @@ exports.createSuperAdmin = async (req, res) => {
       isOldFairGame,
       sessionCommission,
       matchComissionType,
-      matchCommission
+      matchCommission,
+      remark
     } = req.body;
 
     if (isOldFairGame) {
@@ -155,6 +156,7 @@ exports.createSuperAdmin = async (req, res) => {
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
       isUrl: !Boolean(isOldFairGame),
+      remark: remark,
       ...(isOldFairGame ? {
         sessionCommission,
         matchComissionType,
@@ -186,6 +188,7 @@ exports.createSuperAdmin = async (req, res) => {
       "mPartnership",
       "agPartnership",
       "password",
+      "remark",
       ...(isOldFairGame ? ["sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
@@ -302,6 +305,7 @@ exports.updateSuperAdmin = async (req, res) => {
       phoneNumber,
       city,
       isOldFairGame,
+      remark,
       sessionCommission,
       matchComissionType,
       matchCommission
@@ -312,7 +316,8 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
-      (isOldFairGame ? ["sessionCommission",
+      "remark",
+      ...(isOldFairGame ? ["sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
     ]);
@@ -326,6 +331,7 @@ exports.updateSuperAdmin = async (req, res) => {
     updateUser.fullName = fullName ?? updateUser.fullName;
     updateUser.phoneNumber = phoneNumber ?? updateUser.phoneNumber;
     updateUser.city = city || updateUser.city;
+    updateUser.remark = remark || updateUser.remark;
 
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
@@ -364,6 +370,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "fullName",
       "phoneNumber",
       "city",
+      "remark",
       (isOldFairGame ? ["sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
@@ -428,13 +435,6 @@ exports.setExposureLimit = async (req, res, next) => {
         res
       );
 
-    if (loginUser.exposureLimit < amount) {
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
-        req,
-        res
-      );
-    }
     amount = parseInt(amount);
     user.exposureLimit = amount;
     let response = lodash.pick(user, ["id", "exposureLimit"]);

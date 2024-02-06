@@ -263,7 +263,7 @@ exports.getMatchDatesByCompetitionIdAndDate = async (req, res) => {
 exports.declareSessionResult = async (req, res) => {
   try {
 
-    const { betId, score, sessionDetails, userId: userIds, matchId } = req.body;
+    const { betId, score, sessionDetails, userId: userIds, matchId, match } = req.body;
 
     const domainData = await getUserDomainWithFaId();
 
@@ -289,6 +289,7 @@ exports.declareSessionResult = async (req, res) => {
           sessionDetails,
           userId: userIds,
           matchId,
+          match
         });
         response = response?.data;
       }
@@ -367,7 +368,9 @@ exports.declareSessionResult = async (req, res) => {
                   betType: items?.betType,
                   stake: items?.stake,
                   commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.sessionCommission) / 100).toFixed(2)),
-                  partnerShip: userCommission.fwPartnership
+                  partnerShip: userCommission.fwPartnership,
+                  matchName: match?.title,
+                  matchStartDate: match?.startAt
                 });
               });
             });
@@ -472,7 +475,9 @@ exports.declareSessionResult = async (req, res) => {
             betType: items?.betType,
             stake: items?.stake,
             commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(fgWallet?.sessionCommission) / 100).toFixed(2)),
-            upLinePartnership: 100
+            upLinePartnership: 100,
+            matchName: match?.title,
+            matchStartDate: match?.startAt
           });
         });
       });
@@ -1198,7 +1203,6 @@ exports.declareMatchResult = async (req, res) => {
               if (user.user.matchComissionType == matchComissionTypeConstant.entryWise) {
                 response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.forEach((items) => {
 
-
                   bulkCommission.push({
                     createBy: item,
                     matchId: items.matchId,
@@ -1211,11 +1215,10 @@ exports.declareMatchResult = async (req, res) => {
                     betType: items?.betType,
                     stake: items?.stake,
                     commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
-                    partnerShip: userCommission.fwPartnership
+                    partnerShip: userCommission.fwPartnership,
+                    matchName: match?.title,
+                    matchStartDate: match?.startAt
                   });
-
-
-
                 });
               }
               else if (parseFloat(adminBalanceData?.["profitLoss"]) < 0) {
@@ -1225,7 +1228,9 @@ exports.declareMatchResult = async (req, res) => {
                   betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
                   parentId: parentUserId,
                   commissionAmount: parseFloat((parseFloat(parseFloat(adminBalanceData?.["profitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
-                  partnerShip: userCommission.fwPartnership
+                  partnerShip: userCommission.fwPartnership,
+                  matchName: match?.title,
+                  matchStartDate: match?.startAt
                 });
               }
             });
@@ -1313,7 +1318,9 @@ exports.declareMatchResult = async (req, res) => {
               betType: items?.betType,
               stake: items?.stake,
               commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
-              partnerShip: 100
+              partnerShip: 100,
+              matchName: match?.title,
+              matchStartDate: match?.startAt
             });
           });
         }
@@ -1324,7 +1331,9 @@ exports.declareMatchResult = async (req, res) => {
             betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
             parentId: fgWallet.id,
             commissionAmount: parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2)),
-            partnerShip: 100
+            partnerShip: 100,
+            matchName: match?.title,
+            matchStartDate: match?.startAt
           });
         }
       });

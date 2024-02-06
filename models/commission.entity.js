@@ -6,6 +6,10 @@ const commissionSchema = new EntitySchema({
   name: 'commission',
   columns: {
     ...baseColumnsSchemaPart,
+    userName: {
+      type: 'varchar',
+      nullable: true
+    },
     matchId: {
       type: 'uuid',
       nullable: true
@@ -19,30 +23,30 @@ const commissionSchema = new EntitySchema({
       nullable: true,
     },
     teamName: {
-      type:'varchar',
-      nullable:true
+      type: 'varchar',
+      nullable: true
     },
     betPlaceDate: {
-      type:'timestamp with time zone',
-      nullable:true,
+      type: 'timestamp with time zone',
+      nullable: true,
     },
     odds: {
-      type:'decimal',
-      nullable:true,
+      type: 'decimal',
+      nullable: true,
       precision: 13,
       default: 0,
-      transformer:new ColumnNumericTransformer(),
+      transformer: new ColumnNumericTransformer(),
 
     },
     betType: {
-      type:"enum",
-      enum:betType,
-      nullable:true,
+      type: "enum",
+      enum: betType,
+      nullable: true,
     },
     stake: {
-      type:'decimal',
-      transformer:new ColumnNumericTransformer(),
-      nullable:true,
+      type: 'decimal',
+      transformer: new ColumnNumericTransformer(),
+      nullable: true,
       precision: 13,
       default: 0,
     },
@@ -53,25 +57,25 @@ const commissionSchema = new EntitySchema({
       nullable: false,
       transformer: new ColumnNumericTransformer()
     },
-    commissionType:{
+    commissionType: {
       type: 'enum',
       enum: Object.values(matchComissionTypeConstant),
       nullable: true
     },
-    parentId:{
+    parentId: {
       type: 'uuid',
       nullable: false,
     },
-    partnerShip:{
-      type:"int",
-      default:100,
-      nullable:true
+    partnerShip: {
+      type: "int",
+      default: 100,
+      nullable: true
     },
-    matchName:{
-      type:"varchar",
-      nullable:true
+    matchName: {
+      type: "varchar",
+      nullable: true
     },
-    matchStartDate:{
+    matchStartDate: {
       type: "time with time zone",
       nullable: true
     }

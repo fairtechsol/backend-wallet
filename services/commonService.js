@@ -640,7 +640,7 @@ exports.settingBetsDataAtLogin = async (user) => {
         stake: err.stack,
       });
     });
-    bets.push(...data?.data?.rows);
+    bets.push(...(data?.data?.rows??[]));
   }
  
     let sessionResult = {};

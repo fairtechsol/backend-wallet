@@ -3,7 +3,7 @@ const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
 const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference} = require('../validators/userValidator');
-const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist} = require('../controllers/userController');
+const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced} = require('../controllers/userController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -24,6 +24,8 @@ router.get("/total/profitLoss", isAuthenticate, getTotalProfitLoss);
 router.get("/total/domain/profitLoss", isAuthenticate, getDomainProfitLoss);
 router.get("/total/bet/profitLoss", isAuthenticate, getResultBetProfitLoss);
 router.get("/total/session/profitLoss", isAuthenticate, getSessionBetProfitLoss);
+router.get("/commissionMatch/:userId", isAuthenticate, getCommissionMatchReports);
+router.get("/commissionBetPlaced/:userId", isAuthenticate, getCommissionBetPlaced);
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

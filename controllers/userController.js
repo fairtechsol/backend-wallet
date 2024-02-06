@@ -5,6 +5,7 @@ const {
   blockType,
   fileType,
   expertDomain,
+  oldBetFairDomain,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -47,6 +48,7 @@ const {
 } = require("../services/commonService");
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
+const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 exports.createUser = async (req, res) => {
   try {
     let {
@@ -243,7 +245,7 @@ exports.isUserExist = async (req, res) => {
 
     const isUserExist = await getUserByUserName(userName);
     isExist = Boolean(isUserExist);
-    if(isExist){
+    if (isExist) {
       return SuccessResponse({ statusCode: 200, data: { isUserExist: isExist } }, req, res);
     }
 
@@ -606,7 +608,7 @@ exports.userList = async (req, res, next) => {
           //     : 0;
           // }
 
-          element["balance"] =  Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
+          element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
         } else {
           element["availableBalance"] = Number(
             (
@@ -693,7 +695,7 @@ exports.userList = async (req, res, next) => {
         res
       );
     }
-    
+
     response.list = data;
     let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.exposure) as "totalExposure"`;
 
@@ -732,8 +734,8 @@ exports.userList = async (req, res, next) => {
     const totalBalance = await getUsersWithTotalUsersBalanceData(where, req.query, queryColumns);
     totalBalance.availableBalance = parseFloat(totalBalance.availableBalance) - parseFloat(totalBalance.totalExposure);
     const adminBalance = await getUserBalanceDataByUserId(userId || reqUser.id);
-    totalBalance.currBalance=parseFloat(adminBalance.downLevelBalance)+parseFloat(adminBalance.currentBalance);
-  
+    totalBalance.currBalance = parseFloat(adminBalance.downLevelBalance) + parseFloat(adminBalance.currentBalance);
+
     return SuccessResponse(
       {
         statusCode: 200,
@@ -827,9 +829,9 @@ exports.userBalanceDetails = async (req, res, next) => {
       allChildBalanceData,
     ]);
 
-    userBalanceData = AggregateBalanceData[0] && AggregateBalanceData[0].value   ? AggregateBalanceData[0].value : {};
+    userBalanceData = AggregateBalanceData[0] && AggregateBalanceData[0].value ? AggregateBalanceData[0].value : {};
     FirstLevelChildBalanceData = AggregateBalanceData[1] && AggregateBalanceData[1].value ? AggregateBalanceData[1].value : {};
-    allChildBalanceData = AggregateBalanceData[2] && AggregateBalanceData[2].value ? AggregateBalanceData[2].value  : {};
+    allChildBalanceData = AggregateBalanceData[2] && AggregateBalanceData[2].value ? AggregateBalanceData[2].value : {};
 
     let response = {
       userCreditReference: parseFloat(loginUser.creditRefrence),
@@ -1063,7 +1065,6 @@ exports.lockUnlockUser = async (req, res, next) => {
               body
             );
           } catch (err) {
-            console.log(err);
             return ErrorResponse(err?.response?.data, req, res);
           }
         } else if (userBlock) {
@@ -1156,9 +1157,9 @@ exports.getTotalProfitLoss = async (req, res) => {
     const { id: userId, roleName } = req.user;
     const { startDate, endDate, id } = req.query;
     let domainData;
-    let where={};
+    let where = {};
 
-    if(id) {
+    if (id) {
       where = {
         userId: id
       }
@@ -1318,6 +1319,65 @@ exports.getSessionBetProfitLoss = async (req, res) => {
   } catch (error) {
     logger.error({
       context: `error in get session bets profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getCommissionMatchReports = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let commissionReportData = [];
+
+    const userData = await getUserById(userId, ["id"]);
+    if (userData) {
+      commissionReportData = await commissionReport(userId, req.query);
+    }
+    else {
+      try {
+        let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.commissionReportsMatches + userId, null, null, req.query);
+        commissionReportData = response?.data;
+      } catch (err) {
+        return ErrorResponse(err?.response?.data, req, res);
+      }
+    }
+    return SuccessResponse({ statusCode: 200, data: commissionReportData }, req, res);
+
+  } catch (error) {
+    logger.error({
+      context: `error in get commission report`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getCommissionBetPlaced = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { matchId } = req.query;
+    let commissionReportData = [];
+
+    const userData = await getUserById(userId, ["id"]);
+    if (userData) {
+      commissionReportData = await commissionMatchReport(userId, matchId);
+    }
+    else {
+      try {
+        let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.commissionReportsBetPlaced + userId, null, null, req.query);
+        commissionReportData = response?.data;
+      } catch (err) {
+        return ErrorResponse(err?.response?.data, req, res);
+      }
+    }
+    return SuccessResponse({ statusCode: 200, data: commissionReportData }, req, res);
+
+  } catch (error) {
+    logger.error({
+      context: `error in get commission report`,
       error: error.message,
       stake: error.stack,
     });

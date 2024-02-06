@@ -154,7 +154,7 @@ exports.createSuperAdmin = async (req, res) => {
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
-      isUrl: true,
+      isUrl: !Boolean(isOldFairGame),
       ...(isOldFairGame ? {
         sessionCommission,
         matchComissionType,

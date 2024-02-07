@@ -124,14 +124,6 @@ ${getUserChild}
 
 
 
-exports.getUser = async (where = {}, select) => {
-  //find list with filter and pagination
-  return await user.findOne({
-    where: where,
-    select: select
-  });
-
-};
 
 
 exports.getUsers = async (where, select, offset, limit, relations) => {

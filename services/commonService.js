@@ -1,9 +1,10 @@
-const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName } = require("../config/contants");
+const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { logger } = require("../config/logger");
 const { sendMessageToUser } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { getUserDomainWithFaId, getDomainDataByFaId } = require("./domainDataService");
+const userService = require("./userService");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
@@ -608,6 +609,18 @@ exports.calculateRatesMatch = async (betPlace, partnerShip = 100, matchData) => 
   return { teamARate, teamBRate, teamCRate, teamNoRateTie, teamYesRateTie, teamNoRateComplete, teamYesRateComplete };
 }
 
+exports.getFaAdminDomain = async (user,select,where={}) => {
+  const domainData = await getDomainDataByFaId(user.id, select, where);
+  const checkIfUserExist = await userService.getUser({ createBy: user.id },["id"]);
+
+  if (!domainData.find((item) => item?.domain == oldBetFairDomain) && checkIfUserExist) {
+    domainData.push({
+      domain: oldBetFairDomain,
+    });
+  }
+  return domainData;
+}
+
 /**
  * Retrieves and calculates various betting data for a user at login.
  * @param {Object} user - The user object.
@@ -619,10 +632,10 @@ exports.calculateRatesMatch = async (betPlace, partnerShip = 100, matchData) => 
 exports.settingBetsDataAtLogin = async (user) => {
 
   let domainData;
-  if(user.roleName==userRoleConstant.fairGameAdmin){
-    domainData = await getDomainDataByFaId(user.id);
+  if (user.roleName == userRoleConstant.fairGameAdmin) {
+    domainData= await this.getFaAdminDomain(user);
   }
-  else{
+  else {
     domainData = await getUserDomainWithFaId();
   }
 
@@ -631,7 +644,8 @@ exports.settingBetsDataAtLogin = async (user) => {
   for (let url of domainData) {
     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{},{
       deleteReason: "isNull",
-      result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`
+      result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`,
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { "user.superParentId": user.id } : {})
     }).then((data) => data).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,

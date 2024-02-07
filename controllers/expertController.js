@@ -365,14 +365,14 @@ exports.declareSessionResult = async (req, res) => {
                   betPlaceId: items?.betPlaceId,
                   parentId: userId,
                   teamName: items?.sessionName,
-                  betPlaceDate: items?.betPlaceDate,
+                  betPlaceDate: new Date(items?.betPlaceDate),
                   odds: items?.odds,
                   betType: items?.betType,
                   stake: items?.stake,
                   commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.sessionCommission) / 100).toFixed(2)),
                   partnerShip: userCommission.fwPartnership,
                   matchName: match?.title,
-                  matchStartDate: match?.startAt,
+                  matchStartDate: new Date(match?.startAt),
                   userName: items.userName
 
                 });
@@ -474,14 +474,14 @@ exports.declareSessionResult = async (req, res) => {
             betPlaceId: items?.betPlaceId,
             parentId: fgWallet.id,
             teamName: items?.sessionName,
-            betPlaceDate: items?.betPlaceDate,
+            betPlaceDate: new Date(items?.betPlaceDate),
             odds: items?.odds,
             betType: items?.betType,
             stake: items?.stake,
             commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(fgWallet?.sessionCommission) / 100).toFixed(2)),
             upLinePartnership: 100,
             matchName: match?.title,
-            matchStartDate: match?.startAt,
+            matchStartDate: new Date(match?.startAt),
             userName: items.userName
 
           });
@@ -1216,14 +1216,14 @@ exports.declareMatchResult = async (req, res) => {
                     betPlaceId: items?.betPlaceId,
                     parentId: parentUserId,
                     teamName: items?.sessionName,
-                    betPlaceDate: items?.betPlaceDate,
+                    betPlaceDate: new Date(items?.betPlaceDate),
                     odds: items?.odds,
                     betType: items?.betType,
                     stake: items?.stake,
                     commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
                     partnerShip: userCommission.fwPartnership,
                     matchName: match?.title,
-                    matchStartDate: match?.startAt,
+                    matchStartDate: new Date(match?.startAt),
                     userName: items.userName
 
                   });
@@ -1238,7 +1238,7 @@ exports.declareMatchResult = async (req, res) => {
                   commissionAmount: parseFloat((parseFloat(parseFloat(adminBalanceData?.["profitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
                   partnerShip: userCommission.fwPartnership,
                   matchName: match?.title,
-                  matchStartDate: match?.startAt,
+                  matchStartDate: new Date(match?.startAt),
                   userName: response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.[0]?.userName
 
                 });
@@ -1285,6 +1285,8 @@ exports.declareMatchResult = async (req, res) => {
         };
 
       }
+
+      fwProfitLoss += parseFloat(response.fwWalletDeduction);
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -1323,14 +1325,14 @@ exports.declareMatchResult = async (req, res) => {
               betPlaceId: items?.betPlaceId,
               parentId: fgWallet.id,
               teamName: items?.sessionName,
-              betPlaceDate: items?.betPlaceDate,
+              betPlaceDate: new Date(items?.betPlaceDate),
               odds: items?.odds,
               betType: items?.betType,
               stake: items?.stake,
               commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
               partnerShip: 100,
               matchName: match?.title,
-              matchStartDate: match?.startAt,
+              matchStartDate: new Date(match?.startAt),
               userName: items.userName
             });
           });
@@ -1344,7 +1346,7 @@ exports.declareMatchResult = async (req, res) => {
             commissionAmount: parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2)),
             partnerShip: 100,
             matchName: match?.title,
-            matchStartDate: match?.startAt,
+            matchStartDate: new Date(match?.startAt),
             userName: response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.[0]?.userName
 
           });
@@ -1569,6 +1571,7 @@ exports.unDeclareMatchResult = async (req, res) => {
           }
         });
       }
+      fwProfitLoss -= parseFloat(response.fwWalletDeduction);
     };
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);

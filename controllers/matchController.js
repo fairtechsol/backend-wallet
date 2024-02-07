@@ -1,5 +1,6 @@
 const { expertDomain, redisKeys, marketBetType, userRoleConstant, betResultStatus } = require("../config/contants");
 const { logger } = require("../config/logger");
+const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId, getDomainDataByFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
@@ -102,7 +103,7 @@ exports.listMatch = async (req, res) => {
 
     let domainData;
     if (user.roleName == userRoleConstant.fairGameAdmin) {
-      domainData = await getDomainDataByFaId(user.id);
+      domainData = await getFaAdminDomain(user);
     }
     else {
       domainData = await getUserDomainWithFaId();
@@ -111,10 +112,7 @@ exports.listMatch = async (req, res) => {
     let bets = [];
     
     for (let url of domainData) {
-      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, {
-        deleteReason: "isNull",
-        result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`,
-      }).then((data) => data).catch((err) => {
+      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.betCount, null, {}, { ...(user.roleName == userRoleConstant.fairGameAdmin ? { parentId: user.id } : {}) }).then((data) => data).catch((err) => {
         logger.error({
           context: `error in ${url?.domain} setting bet placed redis`,
           process: `User ID : ${user.id} `,
@@ -122,12 +120,12 @@ exports.listMatch = async (req, res) => {
           stake: err.stack,
         });
       });
-      bets.push(...(data?.data?.rows ?? []));
+      bets.push(...(data?.data ?? []));
     }
 
     for (let i = 0; i < apiResponse.data?.matches?.length; i++) {
       let matchDetail = apiResponse.data?.matches[i];
-      apiResponse.data.matches[i].totalBet = bets?.filter((item) => item?.matchId == matchDetail.id)?.length;
+      apiResponse.data.matches[i].totalBet = bets?.find((item) => item?.matchId == matchDetail.id)?.count;
 
       const redisIds = [`${redisKeys.userTeamARate}${matchDetail?.id}`, `${redisKeys.userTeamBRate}${matchDetail?.id}`];
 

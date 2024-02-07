@@ -45,6 +45,7 @@ const {
   calculatePartnership,
   checkUserCreationHierarchy,
   forceLogoutUser,
+  getFaAdminDomain,
 } = require("../services/commonService");
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
@@ -1150,18 +1151,13 @@ exports.getProfile = async (req, res) => {
 
 exports.getTotalProfitLoss = async (req, res) => {
   try {
-    const { id: userId, roleName } = req.user;
+    const { roleName } = req.user;
     const { startDate, endDate, id } = req.query;
     let domainData;
     let where = {};
 
-    if (id) {
-      where = {
-        userId: id
-      }
-    }
     if (roleName == userRoleConstant.fairGameAdmin) {
-      domainData = await getDomainDataByFaId(userId, null, where);
+      domainData = await getFaAdminDomain(req.user, null, where);
     }
     else {
       domainData = await getUserDomainWithFaId(where);
@@ -1171,7 +1167,7 @@ exports.getTotalProfitLoss = async (req, res) => {
 
     for (let url of domainData) {
       let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.profitLoss, {
-        user: req.user, startDate: startDate, endDate: endDate
+        user: req.user, startDate: startDate, endDate: endDate, searchId: id
       }, {})
         .then((data) => data)
         .catch((err) => {
@@ -1227,9 +1223,9 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    const { startDate, endDate, url, type } = req.query;
+    const { startDate, endDate, url, type, id } = req.query;
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type }, {})
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({
@@ -1260,9 +1256,9 @@ exports.getDomainProfitLoss = async (req, res) => {
 
 exports.getResultBetProfitLoss = async (req, res) => {
   try {
-    const { matchId, betId, isSession, url } = req.query;
+    const { matchId, betId, isSession, url, id } = req.query;
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true' }, {})
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true',searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({
@@ -1292,9 +1288,9 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    const { matchId, url } = req.query;
+    const { matchId, url,id } = req.query;
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId }, {})
+    let data = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId,searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({

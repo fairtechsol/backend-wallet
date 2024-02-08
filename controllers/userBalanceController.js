@@ -1,9 +1,12 @@
-const { transType, socketData } = require('../config/contants');
-const { getUser, } = require('../services/userService');
+const { transType, socketData, matchComissionTypeConstant } = require('../config/contants');
+const { getUser, getUsersWithUserBalance, getUserDataWithUserBalance, } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
-const {  updateUserBalanceByUserId, getUserBalanceDataByUserId } = require('../services/userBalanceService');
+const { updateUserBalanceByUserId, getUserBalanceDataByUserId, addInitialUserBalance } = require('../services/userBalanceService');
 const { sendMessageToUser } = require('../sockets/socketManager');
+const { logger } = require('../config/logger');
+const { settleCommission, insertCommissions } = require('../services/commissionService');
+const { apiCall, apiMethod, allApiRoutes } = require('../utils/apiService');
 
 exports.updateUserBalance = async (req, res) => {
     try {
@@ -13,14 +16,14 @@ exports.updateUserBalance = async (req, res) => {
         // let loginUser = await getUserById(reqUser.id || createBy)
         // if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
-        if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "User"} } }, req, res);
+        if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "User" } } }, req, res);
 
         let loginUserBalanceData = getUserBalanceDataByUserId(reqUser.id);
         let insertUserBalanceData = getUserBalanceDataByUserId(user.id);
         let usersBalanceData = await Promise.all([loginUserBalanceData, insertUserBalanceData])
         if (!usersBalanceData.length || !usersBalanceData[1])
-            return ErrorResponse({ statusCode: 400, message: { msg: "notFound",keys :{name : "User balance"} } }, req, res);
-        
+            return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "User balance" } } }, req, res);
+
         loginUserBalanceData = usersBalanceData[0]
         let updatedLoginUserBalanceData = {}
         let updatedUpdateUserBalanceData = {}
@@ -63,19 +66,79 @@ exports.updateUserBalance = async (req, res) => {
             closingBalance: updatedLoginUserBalanceData.currentBalance,
             description: remark
         }]
-        sendMessageToUser(userId,socketData.userBalanceUpdateEvent,updatedUpdateUserBalanceData);
+        sendMessageToUser(userId, socketData.userBalanceUpdateEvent, updatedUpdateUserBalanceData);
         insertTransactions(transactionArray);
         updatedUpdateUserBalanceData["id"] = user.id
         return SuccessResponse(
             {
                 statusCode: 200,
-                message: { msg: "updated",keys : {name : "User Balance"} },
+                message: { msg: "updated", keys: { name: "User Balance" } },
                 data: updatedUpdateUserBalanceData,
             },
             req,
             res
         );
     } catch (error) {
+        return ErrorResponse(error, req, res);
+    }
+}
+
+exports.settleCommissions = async (req, res) => {
+    try {
+        const { userId, domain } = req.body;
+        const userData = await getUserDataWithUserBalance({ id: userId });
+
+        if (userData?.userBal?.totalCommission == 0) {
+            return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.commissionAlreadySettled" } }, req, res);
+        }
+
+        if (domain) {
+            await apiCall(apiMethod.post, domain + allApiRoutes.commissionSettled, {
+                userId: userId
+              })
+                .then((data) => data)
+                .catch((err) => {
+                  logger.error({
+                    context: `error in ${domain} settling commission`,
+                    process: `User ID : ${req.user.id} `,
+                    error: err.message,
+                    stake: err.stack,
+                  });
+                  throw err;
+                });
+        }
+        if (userData) {
+            settleCommission(userId);
+            insertCommissions({
+                userName: userData.userName,
+                commissionAmount: userData.userBal.totalCommission,
+                createBy: userData.id,
+                parentId: userData.id,
+                commissionType: matchComissionTypeConstant.settled,
+                settled: true
+            });
+
+            userData.userBal.totalCommission = 0;
+
+            await addInitialUserBalance(userData.userBal);
+
+        }
+        return SuccessResponse(
+            {
+                statusCode: 200,
+                message: { msg: "settledCommission" },
+                data: userData,
+            },
+            req,
+            res
+        );
+
+    } catch (error) {
+        logger.error({
+            message: "Error in settle commission.",
+            context: error.message,
+            stake: error.stack
+        });
         return ErrorResponse(error, req, res);
     }
 }

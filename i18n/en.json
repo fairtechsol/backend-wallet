@@ -10,6 +10,7 @@
   "add": "{key} added successfully.",
   "required": "{name} is required.",
   "fetched" : "{name} fetch successfully.",
+  "settledCommission" : "Commission settled successfully.",
   "auth": {
     "loginSuccess": "Login successfully.",
     "invalidPass": "Invalid {type} password.",
@@ -46,7 +47,8 @@
   "userBalance": {
     "insufficientBalance": "balance is insufficient to take this action.",
     "BalanceAddedSuccessfully": "Balance Updated successfully.",
-    "InvalidTransactionType" : "Invalid transaction type"
+    "InvalidTransactionType" : "Invalid transaction type",
+    "commissionAlreadySettled":"Commission is already settled."
   },
   "deleteBetError": "{urlData} these url are not update try again with these bet.",
   "wallet": {},

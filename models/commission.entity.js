@@ -78,6 +78,10 @@ const commissionSchema = new EntitySchema({
     matchStartDate: {
       type: "time with time zone",
       nullable: true
+    },
+    settled:{
+      type:Boolean,
+      default:false
     }
   }
 });

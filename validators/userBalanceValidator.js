@@ -29,3 +29,7 @@ module.exports.SetWalletCreditRefrence = Joi.object({
     transactionPassword: Joi.string().required(),
 })
 
+module.exports.settleCommission = Joi.object({
+    userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+    domain: Joi.string()
+});

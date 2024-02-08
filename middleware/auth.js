@@ -69,8 +69,6 @@ exports.isAuthenticate = async (req, res, next) => {
 
 
 exports.checkTransactionPassword = async (req,res,next) => {
-  next();
-  return;
   let {transactionPassword} = req.body
   let {id} = req.user
   if(!transactionPassword) 

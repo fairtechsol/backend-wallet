@@ -225,6 +225,19 @@ exports.getUserBalanceDataByUserIds = async (userIds, select) => {
   })
 }
 
+exports.getUserDataWithUserBalance = async (where) => {
+  return await user
+  .createQueryBuilder()
+  .where(where)
+  .leftJoinAndMapOne(
+    "user.userBal",
+    "userBalances",
+    "UB",
+    "user.id = UB.userId"
+  )
+  .getOne();
+}
+
 
 exports.getUserWithUserBalance = async (userName) => {
   let userData = user

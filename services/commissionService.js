@@ -28,3 +28,9 @@ exports.commissionMatchReport = (userId, matchId) => {
 
   return commissionMatches.getRawMany();
 }
+
+exports.settleCommission = (userId) => {
+  Commission.update({ parentId: userId },{
+    settled:true
+  });
+}

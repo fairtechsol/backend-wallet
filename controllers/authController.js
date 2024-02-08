@@ -275,12 +275,4 @@ exports.logout = async (req, res) => {
   }
 };
 
-exports.dummyFunction = async (req, res) => {
-  try {
-    console.log("at the controller");
-    const users = await dummyFunction();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+

@@ -165,6 +165,7 @@ exports.getUsersWithUsersBalanceData = async (where, query) => {
   let transactionQuery = new ApiFeature(user.createQueryBuilder()
   .where(where)
   .leftJoinAndMapOne("user.userBal","userBalances", "UB","user.id = UB.userId")
+  .leftJoinAndMapOne("user.domainData", "domainDatas", "domainData", "user.id = domainData.userId")
   ,query).search().filter().sort().paginate().getResult();
 
     return await transactionQuery;

@@ -50,6 +50,7 @@ exports.allApiRoutes = {
   isUserExist:"/fairgameWallet/user/exist",
   commissionReportsMatches:"/fairgameWallet/commissionMatch/",
   commissionReportsBetPlaced:"/fairgameWallet/commissionBetPlaced/",
+  userList:"/fairgameWallet/user/list/",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

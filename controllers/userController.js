@@ -493,12 +493,37 @@ exports.userList = async (req, res, next) => {
   try {
     let reqUser = req.user;
     // let loginUser = await getUserById(reqUser.id)
-    const { type, userId, ...apiQuery } = req.query;
+    const { type, userId,domain,roleName, ...apiQuery } = req.query;
+
+    if(domain){
+      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userList,null,{}, {
+        ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${domain} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          data: response?.data
+        },
+        req,
+        res
+      );
+    }
+
     let userRole = reqUser.roleName;
     let where = {
       createBy: userId || reqUser.id,
     };
-
 
     let users = await getUsersWithUsersBalanceData(where, apiQuery);
 
@@ -572,6 +597,14 @@ exports.userList = async (req, res, next) => {
 
     let data = await Promise.all(
       users[0].map(async (element) => {
+
+        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+          element.domain = oldBetFairDomain;
+        }
+        else {
+          element.domain = element?.domainData?.domain;
+        }
+
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         let partner_ships = 100;
         if (partnershipCol && partnershipCol.length) {
@@ -728,7 +761,7 @@ exports.userList = async (req, res, next) => {
       }
     }
 
-    const totalBalance = await getUsersWithTotalUsersBalanceData(where, req.query, queryColumns);
+    const totalBalance = await getUsersWithTotalUsersBalanceData(where, apiQuery, queryColumns);
     totalBalance.availableBalance = parseFloat(totalBalance.availableBalance) - parseFloat(totalBalance.totalExposure);
     const adminBalance = await getUserBalanceDataByUserId(userId || reqUser.id);
     totalBalance.currBalance = parseFloat(adminBalance.downLevelBalance) + parseFloat(adminBalance.currentBalance);

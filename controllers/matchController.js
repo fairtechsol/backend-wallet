@@ -183,3 +183,31 @@ exports.addMatch = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
+
+
+exports.matchLock=async (req,res)=>{
+  try {
+    let { domain } = req.body;
+
+    try {
+      const response = await apiCall(apiMethod.post, domain + allApiRoutes.matchLock, req.body);
+      return SuccessResponse(
+        response,
+        req,
+        res
+      );
+    } catch (error) {
+      throw error?.response?.data
+    }
+
+    
+  } catch (error) {
+    logger.error({
+      message: "Error at matchLock",
+      context: error.message,
+      stake: error.stack
+    });
+
+    return ErrorResponse(error, req, res);
+  }
+}

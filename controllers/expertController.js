@@ -328,6 +328,7 @@ exports.declareSessionResult = async (req, res) => {
 
       for (let userId in response?.faAdminCal.userData) {
         let adminBalanceData = response?.faAdminCal.userData[userId];
+        fwProfitLoss += parseFloat(adminBalanceData?.["profitLoss"]);
 
         if (adminBalanceData.role == userRoleConstant.fairGameAdmin) {
           totalCommissions = [...totalCommissions, ...response?.faAdminCal?.commission];

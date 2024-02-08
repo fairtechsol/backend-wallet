@@ -13,7 +13,7 @@ const { SuccessResponse, ErrorResponse } = require("../utils/response");
 exports.createUser = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
-    let { userName,remark, fullName, password, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege, confirmPassword } = req.body;
+    let { userName, remark, fullName, password, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege, confirmPassword } = req.body;
     let reqUser = req.user;
 
     let userData = {
@@ -50,7 +50,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
-    let { id, fullName,remark, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege } = req.body;
+    let { id, fullName, remark, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege } = req.body;
     let reqUser = req.user;
 
     let userData = {
@@ -281,6 +281,8 @@ exports.declareSessionResult = async (req, res) => {
     let bulkCommission = [];
     let totalCommissions = [];
 
+    let resultProfitLoss = 0;
+
     for (let i = 0; i < domainData?.length; i++) {
       const item = domainData[i];
       let response;
@@ -294,6 +296,7 @@ exports.declareSessionResult = async (req, res) => {
           match
         });
         response = response?.data;
+        resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2))
       }
       catch (err) {
         logger.error({
@@ -549,7 +552,7 @@ exports.declareSessionResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: fwProfitLoss }
+        data: { profitLoss: resultProfitLoss }
       },
       req,
       res
@@ -808,7 +811,7 @@ exports.unDeclareSessionResult = async (req, res) => {
 
     const commissionData = await getCombinedCommission(betId);
     let fwData = new Set();
-
+    let resultProfitLoss = 0;
     for (let i = 0; i < domainData?.length; i++) {
       let item = domainData[i];
       let response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultSession, {
@@ -833,6 +836,7 @@ exports.unDeclareSessionResult = async (req, res) => {
         return;
       });
       response = response?.data;
+      resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2))
 
 
       for (let userIds in response?.superAdminData) {
@@ -911,11 +915,13 @@ exports.unDeclareSessionResult = async (req, res) => {
           if (!profitLossDataAdmin[parentUser.userId]) {
             profitLossDataAdmin[parentUser.userId] = { ...newProfitLoss };
           } else {
-            mergeProfitLoss(
-              newProfitLoss?.betPlaced,
-              profitLossDataAdmin[parentUser.userId]?.betPlaced
-            );
-
+            if (newProfitLoss?.betPlaced &&
+              profitLossDataAdmin[parentUser.userId]?.betPlaced) {
+              mergeProfitLoss(
+                newProfitLoss?.betPlaced,
+                profitLossDataAdmin[parentUser.userId]?.betPlaced
+              );
+            }
             profitLossDataAdmin = {
               upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
               lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
@@ -977,11 +983,13 @@ exports.unDeclareSessionResult = async (req, res) => {
       if (!profitLossDataWallet) {
         profitLossDataWallet = { ...newProfitLoss };
       } else {
-        mergeProfitLoss(
-          newProfitLoss?.betPlaced,
-          profitLossDataWallet?.betPlaced
-        );
-
+        if (newProfitLoss?.betPlaced &&
+          profitLossDataWallet?.betPlaced) {
+          mergeProfitLoss(
+            newProfitLoss?.betPlaced,
+            profitLossDataWallet?.betPlaced
+          );
+        }
         profitLossDataWallet = {
           upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
           lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
@@ -1091,7 +1099,7 @@ exports.unDeclareSessionResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultUnDeclared" },
-        data: { profitLoss: fwProfitLoss, profitLossDataWallet: profitLossDataWallet }
+        data: { profitLoss: resultProfitLoss, profitLossDataWallet: profitLossDataWallet }
       },
       req,
       res
@@ -1128,7 +1136,7 @@ exports.declareMatchResult = async (req, res) => {
     let totalCommissions = [];
 
     let totalCommissionProfitLoss = 0;
-
+    let resultProfitLoss = 0;
     for (let i = 0; i < domainData?.length; i++) {
       const item = domainData[i];
       let response;
@@ -1137,6 +1145,7 @@ exports.declareMatchResult = async (req, res) => {
           result, matchDetails, userId, matchId, match
         });
         response = response?.data;
+        resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2))
       }
       catch (err) {
         logger.error({
@@ -1395,7 +1404,7 @@ exports.declareMatchResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: fwProfitLoss }
+        data: { profitLoss: resultProfitLoss }
       },
       req,
       res
@@ -1434,7 +1443,7 @@ exports.unDeclareMatchResult = async (req, res) => {
 
     const commissionData = await getCombinedCommission(matchOddId);
     let fwData = new Set();
-
+    let resultProfitLoss = 0;
     for (let i = 0; i < domainData?.length; i++) {
       let item = domainData[i];
       let response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultMatch, {
@@ -1460,6 +1469,7 @@ exports.unDeclareMatchResult = async (req, res) => {
         return;
       });
       response = response?.data;
+      resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2))
 
       for (let userIds in response?.superAdminData) {
         if (response?.superAdminData?.[userIds]?.role == userRoleConstant.user) {
@@ -1643,7 +1653,7 @@ exports.unDeclareMatchResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultUnDeclared" },
-        data: { profitLoss: fwProfitLoss, profitLossWallet: profitLossDataWallet }
+        data: { profitLoss: resultProfitLoss, profitLossWallet: profitLossDataWallet }
       },
       req,
       res

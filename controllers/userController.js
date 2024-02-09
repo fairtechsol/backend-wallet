@@ -663,6 +663,7 @@ exports.userList = async (req, res, next) => {
             partnerShips +
             "%)";
         }
+
         return element;
       })
     );

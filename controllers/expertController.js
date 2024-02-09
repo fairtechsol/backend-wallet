@@ -1478,15 +1478,14 @@ exports.unDeclareMatchResult = async (req, res) => {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         }
-        let userCommission = commissionData?.find((item) => item?.userId == userIds);
-        if (userCommission) {
-          response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(userCommission?.amount || 0)).toFixed(2));
-        }
+        
+          response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
+        
         updateUserBalanceData(userIds, response?.superAdminData?.[userIds]);
       }
 
-      for (let parentUserId in response?.faAdminCal.userData) {
-        let adminBalanceData = response?.faAdminCal.userData[parentUserId];
+      for (let parentUserId in response?.faAdminCal.admin) {
+        let adminBalanceData = response?.faAdminCal.admin[parentUserId];
         fwProfitLoss += parseFloat(adminBalanceData?.["profitLoss"]);
         if (adminBalanceData.role == userRoleConstant.fairGameAdmin) {
           let parentUser = await getUserBalanceDataByUserId(parentUserId);
@@ -1543,10 +1542,12 @@ exports.unDeclareMatchResult = async (req, res) => {
           Object.keys(adminBalanceData)?.forEach((pLData) => {
             if (profitLossDataAdmin?.[parentUser.userId]?.[pLData]) {
               profitLossDataAdmin[parentUser.userId][pLData] += adminBalanceData?.[pLData];
+              profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(profitLossDataAdmin[parentUser.userId][pLData]).toFixed(2));
+
             }
             else {
-              profitLossDataAdmin[parentUser.userId][pLData] = {};
-              profitLossDataAdmin[parentUser.userId][pLData] = adminBalanceData?.[pLData];
+              profitLossDataAdmin[parentUser.userId] = {};
+              profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(adminBalanceData?.[pLData]).toFixed(2));
             }
           });
 
@@ -1578,9 +1579,10 @@ exports.unDeclareMatchResult = async (req, res) => {
         Object.keys(response?.faAdminCal?.wallet)?.forEach((pLData) => {
           if (profitLossDataWallet[pLData]) {
             profitLossDataWallet[pLData] += response?.faAdminCal?.wallet?.[pLData];
+            profitLossDataWallet[pLData] = parseFloat(parseFloat(profitLossDataWallet[pLData]).toFixed(2));
           }
           else {
-            profitLossDataWallet[pLData] = response?.faAdminCal?.wallet?.[pLData];
+            profitLossDataWallet[pLData] = parseFloat(parseFloat(response?.faAdminCal?.wallet?.[pLData]).toFixed(2));
           }
         });
       }

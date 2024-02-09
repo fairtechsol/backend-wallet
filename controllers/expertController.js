@@ -910,8 +910,6 @@ exports.unDeclareSessionResult = async (req, res) => {
 
           let newProfitLoss = adminBalanceData?.profitLossData;
 
-
-
           if (!profitLossDataAdmin[parentUser.userId]) {
             profitLossDataAdmin[parentUser.userId] = { ...newProfitLoss };
           } else {
@@ -979,7 +977,7 @@ exports.unDeclareSessionResult = async (req, res) => {
         };
         exposure += parseFloat(adminBalanceData?.["exposure"]);
       }
-      let newProfitLoss = response?.walletData?.profitLossObjWallet;
+      let newProfitLoss = response?.faAdminCal?.walletData?.profitLossObjWallet;
       if (!profitLossDataWallet) {
         profitLossDataWallet = { ...newProfitLoss };
       } else {

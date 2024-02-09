@@ -613,7 +613,7 @@ exports.updateUserBalance = async (req, res) => {
     if (
       !usersBalanceData.length ||
       !usersBalanceData[1] ||
-      !usersBalanceData[2]
+      (!usersBalanceData[2] && user.isUrl)
     )
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },

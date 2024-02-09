@@ -39,7 +39,6 @@ const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const {
   calculatePartnership,
   checkUserCreationHierarchy,
-  forceLogoutUser,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
 
@@ -342,10 +341,11 @@ exports.updateSuperAdmin = async (req, res) => {
     }
     let domainData = {};
     let response = {};
+    let domain = isOldFairGame ? {domain:oldBetFairDomain} : {};
 
     if(!isOldFairGame){
 
-    let domain = await getDomainDataByUserId(updateUser.id, [
+    domain = await getDomainDataByUserId(updateUser.id, [
       "id",
       "logo",
       "sidebarColor",
@@ -368,7 +368,7 @@ exports.updateSuperAdmin = async (req, res) => {
     };
   }
 
-    if (!oldBetFairDomain) {
+    if (!isOldFairGame) {
       response["domain"] = domainData;
     }
     response["user"] = lodash.pick(updateUser, [
@@ -393,7 +393,7 @@ exports.updateSuperAdmin = async (req, res) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
     updateUser = await addUser(updateUser);
-    if (!oldBetFairDomain) {
+    if (!isOldFairGame) {
        await updateDomain(domain.id, domainData);
     }
     return SuccessResponse(

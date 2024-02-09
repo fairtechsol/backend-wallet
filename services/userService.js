@@ -61,7 +61,7 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
             FROM public.users
             WHERE id = '${userId}'
             UNION
-            SELECT ur.id, ur."roleName", ur."createBy"
+            SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
             JOIN RoleHierarchy rh ON ur."createBy" = rh.id
             )`;
@@ -96,7 +96,7 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
             FROM public.users
             WHERE id = '${userId}'
             UNION
-            SELECT ur.id, ur."roleName", ur."createBy"
+            SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
             JOIN RoleHierarchy rh ON ur."createBy" = rh.id
             )`;

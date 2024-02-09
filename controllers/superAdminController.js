@@ -409,16 +409,12 @@ exports.setExposureLimit = async (req, res, next) => {
     let { amount, userId, transactionPassword } = req.body;
 
     let reqUser = req.user || {};
-    let loginUser = await getUserById(reqUser.id, [
-      "id",
-      "exposureLimit",
-      "roleName",
-    ]);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
       "exposureLimit",
       "roleName",
+      "isUrl"
     ]);
     if (!user)
       return ErrorResponse(
@@ -427,7 +423,7 @@ exports.setExposureLimit = async (req, res, next) => {
         res
       );
 
-    let domain = await getDomainByUserId(userId);
+    let domain = user.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
     if (!domain)
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -483,6 +479,7 @@ exports.setCreditReferrence = async (req, res, next) => {
       "id",
       "creditRefrence",
       "roleName",
+      "isUrl"
     ]);
     if (!user)
       return ErrorResponse(
@@ -490,7 +487,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         req,
         res
       );
-    let domain = await getDomainByUserId(userId);
+    let domain = user.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
     if (!domain)
       return ErrorResponse(
         {
@@ -590,7 +587,7 @@ exports.updateUserBalance = async (req, res) => {
     let reqUser = req.user;
     amount = parseFloat(amount);
 
-    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id","isUrl"]);
     if (!user)
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -619,7 +616,7 @@ exports.updateUserBalance = async (req, res) => {
       );
 
     loginUserBalanceData = usersBalanceData[0];
-    domainData = usersBalanceData[2];
+    domainData = user.isUrl ? usersBalanceData[2] : oldBetFairDomain;
     let updatedLoginUserBalanceData = {};
     let updatedUpdateUserBalanceData = {};
     let body = {
@@ -737,7 +734,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information
-    const userDetails = await getUserById(loginId, ["userBlock", "betBlock"]);
+    const userDetails = await getUserById(loginId, ["userBlock", "betBlock", "isUrl"]);
 
     // Fetch details of the user who is performing the block/unblock operation,
     // including the hierarchy and block information
@@ -748,7 +745,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     ]);
 
     //fetch domain details of user
-    const domain = await getDomainByUserId(userId);
+    const domain = userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
 
     // Check if the current user is already blocked
     if (userDetails?.userBlock) {
@@ -829,7 +826,9 @@ exports.changePassword = async (req, res, next) => {
     // Destructure request body
     const { newPassword, transactionPassword, userId } = req.body;
 
-    let domain = await getDomainByUserId(userId);
+    const userData = await getUserById(userId, ["id", "isUrl"]);
+
+    let domain = userData?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
     if (!domain)
       return ErrorResponse(
         {

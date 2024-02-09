@@ -1080,13 +1080,12 @@ exports.lockUnlockUser = async (req, res, next) => {
         if (item?.roleName == userRoleConstant.superAdmin) {
           const body = {
             userId: item?.id,
-
             loginId,
             betBlock: null,
             userBlock,
           };
           //fetch domain details of user
-          const domain = await getDomainByUserId(item?.id);
+          const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
           try {
             await apiCall(
               apiMethod.post,
@@ -1116,7 +1115,7 @@ exports.lockUnlockUser = async (req, res, next) => {
             userBlock: null,
           };
           //fetch domain details of user
-          const domain = await getDomainByUserId(item?.id);
+          const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
           try {
             await apiCall(
               apiMethod.post,

@@ -36,9 +36,7 @@ const {
 } = require("../services/userBalanceService");
 const { ILike } = require("typeorm");
 const {
-  getDomainDataByUserIds,
   getDomainByUserId,
-  getDomainDataByFaId,
   getUserDomainWithFaId,
 } = require("../services/domainDataService");
 const {

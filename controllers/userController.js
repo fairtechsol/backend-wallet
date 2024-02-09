@@ -663,6 +663,10 @@ exports.userList = async (req, res, next) => {
             partnerShips +
             "%)";
         }
+
+        if (element?.roleName != userRoleConstant.user) {
+          element.exposureLimit = "NA";
+        }
         return element;
       })
     );

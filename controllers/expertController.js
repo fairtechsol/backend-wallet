@@ -1089,15 +1089,13 @@ exports.unDeclareSessionResult = async (req, res) => {
       sessionExposure: sessionExposure,
       parentRedisUpdateObj
     });
-
-
     deleteCommission(betId);
 
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "bet.resultUnDeclared" },
-        data: { profitLoss: resultProfitLoss, profitLossDataWallet: profitLossDataWallet }
+        data: { profitLoss: resultProfitLoss, profitLossObj: profitLossDataWallet }
       },
       req,
       res

@@ -22,6 +22,13 @@ exports.getUser = async (where, select) => {
     select: select,
   });
 };
+
+exports.getUsersWithoutCount = async (where, select) => {
+  return await user.find({
+    where: where,
+    select: select,
+  });
+};
 exports.addUser = async (body) => {
   let insertUser = await user.save(body);
   return insertUser;

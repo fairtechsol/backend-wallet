@@ -327,7 +327,13 @@ exports.declareSessionResult = async (req, res) => {
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
       }
 
-      bulkCommission.push(...response?.faAdminCal?.commission);
+      bulkCommission.push(...response?.faAdminCal?.commission?.map((item) => {
+        return {
+          ...item,
+          betPlaceDate: new Date(item?.betPlaceDate),
+          matchStartDate: new Date(item?.matchStartDate)
+        }
+      }));
 
       for (let userId in response?.faAdminCal.userData) {
         let adminBalanceData = response?.faAdminCal.userData[userId];

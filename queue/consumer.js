@@ -1,11 +1,13 @@
 const Queue = require('bee-queue');
 const lodash = require('lodash');
 const { getUserRedisData, updateUserDataRedis } = require('../services/redis/commonFunctions');
-const { getUserBalanceDataByUserId, updateUserBalanceByUserId } = require('../services/userBalanceService');
+const { getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData, updateUserBalanceExposure } = require('../services/userBalanceService');
 const { calculateExpertRate, calculateProfitLossSession, mergeProfitLoss } = require('../services/commonService');
 const { logger } = require('../config/logger');
 const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData } = require('../config/contants');
 const { sendMessageToUser } = require('../sockets/socketManager');
+const { getUserById, getUsers, getUsersWithoutCount } = require('../services/userService');
+const { In } = require('typeorm');
 const walletRedisOption = {
   removeOnSuccess: true,
   redis: {
@@ -40,6 +42,7 @@ WalletMatchBetQueue.process(async function (job, done) {
 let calculateRateAmount = async (jobData, userId) => {
   let partnershipObj = JSON.parse(jobData.partnerships);
   let userCurrentExposure = jobData.newUserExposure;
+  let newUserExposure = jobData.userUpdatedExposure;
   let userOldExposure = jobData.userPreviousExposure
   let teamRates = jobData.teamRates;
   let obj = {
@@ -51,6 +54,24 @@ let calculateRateAmount = async (jobData, userId) => {
     bettingType: jobData.bettingType,
     betOnTeam: jobData.betOnTeam
   }
+
+  const partnerShipIds = [userId];
+   Object.keys(partnershipObj)?.forEach((item)=>{
+    if(item.includes("PartnershipId")){
+      partnerShipIds.push(partnershipObj[item]);
+    }
+   });
+
+  const usersData = await getUsersWithoutCount({
+    id: In(partnerShipIds)
+  }, ["id"]);
+
+  const userIds = usersData?.map((item) => item.id);
+
+  updateUserBalanceExposure(userIds, {
+    exposure: newUserExposure
+  });
+
 
   Object.keys(partnershipPrefixByRole)
     ?.filter(
@@ -140,6 +161,27 @@ const calculateSessionRateAmount = async (jobData, userId) => {
   let maxLossExposure = placedBetObject.maxLoss;
   let partnerSessionExposure = placedBetObject.diffSessionExp;
   let stake = placedBetObject?.betPlacedData?.stake;
+  let newUserExposure = jobData.userUpdatedExposure;
+
+
+  const partnerShipIds = [userId];
+  Object.keys(partnershipObj)?.forEach((item)=>{
+   if(item.includes("PartnershipId")){
+     partnerShipIds.push(partnershipObj[item]);
+   }
+  });
+
+ const usersData = await getUsersWithoutCount({
+   id: In(partnerShipIds)
+ }, ["id"]);
+
+ const userIds = usersData?.map((item) => item.id);
+
+ updateUserBalanceExposure(userIds, {
+   exposure: newUserExposure
+ });
+
+
 
   // Iterate through partnerships based on role and update exposure
   Object.keys(partnershipPrefixByRole)

@@ -343,6 +343,8 @@ exports.updateSuperAdmin = async (req, res) => {
     let domainData = {};
     let response = {};
 
+    if(!isOldFairGame){
+
     let domain = await getDomainDataByUserId(updateUser.id, [
       "id",
       "logo",
@@ -364,8 +366,11 @@ exports.updateSuperAdmin = async (req, res) => {
       headerColor: headerColor || domain.headerColor,
       footerColor: footerColor || domain.footerColor,
     };
+  }
 
-    response["domain"] = domainData;
+    if (!oldBetFairDomain) {
+      response["domain"] = domainData;
+    }
     response["user"] = lodash.pick(updateUser, [
       "fullName",
       "phoneNumber",
@@ -388,8 +393,9 @@ exports.updateSuperAdmin = async (req, res) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
     updateUser = await addUser(updateUser);
-    const update = await updateDomain(domain.id, domainData);
-
+    if (!oldBetFairDomain) {
+       await updateDomain(domain.id, domainData);
+    }
     return SuccessResponse(
       {
         statusCode: 200,

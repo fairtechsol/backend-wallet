@@ -664,9 +664,6 @@ exports.userList = async (req, res, next) => {
             "%)";
         }
 
-        if (element?.roleName != userRoleConstant.user) {
-          element.exposureLimit = "NA";
-        }
         return element;
       })
     );

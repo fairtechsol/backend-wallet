@@ -76,8 +76,8 @@ let calculateRateAmount = async (jobData, userId) => {
   Object.keys(partnershipPrefixByRole)
     ?.filter(
       (item) =>
-        item == userRoleConstant.fairGameAdmin ||
-        item == userRoleConstant.fairGameWallet
+        item == partnershipPrefixByRole[userRoleConstant.fairGameAdmin] ||
+        item == partnershipPrefixByRole[userRoleConstant.fairGameWallet]
     )
     ?.map(async (item) => {
       let partnerShipKey = `${partnershipPrefixByRole[item]}`;
@@ -187,8 +187,8 @@ const calculateSessionRateAmount = async (jobData, userId) => {
   Object.keys(partnershipPrefixByRole)
     ?.filter(
       (item) =>
-        item == userRoleConstant.fairGameAdmin ||
-        item == userRoleConstant.fairGameWallet
+        item == partnershipPrefixByRole[userRoleConstant.fairGameAdmin] ||
+        item == partnershipPrefixByRole[userRoleConstant.fairGameWallet]
     )
     ?.map(async (item) => {
       let partnerShipKey = `${partnershipPrefixByRole[item]}`;
@@ -303,8 +303,8 @@ walletSessionBetDeleteQueue.process((job, done) => {
     Object.keys(partnershipPrefixByRole)
       ?.filter(
         (item) =>
-          item == userRoleConstant.fairGameAdmin ||
-          item == userRoleConstant.fairGameWallet
+          item == partnershipPrefixByRole[userRoleConstant.fairGameAdmin] ||
+          item == partnershipPrefixByRole[userRoleConstant.fairGameWallet]
       )
       ?.map(async (item) => {
         let partnerShipKey = `${partnershipPrefixByRole[item]}`;
@@ -432,8 +432,8 @@ walletMatchBetDeleteQueue.process((job, done) => {
     Object.keys(partnershipPrefixByRole)
       ?.filter(
         (item) =>
-          item == userRoleConstant.fairGameAdmin ||
-          item == userRoleConstant.fairGameWallet
+          item == partnershipPrefixByRole[userRoleConstant.fairGameAdmin] ||
+          item == partnershipPrefixByRole[userRoleConstant.fairGameWallet]
       )
       ?.map(async (item) => {
         let partnerShipKey = `${partnershipPrefixByRole[item]}`;

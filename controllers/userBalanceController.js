@@ -7,12 +7,17 @@ const { sendMessageToUser } = require('../sockets/socketManager');
 const { logger } = require('../config/logger');
 const { settleCommission, insertCommissions } = require('../services/commissionService');
 const { apiCall, apiMethod, allApiRoutes } = require('../utils/apiService');
+const { hasUserInCache, updateUserDataRedis } = require('../services/redis/commonFunctions');
 
 exports.updateUserBalance = async (req, res) => {
     try {
         let { userId, transactionType, amount, transactionPassword, remark } = req.body
-        let reqUser = req.user
-        amount = parseFloat(amount)
+        let reqUser = req.user;
+
+        const userExistRedis = await hasUserInCache(userId);
+
+
+        amount = parseFloat(amount);
         // let loginUser = await getUserById(reqUser.id || createBy)
         // if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
@@ -33,7 +38,12 @@ exports.updateUserBalance = async (req, res) => {
             insertUserBalanceData = usersBalanceData[1]
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount)
-            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
+            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+
+            if (userExistRedis) {
+                await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
+            }
+
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
         } else if (transactionType == transType.withDraw) {
             insertUserBalanceData = usersBalanceData[1]
@@ -41,14 +51,23 @@ exports.updateUserBalance = async (req, res) => {
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
-            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
+            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+
+            if (userExistRedis) {
+                await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
+            }
+
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.InvalidTransactionType" } }, req, res);
         }
 
         updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
+        const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
+        if (parentUserExistRedis) {
+            await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
+        }
         let transactionArray = [{
             actionBy: reqUser.id,
             searchId: user.id,
@@ -69,6 +88,7 @@ exports.updateUserBalance = async (req, res) => {
         sendMessageToUser(userId, socketData.userBalanceUpdateEvent, updatedUpdateUserBalanceData);
         insertTransactions(transactionArray);
         updatedUpdateUserBalanceData["id"] = user.id
+
         return SuccessResponse(
             {
                 statusCode: 200,
@@ -95,16 +115,16 @@ exports.settleCommissions = async (req, res) => {
         if (domain) {
             await apiCall(apiMethod.post, domain + allApiRoutes.commissionSettled, {
                 userId: userId
-              })
+            })
                 .then((data) => data)
                 .catch((err) => {
-                  logger.error({
-                    context: `error in ${domain} settling commission`,
-                    process: `User ID : ${req.user.id} `,
-                    error: err.message,
-                    stake: err.stack,
-                  });
-                  throw err;
+                    logger.error({
+                        context: `error in ${domain} settling commission`,
+                        process: `User ID : ${req.user.id} `,
+                        error: err.message,
+                        stake: err.stack,
+                    });
+                    throw err;
                 });
         }
         if (userData) {

@@ -48,6 +48,7 @@ const {
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
+const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 exports.createUser = async (req, res) => {
   try {
     let {
@@ -966,6 +967,14 @@ exports.setCreditReferrence = async (req, res, next) => {
     let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
       profitLoss,
     });
+
+    const userExistRedis = await hasUserInCache(user.id);
+
+    if (userExistRedis) {
+
+      await updateUserDataRedis(user.id, { profitLoss });
+    }
+
 
     let transactionArray = [
       {

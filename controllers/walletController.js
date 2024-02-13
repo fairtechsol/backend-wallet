@@ -1,7 +1,8 @@
 const { userRoleConstant, transType } = require("../config/contants");
+const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { insertTransactions } = require("../services/transactionService");
 const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
-const { getUserByUserName, addUser, getUserById, getChildUser, updateUser} = require("../services/userService");
+const { getUserByUserName, addUser, getUserById, getChildUser, updateUser } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require('bcryptjs')
 exports.insertWallet = async (req, res) => {
@@ -46,7 +47,7 @@ exports.insertWallet = async (req, res) => {
             exposure: 0
         }
         insertUserBalanceData = await addInitialUserBalance(insertUserBalanceData);
-        const {password,...data}=insertUser;
+        const { password, ...data } = insertUser;
         return SuccessResponse(
             { statusCode: 200, message: { msg: "add", keys: { key: "Wallet" } }, data: data },
             req,
@@ -61,9 +62,10 @@ exports.updateBalance = async (req, res) => {
     try {
         let { transactionType, amount, transactionPassword, remark } = req.body;
         let reqUser = req.user;
+        const userExistRedis = await hasUserInCache(reqUser.id);
 
-        if(reqUser.roleName != userRoleConstant.fairGameWallet){
-            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        if (reqUser.roleName != userRoleConstant.fairGameWallet) {
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } }, req, res);
         }
 
 
@@ -79,6 +81,12 @@ exports.updateBalance = async (req, res) => {
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
             let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+
+            if (userExistRedis) {
+                await updateUserDataRedis(reqUser.id, updatedUpdateUserBalanceData);
+
+            }
+
         } else if (transactionType == transType.withDraw) {
             if (amount > loginUserBalanceData.currentBalance)
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
@@ -86,6 +94,12 @@ exports.updateBalance = async (req, res) => {
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) - parseFloat(amount);
             let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+
+            if (userExistRedis) {
+                await updateUserDataRedis(reqUser.id, updatedUpdateUserBalanceData);
+
+            }
+
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
         }
@@ -121,8 +135,8 @@ exports.setExposureLimit = async (req, res, next) => {
 
         let reqUser = req.user || {};
 
-        if(reqUser.roleName != userRoleConstant.fairGameWallet){
-            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        if (reqUser.roleName != userRoleConstant.fairGameWallet) {
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } }, req, res);
         }
 
         let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
@@ -161,11 +175,11 @@ exports.setExposureLimit = async (req, res, next) => {
 exports.setCreditReferrence = async (req, res, next) => {
     try {
 
-        let {  amount, transactionPassword, remark } = req.body;
+        let { amount, transactionPassword, remark } = req.body;
         let reqUser = req.user;
 
-        if(reqUser.roleName != userRoleConstant.fairGameWallet){
-            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } },req,res);
+        if (reqUser.roleName != userRoleConstant.fairGameWallet) {
+            return ErrorResponse({ statusCode: 401, message: { msg: "auth.unauthorize" } }, req, res);
         }
         amount = parseFloat(amount);
 
@@ -182,6 +196,13 @@ exports.setCreditReferrence = async (req, res, next) => {
 
         let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
         let newUserBalanceData = await updateUserBalanceByUserId(loginUser.id, { profitLoss })
+
+        const userExistRedis = await hasUserInCache(loginUser.id);
+
+        if (userExistRedis) {
+
+            await updateUserDataRedis(loginUser.id, { profitLoss });
+        }
 
         let transactionArray = [{
             actionBy: reqUser.id,

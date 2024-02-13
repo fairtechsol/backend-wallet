@@ -13,6 +13,11 @@ exports.getUserRedisData = async (userId)=>{
     await internalRedis.hmset(userId, value);
   };
   
+  exports.hasUserInCache = async (userId) => {
+    return await internalRedis.exists(userId);
+  }
+  
+  
   exports.deleteKeyFromUserRedis = async (userId,...key) => {
     return await internalRedis.hdel(userId,key);
   }

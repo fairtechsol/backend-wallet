@@ -41,6 +41,7 @@ const {
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
+const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -693,6 +694,12 @@ exports.updateUserBalance = async (req, res) => {
       reqUser.id,
       updatedLoginUserBalanceData
     );
+
+    const parentUserExistRedis = await hasUserInCache(reqUser.id);
+
+    if (parentUserExistRedis) {
+        await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
+    }
 
     let transactionArray = [
       {

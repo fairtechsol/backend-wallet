@@ -1,6 +1,6 @@
 const { EntitySchema } = require('typeorm');
 const { baseColumnsSchemaPart, matchComissionTypeConstant, betType } = require("../config/contants");
-const { ColumnNumericTransformer } = require('../services/commonService');
+const { ColumnNumericTransformer } = require('../services/dbService');
 
 const commissionSchema = new EntitySchema({
   name: 'commission',

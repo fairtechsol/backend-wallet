@@ -1,6 +1,6 @@
 const { EntitySchema } = require('typeorm');
 const { userRoleConstant, matchComissionTypeConstant, baseColumnsSchemaPart } = require("./../config/contants");
-const { ColumnNumericTransformer } = require('../services/commonService');
+const { ColumnNumericTransformer } = require('../services/dbService');
 
 const userSchema = new EntitySchema({
   name: 'user',

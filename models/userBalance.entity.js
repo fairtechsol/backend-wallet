@@ -1,4 +1,5 @@
 const { EntitySchema } = require('typeorm');
+const { ColumnNumericTransformer } = require('../services/dbService');
 
 const userBalanceSchema = new EntitySchema({
     name: 'userBalance',
@@ -13,14 +14,16 @@ const userBalanceSchema = new EntitySchema({
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
         },
         exposure: {
             type: 'decimal',
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
         },
         userId: {
             type: 'uuid',
@@ -32,28 +35,32 @@ const userBalanceSchema = new EntitySchema({
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
         },
         myProfitLoss: {
             type: 'decimal',
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
         },
         downLevelBalance: {
             type: 'decimal',
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
         },
         totalCommission: {
             type: 'decimal',
             nullable: false,
             precision: 13,
             scale: 2,
-            default: 0
+            default: 0,
+            transformer: new ColumnNumericTransformer()
           },
     },
     relations: {

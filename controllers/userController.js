@@ -663,6 +663,9 @@ exports.userList = async (req, res, next) => {
             "(" +
             partnerShips +
             "%)";
+
+          element['upLinePartnership'] =  partnerShips;
+
         }
 
         return element;

@@ -94,7 +94,7 @@ module.exports.walletDescription = {
     userCreate : "CREDIT REFRENCE as user create",
 }
 
-module.exports.passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{6,30}$/;
+module.exports.passwordRegex = /^(?=.[A-Z])(?=.\d.\d.\d.\d)[a-zA-Z\d!@#$%^&()-_=+]{8,}$/;
 
 module.exports.socketData ={
   userBalanceUpdateEvent : "userBalanceUpdate",

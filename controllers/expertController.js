@@ -915,7 +915,7 @@ exports.unDeclareSessionResult = async (req, res) => {
           let parentRedisUpdateObj = {};
 
           let newProfitLoss = adminBalanceData?.profitLossData;
-
+          if (newProfitLoss && Object.keys(newProfitLoss)?.length > 0) {
           if (!profitLossDataAdmin[parentUser.userId]) {
             profitLossDataAdmin[parentUser.userId] = { ...newProfitLoss };
           } else {
@@ -942,7 +942,7 @@ exports.unDeclareSessionResult = async (req, res) => {
             
           }
 
-
+        }
 
 
           if (parentUserRedisData?.exposure) {
@@ -985,7 +985,7 @@ exports.unDeclareSessionResult = async (req, res) => {
         exposure += parseFloat(adminBalanceData?.["exposure"]);
       }
       let newProfitLoss = response?.faAdminCal?.walletData?.profitLossObjWallet;
-      if (Object.keys(newProfitLoss)?.length > 0) {
+      if (newProfitLoss && Object.keys(newProfitLoss)?.length > 0) {
         if (!profitLossDataWallet) {
           profitLossDataWallet = { ...newProfitLoss };
         } else {

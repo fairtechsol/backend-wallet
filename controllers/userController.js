@@ -593,6 +593,32 @@ exports.userList = async (req, res, next) => {
     ) {
       partnershipCol = ["fwPartnership"];
     }
+    let usersBalance={};
+
+    let oldBetFairUserIds = [];
+
+    users[0]?.forEach(async (element) => {
+      if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+        oldBetFairUserIds.push(element.id);
+      }
+      else {
+        let response = await apiCall(apiMethod.get, domain + allApiRoutes.userBalanceSum,null,{}, {
+          roleName: element.roleName
+        })
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${domain} getting user list`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
+      }
+    });
+
+
 
     let data = await Promise.all(
       users[0].map(async (element) => {
@@ -622,20 +648,8 @@ exports.userList = async (req, res, next) => {
           ) - Number(
             parseFloat(element.userBal["exposure"]).toFixed(2)
           );
-          // let childUsers = await getChildUser(element.id);
-          // let allChildUserIds = childUsers.map((obj) => obj.id);
-          // let balancesum = 0;
-
-          // if (allChildUserIds.length) {
-          //   let allChildBalanceData = await getAllchildsCurrentBalanceSum(
-          //     allChildUserIds
-          //   );
-          //   balancesum = parseFloat(
-          //     allChildBalanceData.allchildscurrentbalancesum
-          //   )
-          //     ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-          //     : 0;
-          // }
+         
+          
 
           element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
         } else {
@@ -645,7 +659,7 @@ exports.userList = async (req, res, next) => {
               element.userBal["exposure"]
             ).toFixed(2)
           );
-          element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
+          element["balance"] = Number((parseFloat(element.userBal["currentBalance"])));
         }
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         element["commission"] = element?.userBal?.["totalCommission"];
@@ -730,6 +744,58 @@ exports.userList = async (req, res, next) => {
     }
 
     response.list = data;
+    
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "fetched", keys: { name: "User list" } },
+        data: response,
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    return ErrorResponse(error, req, res);
+  }
+};
+
+exports.getTotalUserListBalance = async (req, res, next) => { 
+  try{
+
+    let reqUser = req.user;
+    // let loginUser = await getUserById(reqUser.id)
+    const { type, userId, domain, roleName, ...apiQuery } = req.query;
+
+    if (domain) {
+      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userTotalBalance, null, {}, {
+        ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${domain} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          data: response?.data
+        },
+        req,
+        res
+      );
+    }
+
+    let userRole = reqUser.roleName;
+    let where = {
+      createBy: userId || reqUser.id,
+    };
+
     let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(UB.exposure) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
 
     switch (userRole) {
@@ -778,9 +844,14 @@ exports.userList = async (req, res, next) => {
       res
     );
   } catch (error) {
+    logger.error({
+      message: "Error in user list total balance.",
+      context: error.message,
+      stake: error.stack
+    });
     return ErrorResponse(error, req, res);
   }
-};
+}
 
 exports.userSearchList = async (req, res, next) => {
   try {

@@ -782,6 +782,19 @@ exports.userList = async (req, res, next) => {
   }
 };
 
+exports.getTotalUserListBalance = async (req, res, next) => { 
+  try{
+
+  } catch (error) {
+    logger.error({
+      message: "Error in user list total balance.",
+      context: error.message,
+      stake: error.stack
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
 exports.userSearchList = async (req, res, next) => {
   try {
     let { userName, createdBy } = req.query;

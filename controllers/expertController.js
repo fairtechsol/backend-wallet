@@ -915,33 +915,34 @@ exports.unDeclareSessionResult = async (req, res) => {
           let parentRedisUpdateObj = {};
 
           let newProfitLoss = adminBalanceData?.profitLossData;
-
+          if (newProfitLoss && Object.keys(newProfitLoss)?.length > 0) {
           if (!profitLossDataAdmin[parentUser.userId]) {
             profitLossDataAdmin[parentUser.userId] = { ...newProfitLoss };
           } else {
-            if (newProfitLoss?.betPlaced &&
-              profitLossDataAdmin[parentUser.userId]?.betPlaced) {
+            if (newProfitLoss?.betPlaced && profitLossDataAdmin[parentUser.userId]?.betPlaced) {
               mergeProfitLoss(
                 newProfitLoss?.betPlaced,
                 profitLossDataAdmin[parentUser.userId]?.betPlaced
               );
+
+              profitLossDataAdmin = {
+                upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
+                lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
+                maxLoss: profitLossDataAdmin[parentUser.userId]?.maxLoss + newProfitLoss?.maxLoss,
+                totalBet: newProfitLoss?.totalBet + profitLossDataAdmin[parentUser.userId]?.totalBet,
+                betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
+                  return {
+                    odds: item?.odds,
+                    profitLoss:
+                      item?.profitLoss + profitLossDataAdmin[parentUser.userId]?.betPlaced?.[index]?.profitLoss,
+                  };
+                }),
+              };
             }
-            profitLossDataAdmin = {
-              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
-              lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
-              maxLoss: profitLossDataAdmin[parentUser.userId]?.maxLoss + newProfitLoss?.maxLoss,
-              totalBet: newProfitLoss.totalBet + profitLossDataAdmin[parentUser.userId].totalBet,
-              betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
-                return {
-                  odds: item?.odds,
-                  profitLoss:
-                    item?.profitLoss + profitLossDataAdmin[parentUser.userId]?.betPlaced?.[index]?.profitLoss,
-                };
-              }),
-            };
+            
           }
 
-
+        }
 
 
           if (parentUserRedisData?.exposure) {
@@ -949,9 +950,9 @@ exports.unDeclareSessionResult = async (req, res) => {
               exposure: parentUser.exposure,
               profitLoss: parentUser.profitLoss,
               myProfitLoss: parentUser.myProfitLoss,
-              [betId + redisKeys.profitLoss]: JSON.stringify(
+              ...(profitLossDataAdmin[parentUser.userId]?{[betId + redisKeys.profitLoss]: JSON.stringify(
                 profitLossDataAdmin[parentUser.userId]
-              ),
+              )}:{}),
             };
           }
           const redisSessionExposureName =
@@ -984,29 +985,32 @@ exports.unDeclareSessionResult = async (req, res) => {
         exposure += parseFloat(adminBalanceData?.["exposure"]);
       }
       let newProfitLoss = response?.faAdminCal?.walletData?.profitLossObjWallet;
-      if (!profitLossDataWallet) {
-        profitLossDataWallet = { ...newProfitLoss };
-      } else {
-        if (newProfitLoss?.betPlaced &&
-          profitLossDataWallet?.betPlaced) {
-          mergeProfitLoss(
-            newProfitLoss?.betPlaced,
-            profitLossDataWallet?.betPlaced
-          );
-        }
-        profitLossDataWallet = {
-          upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
-          lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
-          maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
-          totalBet: newProfitLoss.totalBet + profitLossDataWallet.totalBet,
-          betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
-            return {
-              odds: item?.odds,
-              profitLoss:
-                item?.profitLoss + profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
+      if (newProfitLoss && Object.keys(newProfitLoss)?.length > 0) {
+        if (!profitLossDataWallet) {
+          profitLossDataWallet = { ...newProfitLoss };
+        } else {
+          if (newProfitLoss?.betPlaced && profitLossDataWallet?.betPlaced) {
+            mergeProfitLoss(
+              newProfitLoss?.betPlaced,
+              profitLossDataWallet?.betPlaced
+            );
+
+            profitLossDataWallet = {
+              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
+              lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
+              maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
+              totalBet: (newProfitLoss?.totalBet || 0) + (profitLossDataWallet?.totalBet || 0),
+              betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
+                return {
+                  odds: item?.odds,
+                  profitLoss:
+                    item?.profitLoss + profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
+                };
+              }),
             };
-          }),
-        };
+          }
+
+        }
       }
 
     };
@@ -1065,9 +1069,9 @@ exports.unDeclareSessionResult = async (req, res) => {
         exposure: parentUser.exposure,
         profitLoss: parentUser.profitLoss,
         myProfitLoss: parentUser.myProfitLoss,
-        [betId + redisKeys.profitLoss]: JSON.stringify(
+        ...(profitLossDataWallet?{[betId + redisKeys.profitLoss]: JSON.stringify(
           profitLossDataWallet
-        ),
+        )}:{}),
       };
     }
     const redisSessionExposureName =

@@ -993,93 +993,114 @@ exports.userSearchList = async (req, res, next) => {
 
 exports.userBalanceDetails = async (req, res, next) => {
   try {
-    let reqUser = req.user || {};
-    let id = req.query?.id || reqUser.id;
-    let loginUser = await getUserById(id);
-    if (!loginUser || id != loginUser.id)
+    // Retrieve user information from the request
+    const { user: reqUser } = req;
+    const userId = req.query?.id || reqUser?.id;
+
+    // Fetch details of the logged-in user
+    const loginUser = await getUserById(userId);
+
+    // Ensure the user exists and matches the logged-in user
+    if (!loginUser || userId !== loginUser.id) {
       return ErrorResponse(
         {
           statusCode: 400,
-          message: { msg: "notFound", keys: { name: "Login user" } },
+          message: { msg: "notFound", keys: { name: "User" } }
         },
         req,
         res
       );
+    }
 
-    let firstLevelChildUser = await getFirstLevelChildUser(loginUser.id);
+    // Retrieve first-level child users and their IDs
+    const firstLevelChildUsers = await getFirstLevelChildUser(loginUser.id);
+    const firstLevelChildUserIds = firstLevelChildUsers.map(user => user.id);
 
-    let firstLevelChildUserIds = await firstLevelChildUser.map((obj) => obj.id);
+    // Fetch user balance data
+    const userBalanceData = getUserBalanceDataByUserId(loginUser.id, ["id", "currentBalance", "profitLoss", "myProfitLoss"]);
 
-    let childUsers = await getChildUser(loginUser.id);
+    // Fetch profit/loss sum for first-level child users
+    const firstLevelChildBalanceData = getAllChildProfitLossSum(firstLevelChildUserIds);
 
-    let allChildUserIds = childUsers.map((obj) => obj.id);
+    let totalCurrentBalance = 0;
 
-    let userBalanceData = getUserBalanceDataByUserId(loginUser.id, [
-      "id",
-      "currentBalance",
-      "profitLoss",
-      "myProfitLoss"
-    ]);
+    if (loginUser.roleName == userRoleConstant.fairGameWallet) {
+      const fgAdminBalanceSum = await getBalanceSumByRoleName(userRoleConstant.fairGameAdmin);
+      totalCurrentBalance += parseFloat(parseFloat(fgAdminBalanceSum?.balance).toFixed(2));
+      let domainData = await getUserDomainWithFaId();
 
-    let FirstLevelChildBalanceData = getAllChildProfitLossSum(
-      firstLevelChildUserIds
-    );
+      for (let usersDomain of domainData) {
+        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + loginUser.id, null, {}, {
+          roleName: loginUser.roleName,
 
-    let allChildBalanceData = getAllchildsCurrentBalanceSum(allChildUserIds);
+        })
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${usersDomain?.domain} getting user list`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
 
-    let AggregateBalanceData = await Promise.allSettled([
-      userBalanceData,
-      FirstLevelChildBalanceData,
-      allChildBalanceData,
-    ]);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
+      }
+      
+    }
+    else if (loginUser.roleName == userRoleConstant.fairGameAdmin) {
+      const faDomains = await getFaAdminDomain({ id: loginUser.id });
+      for (let usersDomain of faDomains) {
+     
+        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + loginUser.id, null, {}, {
+          roleName: loginUser.roleName,
 
-    userBalanceData = AggregateBalanceData[0] && AggregateBalanceData[0].value ? AggregateBalanceData[0].value : {};
-    FirstLevelChildBalanceData = AggregateBalanceData[1] && AggregateBalanceData[1].value ? AggregateBalanceData[1].value : {};
-    allChildBalanceData = AggregateBalanceData[2] && AggregateBalanceData[2].value ? AggregateBalanceData[2].value : {};
+        })
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${usersDomain?.domain} getting user list`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
 
-    let response = {
+          totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
+      };
+
+    }
+
+    // Wait for all promises to settle
+    const [userBalance, firstLevelChildBalance] = await Promise.allSettled([userBalanceData, firstLevelChildBalanceData]);
+
+    // Calculate various balance-related metrics
+    const response = {
       userCreditReference: parseFloat(loginUser.creditRefrence),
-      downLevelOccupyBalance: allChildBalanceData.allchildscurrentbalancesum
-        ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-        : 0,
+      downLevelOccupyBalance: parseFloat(totalCurrentBalance || 0),
       downLevelCreditReference: loginUser.downLevelCreditRefrence,
-      availableBalance: userBalanceData.currentBalance
-        ? parseFloat(userBalanceData.currentBalance)
-        : 0,
-      totalMasterBalance:
-        (userBalanceData.currentBalance
-          ? parseFloat(userBalanceData.currentBalance)
-          : 0) +
-        (allChildBalanceData.allchildscurrentbalancesum
-          ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-          : 0),
-      upperLevelBalance: userBalanceData.profitLoss
-        ? -userBalanceData.profitLoss
-        : 0,
-      downLevelProfitLoss:
-        FirstLevelChildBalanceData.firstlevelchildsprofitlosssum
-          ? -FirstLevelChildBalanceData.firstlevelchildsprofitlosssum
-          : 0,
-      availableBalanceWithProfitLoss:
-        (userBalanceData.currentBalance
-          ? parseFloat(userBalanceData.currentBalance)
-          : 0) +
-        // (allChildBalanceData.allchildscurrentbalancesum
-        //   ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-        //   : 0) +
-        parseFloat(userBalanceData.myProfitLoss ? userBalanceData.myProfitLoss : 0),
-      profitLoss: 0,
+      availableBalance: parseFloat(userBalance.value.currentBalance || 0),
+      totalMasterBalance: parseFloat(userBalance.value.currentBalance || 0) + parseFloat(totalCurrentBalance || 0),
+      upperLevelBalance: parseFloat(loginUser.creditRefrence) - parseFloat(userBalance.value.currentBalance || 0) - parseFloat(totalCurrentBalance || 0),
+      downLevelProfitLoss: -firstLevelChildBalance.value.firstlevelchildsprofitlosssum || 0,
+      availableBalanceWithProfitLoss: ((parseFloat(userBalance.value?.currentBalance || 0) + parseFloat(userBalance.value?.myProfitLoss || 0))),
+      profitLoss: userBalance.value?.myProfitLoss || 0
     };
+
+    // Send success response
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "fetched", keys: { name: "User balance" } },
+        message: { msg: "user.UserBalanceFetchSuccessfully" },
         data: { response },
       },
       req,
       res
     );
   } catch (error) {
+    // Handle errors and send error response
     return ErrorResponse(error, req, res);
   }
 };

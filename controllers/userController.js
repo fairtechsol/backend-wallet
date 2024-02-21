@@ -33,11 +33,13 @@ const {
   getAllChildProfitLossSum,
   updateUserBalanceByUserId,
   addInitialUserBalance,
+  getBalanceSumByRoleName,
 } = require("../services/userBalanceService");
 const { ILike } = require("typeorm");
 const {
   getDomainByUserId,
   getUserDomainWithFaId,
+  getDomainDataByUserId,
 } = require("../services/domainDataService");
 const {
   calculatePartnership,
@@ -593,6 +595,75 @@ exports.userList = async (req, res, next) => {
     ) {
       partnershipCol = ["fwPartnership"];
     }
+    let usersBalance={};
+
+    let oldBetFairUserIds = [];
+    for (let element of users[0]?.filter((item) => item?.roleName != userRoleConstant.user)) {
+    
+
+      if (element?.roleName == userRoleConstant.fairGameAdmin) {
+        const faDomains =await getFaAdminDomain(element);
+        for (let usersDomain of faDomains) {
+       
+          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + element.id, null, {}, {
+            roleName: element.roleName,
+
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${usersDomain?.domain} getting user list`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.data?.balance[element.id] || 0);
+        };
+
+      }
+      else {
+        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+          oldBetFairUserIds.push(element.id);
+        }
+        else {
+          const userDomain = await getDomainDataByUserId(element.id, ["domain"]);
+          let response = await apiCall(apiMethod.get, userDomain?.domain + allApiRoutes.userBalanceSum + element.id, null, {}, {
+            roleName: element.roleName
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${userDomain.domain} getting user list`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.data?.balance[element.id] || 0);
+        }
+      }
+    };
+
+    if (oldBetFairUserIds?.length > 0) {
+      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userBalanceSum + oldBetFairUserIds?.join(","), null, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${oldBetFairUserIds?.join(",")} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      usersBalance = { ...usersBalance, ...(response?.data?.balance ?? {}) };
+    }
 
     let data = await Promise.all(
       users[0].map(async (element) => {
@@ -621,23 +692,15 @@ exports.userList = async (req, res, next) => {
             parseFloat(element.userBal["currentBalance"]).toFixed(2)
           ) - Number(
             parseFloat(element.userBal["exposure"]).toFixed(2)
-          );
-          // let childUsers = await getChildUser(element.id);
-          // let allChildUserIds = childUsers.map((obj) => obj.id);
-          // let balancesum = 0;
+            );
 
-          // if (allChildUserIds.length) {
-          //   let allChildBalanceData = await getAllchildsCurrentBalanceSum(
-          //     allChildUserIds
-          //   );
-          //   balancesum = parseFloat(
-          //     allChildBalanceData.allchildscurrentbalancesum
-          //   )
-          //     ? parseFloat(allChildBalanceData.allchildscurrentbalancesum)
-          //     : 0;
-          // }
 
-          element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
+          if (element.roleName == userRoleConstant.fairGameAdmin) {
+            element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(usersBalance[element.id])).toFixed(2));
+          }
+          else{
+            element["balance"] = Number((parseFloat(usersBalance[element.id])).toFixed(2));
+          }
         } else {
           element["availableBalance"] = Number(
             (
@@ -645,7 +708,7 @@ exports.userList = async (req, res, next) => {
               element.userBal["exposure"]
             ).toFixed(2)
           );
-          element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(element.userBal["downLevelBalance"])).toFixed(2));
+          element["balance"] = Number((parseFloat(element.userBal["currentBalance"])));
         }
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         element["commission"] = element?.userBal?.["totalCommission"];
@@ -730,6 +793,58 @@ exports.userList = async (req, res, next) => {
     }
 
     response.list = data;
+    
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "fetched", keys: { name: "User list" } },
+        data: response,
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    return ErrorResponse(error, req, res);
+  }
+};
+
+exports.getTotalUserListBalance = async (req, res, next) => { 
+  try{
+
+    let reqUser = req.user;
+    // let loginUser = await getUserById(reqUser.id)
+    const { type, userId, domain, roleName, ...apiQuery } = req.query;
+
+    if (domain) {
+      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userTotalBalance, null, {}, {
+        ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${domain} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          data: response?.data
+        },
+        req,
+        res
+      );
+    }
+
+    let userRole = roleName || reqUser.roleName;
+    let where = {
+      createBy: userId || reqUser.id,
+    };
+
     let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(UB.exposure) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
 
     switch (userRole) {
@@ -763,28 +878,72 @@ exports.userList = async (req, res, next) => {
         break;
       }
     }
+    let totalCurrentBalance = 0;
+
+    if (userRole == userRoleConstant.fairGameWallet) {
+      const fgAdminBalanceSum = await getBalanceSumByRoleName(userRoleConstant.fairGameAdmin);
+      totalCurrentBalance += parseFloat(parseFloat(fgAdminBalanceSum?.balance).toFixed(2));
+      let domainData = await getUserDomainWithFaId();
+
+      for (let usersDomain of domainData) {
+        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + where.createBy, null, {}, {
+          roleName: userRole,
+
+        })
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${usersDomain?.domain} getting user list`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
+
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
+      }
+      
+    }
+    else if (userRole == userRoleConstant.fairGameAdmin) {
+      const faDomains = await getFaAdminDomain({ id: where.createBy });
+      for (let usersDomain of faDomains) {
+     
+        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + where.createBy, null, {}, {
+          roleName: userRole,
+
+        })
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${usersDomain?.domain} getting user list`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
+
+          totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
+      };
+
+    }
+
+    const userTotalBalance = await getUserBalanceDataByUserId(where.createBy, ["currentBalance"]);
 
     const totalBalance = await getUsersWithTotalUsersBalanceData(where, apiQuery, queryColumns);
-    totalBalance.currBalance = parseFloat(totalBalance.downLevelBalance) + parseFloat(totalBalance.availableBalance);
+    totalBalance.currBalance = totalCurrentBalance + userTotalBalance.currentBalance;
     totalBalance.availableBalance = parseFloat(totalBalance.availableBalance) - parseFloat(totalBalance.totalExposure);
 
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "fetched", keys: { name: "User list" } },
-        data: { ...response, totalBalance },
+        data:  totalBalance ,
       },
       req,
       res
     );
-  } catch (error) {
-    return ErrorResponse(error, req, res);
-  }
-};
-
-exports.getTotalUserListBalance = async (req, res, next) => { 
-  try{
-
   } catch (error) {
     logger.error({
       message: "Error in user list total balance.",

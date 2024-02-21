@@ -3,7 +3,7 @@ const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
 const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference} = require('../validators/userValidator');
-const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced} = require('../controllers/userController');
+const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced, getTotalUserListBalance} = require('../controllers/userController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -14,6 +14,8 @@ router.post('/lockUnlockUser',isAuthenticate,checkTransactionPassword, validator
 router.post('/changePassword',isAuthenticate,validator(ChangePassword),changePassword);
 router.post("/update/exposurelimit",isAuthenticate,checkTransactionPassword,validator(SetExposureLimitValid),setExposureLimit);
 router.get("/list",isAuthenticate,userList);
+router.get("/child/totalBalance", isAuthenticate, getTotalUserListBalance);
+
 router.get("/exist", isAuthenticate, isUserExist);
 router.get("/searchlist",isAuthenticate,userSearchList)
 router.get("/balance",isAuthenticate,userBalanceDetails)

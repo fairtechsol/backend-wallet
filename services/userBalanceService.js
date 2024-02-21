@@ -62,3 +62,14 @@ exports.getAllchildsCurrentBalanceSum = async (childUserIds) => {
    
     return childUserData;
   }
+
+
+  exports.getBalanceSumByRoleName = async (roleName)=>{
+    const balanceSum = UserBalance
+    .createQueryBuilder()
+    .leftJoinAndMapOne("userBalance.user","users", "user","user.id = userBalance.userId")
+    .select(['SUM(userBalance.currentBalance) as balance'])
+    .where(`user.roleName = '${roleName}'`)
+    .getRawOne();
+    return balanceSum;
+  }

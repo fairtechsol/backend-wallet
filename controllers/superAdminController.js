@@ -648,8 +648,18 @@ exports.updateUserBalance = async (req, res) => {
         parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
       updatedUpdateUserBalanceData.profitLoss =
         parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
+
+      if (parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
+        updatedUpdateUserBalanceData.myProfitLoss = 0;
+      }
+      else {
+        updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount);
+      }
+
       updatedLoginUserBalanceData.currentBalance =
         parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
+
+
     } else if (transactionType == transType.withDraw) {
       insertUserBalanceData = usersBalanceData[1];
       if (amount > insertUserBalanceData.currentBalance)
@@ -665,6 +675,15 @@ exports.updateUserBalance = async (req, res) => {
         parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
       updatedUpdateUserBalanceData.profitLoss =
         parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
+
+
+      if (parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
+        updatedUpdateUserBalanceData.myProfitLoss = 0;
+      }
+      else {
+        updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount);
+      }
+
       // let newUserBalanceData = await updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
       updatedLoginUserBalanceData.currentBalance =
         parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);

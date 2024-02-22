@@ -696,10 +696,10 @@ exports.userList = async (req, res, next) => {
 
 
           if (element.roleName == userRoleConstant.fairGameAdmin) {
-            element["balance"] = Number((parseFloat(element.userBal["currentBalance"]) + parseFloat(usersBalance[element.id])).toFixed(2));
+            element["balance"] = Number((parseFloat(element.userBal["currentBalance"] || 0) + parseFloat(usersBalance[element.id] || 0)).toFixed(2));
           }
           else{
-            element["balance"] = Number((parseFloat(usersBalance[element.id])).toFixed(2));
+            element["balance"] = Number((parseFloat(usersBalance[element.id] || 0)).toFixed(2));
           }
         } else {
           element["availableBalance"] = Number(

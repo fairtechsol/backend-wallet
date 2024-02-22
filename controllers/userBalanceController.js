@@ -37,7 +37,13 @@ exports.updateUserBalance = async (req, res) => {
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             insertUserBalanceData = usersBalanceData[1]
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
-            updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount)
+            updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
+            if (parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
+                updatedUpdateUserBalanceData.myProfitLoss = 0;
+            }
+            else {
+                updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount);
+            }
             updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
 
             if (userExistRedis) {
@@ -51,6 +57,14 @@ exports.updateUserBalance = async (req, res) => {
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
+
+            if (parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
+                updatedUpdateUserBalanceData.myProfitLoss = 0;
+            }
+            else {
+                updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount);
+            }
+
             updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
 
             if (userExistRedis) {

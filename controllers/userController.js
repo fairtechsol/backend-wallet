@@ -636,7 +636,7 @@ exports.userList = async (req, res, next) => {
             .then((data) => data)
             .catch((err) => {
               logger.error({
-                context: `error in ${userDomain.domain} getting user list`,
+                context: `error in ${userDomain?.domain} getting user list`,
                 process: `User ID : ${req.user.id} `,
                 error: err.message,
                 stake: err.stack,

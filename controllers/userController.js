@@ -1078,15 +1078,15 @@ exports.userBalanceDetails = async (req, res, next) => {
 
     // Calculate various balance-related metrics
     const response = {
-      userCreditReference: parseFloat(loginUser.creditRefrence),
+      userCreditReference: parseFloat(loginUser?.creditRefrence),
       downLevelOccupyBalance: parseFloat(totalCurrentBalance || 0),
-      downLevelCreditReference: loginUser.downLevelCreditRefrence,
-      availableBalance: parseFloat(userBalance.value.currentBalance || 0),
-      totalMasterBalance: parseFloat(userBalance.value.currentBalance || 0) + parseFloat(totalCurrentBalance || 0),
-      upperLevelBalance: parseFloat(loginUser.creditRefrence) - parseFloat(userBalance.value.currentBalance || 0) - parseFloat(totalCurrentBalance || 0),
-      downLevelProfitLoss: -firstLevelChildBalance.value.firstlevelchildsprofitlosssum || 0,
-      availableBalanceWithProfitLoss: ((parseFloat(userBalance.value?.currentBalance || 0) + parseFloat(userBalance.value?.myProfitLoss || 0))),
-      profitLoss: userBalance.value?.myProfitLoss || 0
+      downLevelCreditReference: loginUser?.downLevelCreditRefrence,
+      availableBalance: parseFloat(userBalance?.value?.currentBalance || 0),
+      totalMasterBalance: parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(totalCurrentBalance || 0),
+      upperLevelBalance: parseFloat(loginUser?.creditRefrence) - parseFloat(userBalance?.value?.currentBalance || 0) - parseFloat(totalCurrentBalance || 0),
+      downLevelProfitLoss: -firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0,
+      availableBalanceWithProfitLoss: ((parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(userBalance?.value?.myProfitLoss || 0))),
+      profitLoss: userBalance?.value?.myProfitLoss || 0
     };
 
     // Send success response

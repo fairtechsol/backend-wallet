@@ -24,7 +24,7 @@ exports.commissionReport = (userId, query) => {
 }
 
 exports.commissionMatchReport = (userId, matchId) => {
-  const commissionMatches = Commission.createQueryBuilder().where({ parentId: userId, matchId: matchId }).select(['commission.userName as "userName"', 'commission.teamName as "name"', 'commission.betPlaceDate as "date"', 'commission.teamName as "teamName"', 'commission.odds as "odds"', 'commission.betType as "betType"', 'commission.stake as "stake"', 'commission.commissionAmount as "commissionAmount"','commission.commissionType as "commissionType"','commission.partnerShip as "partnerShip"']);
+  const commissionMatches = Commission.createQueryBuilder().where({ parentId: userId, matchId: matchId }).select(['commission.userName as "userName"', 'commission.teamName as "name"', 'commission.betPlaceDate as "date"', 'commission.teamName as "teamName"', 'commission.odds as "odds"', 'commission.betType as "betType"', 'commission.stake as "stake"', 'commission.commissionAmount as "commissionAmount"','commission.commissionType as "commissionType"','commission.partnerShip as "partnerShip"','commission.matchName as "matchName"']);
 
   return commissionMatches.getRawMany();
 }

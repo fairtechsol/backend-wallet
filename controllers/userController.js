@@ -722,7 +722,7 @@ exports.userList = async (req, res, next) => {
             partnerShips
           ).toFixed(2);
           element["commission"] =
-            ((element?.userBal?.["totalCommission"] / 100) * partnerShips).toFixed(2) +
+            (element?.userBal?.["totalCommission"]).toFixed(2) +
             "(" +
             partnerShips +
             "%)";

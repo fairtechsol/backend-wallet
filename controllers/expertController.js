@@ -321,7 +321,7 @@ exports.declareSessionResult = async (req, res) => {
         }
         else {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-          response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
+          // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
@@ -360,7 +360,7 @@ exports.declareSessionResult = async (req, res) => {
             parentExposure = parseFloat(parentUserRedisData?.exposure);
           }
 
-          parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss - adminBalanceData?.["profitLoss"]).toFixed(2));
+          parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + adminBalanceData?.["profitLoss"]).toFixed(2));
           parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"]))).toFixed(2)).toFixed(2));
           parentUser.exposure = parseFloat(parseFloat(parentExposure - adminBalanceData?.["exposure"]).toFixed(2));
           if (userCommission?.sessionCommission && item.domain == oldBetFairDomain) {
@@ -469,7 +469,7 @@ exports.declareSessionResult = async (req, res) => {
       parentExposure = parseFloat(parentUserRedisData?.exposure);
     }
 
-    parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss - fwProfitLoss).toFixed(2));
+    parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + fwProfitLoss).toFixed(2));
     parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - fwProfitLoss).toFixed(2));
     parentUser.exposure = parseFloat(parseFloat(parentExposure - exposure).toFixed(2));
     if (fgWallet?.sessionCommission) {
@@ -848,7 +848,9 @@ exports.unDeclareSessionResult = async (req, res) => {
       for (let userIds in response?.superAdminData) {
         if (response?.superAdminData?.[userIds]?.role == userRoleConstant.user) {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
-          response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
+          response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
+        } else {
+          response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
         }
         let userCommission = commissionData?.find((item) => item?.userId == userIds);
         if (userCommission) {
@@ -880,7 +882,7 @@ exports.unDeclareSessionResult = async (req, res) => {
             parentExposure = parseFloat(parentUserRedisData?.exposure);
           }
 
-          parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + adminBalanceData?.["profitLoss"]).toFixed(2));
+          parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss - adminBalanceData?.["profitLoss"]).toFixed(2));
           parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2))).toFixed(2));
           parentUser.exposure = parseFloat(parseFloat(parentExposure + adminBalanceData?.["exposure"]).toFixed(2));
 
@@ -1032,7 +1034,7 @@ exports.unDeclareSessionResult = async (req, res) => {
       parentExposure = parseFloat(parentUserRedisData?.exposure);
     }
 
-    parentUser.profitLoss =  parseFloat(parseFloat(parentProfitLoss + parseFloat(fwProfitLoss)).toFixed(2));
+    parentUser.profitLoss =  parseFloat(parseFloat(parentProfitLoss - parseFloat(fwProfitLoss)).toFixed(2));
     parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(fwProfitLoss)).toFixed(2))).toFixed(2));
     parentUser.exposure = parseFloat(parseFloat(parentExposure + exposure).toFixed(2));
 
@@ -1176,7 +1178,7 @@ exports.declareMatchResult = async (req, res) => {
         }
         else {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-          response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
+          // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
@@ -1214,7 +1216,7 @@ exports.declareMatchResult = async (req, res) => {
             parentExposure = parseFloat(parentUserRedisData?.exposure);
           }
 
-          parentUser.profitLoss = parseFloat(parentProfitLoss) - parseFloat(adminBalanceData?.["profitLoss"]);
+          parentUser.profitLoss = parseFloat(parentProfitLoss) + parseFloat(adminBalanceData?.["profitLoss"]);
           parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2));
           parentUser.exposure = parentExposure - adminBalanceData?.["exposure"];
 
@@ -1324,7 +1326,7 @@ exports.declareMatchResult = async (req, res) => {
       parentExposure = parseFloat(parentUserRedisData?.exposure);
     }
 
-    parentUser.profitLoss = parseFloat(parentProfitLoss) - fwProfitLoss;
+    parentUser.profitLoss = parseFloat(parentProfitLoss) + fwProfitLoss;
     parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) - fwProfitLoss;
     parentUser.exposure = parentExposure - exposure;
 
@@ -1481,6 +1483,8 @@ exports.unDeclareMatchResult = async (req, res) => {
         if (response?.superAdminData?.[userIds]?.role == userRoleConstant.user) {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
+        } else {
+          response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
         }
         
           response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
@@ -1509,7 +1513,7 @@ exports.unDeclareMatchResult = async (req, res) => {
             parentExposure = parseFloat(parentUserRedisData?.exposure);
           }
 
-          parentUser.profitLoss = parseFloat(parentProfitLoss) + parseFloat(adminBalanceData?.["profitLoss"]);
+          parentUser.profitLoss = parseFloat(parentProfitLoss) - parseFloat(adminBalanceData?.["profitLoss"]);
           parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) + parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2));
           parentUser.exposure = parentExposure + parseFloat(adminBalanceData?.["exposure"]);
 
@@ -1541,8 +1545,6 @@ exports.unDeclareMatchResult = async (req, res) => {
 
           let parentRedisUpdateObj = {};
 
-
-
           Object.keys(adminBalanceData)?.forEach((pLData) => {
             if (profitLossDataAdmin?.[parentUser.userId]?.[pLData]) {
               profitLossDataAdmin[parentUser.userId][pLData] += adminBalanceData?.[pLData];
@@ -1554,9 +1556,6 @@ exports.unDeclareMatchResult = async (req, res) => {
               profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(adminBalanceData?.[pLData]).toFixed(2));
             }
           });
-
-
-
 
           if (parentUserRedisData?.exposure) {
             parentRedisUpdateObj = {
@@ -1610,7 +1609,7 @@ exports.unDeclareMatchResult = async (req, res) => {
       parentExposure = parseFloat(parentUserRedisData?.exposure);
     }
 
-    parentUser.profitLoss = parseFloat(parentProfitLoss) + parseFloat(fwProfitLoss);
+    parentUser.profitLoss = parseFloat(parentProfitLoss) - parseFloat(fwProfitLoss);
     parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) + parseFloat(fwProfitLoss);
     parentUser.exposure = parentExposure + parseFloat(exposure);
 

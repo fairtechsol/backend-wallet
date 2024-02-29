@@ -34,6 +34,7 @@ const commissionSchema = new EntitySchema({
       type: 'decimal',
       nullable: true,
       precision: 13,
+      scale: 2,
       default: 0,
       transformer: new ColumnNumericTransformer(),
 
@@ -48,11 +49,13 @@ const commissionSchema = new EntitySchema({
       transformer: new ColumnNumericTransformer(),
       nullable: true,
       precision: 13,
+      scale: 2,
       default: 0,
     },
     commissionAmount: {
       type: 'decimal',
       precision: 13,
+      scale: 2,
       default: 0,
       nullable: false,
       transformer: new ColumnNumericTransformer()

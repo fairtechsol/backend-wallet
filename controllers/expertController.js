@@ -260,8 +260,6 @@ exports.getMatchDatesByCompetitionIdAndDate = async (req, res) => {
   }
 };
 
-
-
 exports.declareSessionResult = async (req, res) => {
   try {
 
@@ -852,7 +850,7 @@ exports.unDeclareSessionResult = async (req, res) => {
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
         }
-        let userCommission = commissionData?.find((item) => item?.userId == userIds);
+        let userCommission = commissionData?.find((cData) => cData?.userId == userIds);
         if (userCommission) {
           response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(userCommission?.amount || 0)).toFixed(2));
         }
@@ -888,7 +886,7 @@ exports.unDeclareSessionResult = async (req, res) => {
 
           if (!fwData.has(parentUserId)) {
             fwData.add(parentUserId);
-            let parentCommission = commissionData?.find((item) => item?.userId == parentUser.id);
+            let parentCommission = commissionData?.find((cData) => cData?.userId == parentUser.userId);
             if (parentCommission) {
               parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
             }
@@ -1039,7 +1037,7 @@ exports.unDeclareSessionResult = async (req, res) => {
     parentUser.exposure = parseFloat(parseFloat(parentExposure + exposure).toFixed(2));
 
 
-    let parentCommission = commissionData?.find((item) => item?.userId == fgWallet.id);
+    let parentCommission = commissionData?.find((cData) => cData?.userId == fgWallet.id);
     if (parentCommission) {
       parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
     }
@@ -1238,7 +1236,7 @@ exports.declareMatchResult = async (req, res) => {
                     odds: items?.odds,
                     betType: items?.betType,
                     stake: items?.stake,
-                    commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
+                    commissionAmount: Math.abs(parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
                     partnerShip: userCommission.fwPartnership,
                     matchName: match?.title,
                     matchStartDate: new Date(match?.startAt),
@@ -1253,7 +1251,7 @@ exports.declareMatchResult = async (req, res) => {
                   matchId: matchId,
                   betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
                   parentId: parentUserId,
-                  commissionAmount: parseFloat((parseFloat(parseFloat(adminBalanceData?.["profitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
+                  commissionAmount: Math.abs(parseFloat((parseFloat(parseFloat(adminBalanceData?.["profitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
                   partnerShip: userCommission.fwPartnership,
                   matchName: match?.title,
                   matchStartDate: new Date(match?.startAt),
@@ -1347,7 +1345,7 @@ exports.declareMatchResult = async (req, res) => {
               odds: items?.odds,
               betType: items?.betType,
               stake: items?.stake,
-              commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)),
+              commissionAmount: Math.abs(parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
               partnerShip: 100,
               matchName: match?.title,
               matchStartDate: new Date(match?.startAt),
@@ -1361,7 +1359,7 @@ exports.declareMatchResult = async (req, res) => {
             matchId: matchId,
             betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
             parentId: fgWallet.id,
-            commissionAmount: parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2)),
+            commissionAmount: Math.abs(parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2))),
             partnerShip: 100,
             matchName: match?.title,
             matchStartDate: new Date(match?.startAt),
@@ -1434,11 +1432,8 @@ exports.declareMatchResult = async (req, res) => {
 
 exports.unDeclareMatchResult = async (req, res) => {
   try {
-
     const { matchOddId, userId, matchId, match, matchBetting } = req.body;
-
     const domainData = await getUserDomainWithFaId();
-
 
     const fgWallet = await getUser({
       roleName: userRoleConstant?.fairGameWallet
@@ -1519,7 +1514,7 @@ exports.unDeclareMatchResult = async (req, res) => {
 
           if (!fwData.has(parentUserId)) {
             fwData.add(parentUserId);
-            let parentCommission = commissionData?.find((item) => item?.userId == parentUser.id);
+            let parentCommission = commissionData?.find((item) => item?.userId == parentUser.userId);
             if (parentCommission) {
               parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
             }

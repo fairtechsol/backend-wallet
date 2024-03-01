@@ -1,3 +1,4 @@
+const { __mf } = require("i18n");
 const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { logger } = require("../config/logger");
@@ -8,10 +9,9 @@ const userService = require("./userService");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
-
   if (token) {
     // function to force logout
-    sendMessageToUser(userId, socketData.logoutUserForceEvent, null)
+    sendMessageToUser(userId, socketData.logoutUserForceEvent, { message: __mf("auth.forceLogout") });
   }
 };
 

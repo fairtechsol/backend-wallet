@@ -19,7 +19,8 @@
     "logoutSuccess": "Logout successfully.",
     "passwordChanged": "Password changed successfully.",
     "unauthorize": "Unauthorized user",
-    "TransactionPasswordNotExist" : "Your transaction password not generated. Please contact your administrator."
+    "TransactionPasswordNotExist" : "Your transaction password not generated. Please contact your administrator.",
+    "forceLogout":"Some other user login this account on other device."
   },
   "user": {
     "blocked": "There is something wrong with your account. Please contact your administrator.",

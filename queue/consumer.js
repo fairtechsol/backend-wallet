@@ -36,9 +36,6 @@ WalletMatchBetQueue.process(async function (job, done) {
   }
 });
 
-
-
-
 let calculateRateAmount = async (jobData, userId) => {
   let partnershipObj = JSON.parse(jobData.partnerships);
   let userCurrentExposure = jobData.newUserExposure;
@@ -129,7 +126,6 @@ let calculateRateAmount = async (jobData, userId) => {
     );
 }
 
-
 WalletSessionBetQueue.process(async function (job, done) {
   let jobData = job.data;
   let userId = jobData.userId;
@@ -146,7 +142,6 @@ WalletSessionBetQueue.process(async function (job, done) {
     return done(null, {});
   }
 });
-
 
 const calculateSessionRateAmount = async (jobData, userId) => {
   // Parse partnerships from userRedisData
@@ -512,6 +507,10 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
                 matchBetType,
+                teamArateRedisKey: teamArateRedisKey,
+                teamBrateRedisKey: teamBrateRedisKey,
+                teamCrateRedisKey: teamCrateRedisKey,
+                redisObject: redisObj
               });
             }
 

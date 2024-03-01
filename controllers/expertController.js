@@ -1608,6 +1608,11 @@ exports.unDeclareMatchResult = async (req, res) => {
     parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) + parseFloat(fwProfitLoss);
     parentUser.exposure = parentExposure + parseFloat(exposure);
 
+    const parentCommission = commissionData?.find((item) => item?.userId == fgWallet.id);
+    if (parentCommission) {
+      parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
+    }
+
 
     if (parentUser.exposure < 0) {
       logger.info({
@@ -1619,7 +1624,7 @@ exports.unDeclareMatchResult = async (req, res) => {
       });
       parentUser.exposure = 0;
     }
-    await addInitialUserBalance(parentUser);
+    await updateUserBalanceByUserId(fgWallet.id, parentUser);
     logger.info({
       message: "Un declare result db update for parent ",
       data: {

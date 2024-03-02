@@ -372,7 +372,8 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
                 matchId: matchId,
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
-                domainUrl: domainUrl
+                domainUrl: domainUrl,
+                betId
               });
             }
 

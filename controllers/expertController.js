@@ -1190,7 +1190,7 @@ exports.declareMatchResult = async (req, res) => {
 
         fwProfitLoss += parseFloat(adminBalanceData?.profitLoss);
         if (item.domain == oldBetFairDomain) {
-          totalCommissionProfitLoss += parseFloat(adminBalanceData?.profitLoss);
+          totalCommissionProfitLoss += parseFloat(adminBalanceData?.userOriginalProfitLoss);
         }
 
         if (adminBalanceData.role == userRoleConstant.fairGameAdmin) {
@@ -1219,12 +1219,11 @@ exports.declareMatchResult = async (req, res) => {
           parentUser.exposure = parentExposure - adminBalanceData?.["exposure"];
 
           if (userCommission?.matchCommission && item.domain == oldBetFairDomain) {
-            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.matchCommission).toFixed(2)) / 100).toFixed(2));
 
             Object.keys(response?.bulkCommission)?.forEach((item) => {
               if (userCommission.matchComissionType == matchComissionTypeConstant.entryWise) {
                 response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.forEach((items) => {
-
+                  parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat(parseFloat(parseFloat(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))*parseFloat((parseFloat(userCommission.fwPartnership)/100).toFixed(2))).toFixed(2))));
                   bulkCommission.push({
                     createBy: item,
                     matchId: items.matchId,
@@ -1236,7 +1235,7 @@ exports.declareMatchResult = async (req, res) => {
                     odds: items?.odds,
                     betType: items?.betType,
                     stake: items?.stake,
-                    commissionAmount: Math.abs(parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
+                    commissionAmount: Math.abs(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
                     partnerShip: userCommission.fwPartnership,
                     matchName: match?.title,
                     matchStartDate: new Date(match?.startAt),
@@ -1245,17 +1244,19 @@ exports.declareMatchResult = async (req, res) => {
                   });
                 });
               }
-              else if (parseFloat(adminBalanceData?.["profitLoss"]) < 0) {
+              else if (parseFloat(adminBalanceData?.["userOriginalProfitLoss"]) < 0) {
+                parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat(parseFloat(
+                  parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2)));
                 bulkCommission.push({
                   createBy: item,
                   matchId: matchId,
                   betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
                   parentId: parentUserId,
-                  commissionAmount: Math.abs(parseFloat((parseFloat(parseFloat(adminBalanceData?.["profitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
+                  commissionAmount: Math.abs(parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
                   partnerShip: userCommission.fwPartnership,
                   matchName: match?.title,
                   matchStartDate: new Date(match?.startAt),
-                  userName: response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.[0]?.userName
+                  userName: null
 
                 });
               }
@@ -1295,9 +1296,7 @@ exports.declareMatchResult = async (req, res) => {
             matchId
           });
           exposure += parseFloat(adminBalanceData?.exposure);
-          if (fgWallet.matchCommission && item.domain == oldBetFairDomain) {
-            commissionWallet += Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(fgWallet?.matchCommission).toFixed(2)) / 100).toFixed(2)) || 0;
-          }
+         
         };
 
       }
@@ -1329,11 +1328,13 @@ exports.declareMatchResult = async (req, res) => {
     parentUser.exposure = parentExposure - exposure;
 
     if (userCommission?.matchCommission && item.domain == oldBetFairDomain) {
-      parentUser.totalCommission += commissionWallet;
+    
 
       Object.keys(response?.bulkCommission)?.forEach((item) => {
         if (userCommission.matchComissionType == matchComissionTypeConstant.entryWise) {
           response?.bulkCommission?.[item]?.forEach((items) => {
+
+            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)));
             bulkCommission.push({
               createBy: item,
               matchId: items.matchId,
@@ -1345,7 +1346,7 @@ exports.declareMatchResult = async (req, res) => {
               odds: items?.odds,
               betType: items?.betType,
               stake: items?.stake,
-              commissionAmount: Math.abs(parseFloat((parseFloat(items?.amount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
+              commissionAmount: Math.abs(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
               partnerShip: 100,
               matchName: match?.title,
               matchStartDate: new Date(match?.startAt),
@@ -1354,6 +1355,7 @@ exports.declareMatchResult = async (req, res) => {
           });
         }
         else if (totalCommissionProfitLoss < 0) {
+          parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2)));
           bulkCommission.push({
             createBy: item,
             matchId: matchId,
@@ -1363,7 +1365,7 @@ exports.declareMatchResult = async (req, res) => {
             partnerShip: 100,
             matchName: match?.title,
             matchStartDate: new Date(match?.startAt),
-            userName: response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.[0]?.userName
+            userName: null
 
           });
         }
@@ -1477,12 +1479,12 @@ exports.unDeclareMatchResult = async (req, res) => {
       for (let userIds in response?.superAdminData) {
         if (response?.superAdminData?.[userIds]?.role == userRoleConstant.user) {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
-          response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
+          response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
         }
         
-          response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
+        response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
         
         updateUserBalanceData(userIds, response?.superAdminData?.[userIds]);
       }

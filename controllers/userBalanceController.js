@@ -8,6 +8,7 @@ const { logger } = require('../config/logger');
 const { settleCommission, insertCommissions } = require('../services/commissionService');
 const { apiCall, apiMethod, allApiRoutes } = require('../utils/apiService');
 const { hasUserInCache, updateUserDataRedis } = require('../services/redis/commonFunctions');
+const { __mf } = require('i18n');
 
 exports.updateUserBalance = async (req, res) => {
     try {
@@ -132,6 +133,9 @@ exports.settleCommissions = async (req, res) => {
             })
                 .then((data) => data)
                 .catch((err) => {
+                    if(err.response.data.message == __mf("userBalance.commissionAlreadySettled")){
+                        return null;
+                    }
                     logger.error({
                         context: `error in ${domain} settling commission`,
                         process: `User ID : ${req.user.id} `,

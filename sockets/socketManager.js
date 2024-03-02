@@ -87,18 +87,6 @@ const handleDisconnect = async (client) => {
       internalRedis.srem("expertLoginIds", userId);
       // Leave the "expertUserCountRoom" room
       client.leave("expertUserCountRoom");
-    } else if (roleName === userRoleConstant.user) {
-      const userCount = parseInt(await internalRedis.get("loginUserCount"));
-      // If the user is a regular user, manage user login count
-      const decrementCount = async () => {
-        const userCount = await internalRedis.decr("loginUserCount");
-        io.to("expertUserCountRoom").emit("loginUserCount", {
-          count: userCount,
-        });
-      };
-
-      // Decrement and emit the login user count if greater than 0; otherwise, set it to 0
-      userCount > 0 ? decrementCount() : internalRedis.set("loginUserCount", 0);
     }
   } catch (err) {
     // Handle any errors by disconnecting the client

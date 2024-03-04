@@ -127,7 +127,7 @@ exports.listMatch = async (req, res) => {
 
     for (let i = 0; i < apiResponse.data?.matches?.length; i++) {
       let matchDetail = apiResponse.data?.matches[i];
-      apiResponse.data.matches[i].totalBet = bets?.find((item) => item?.matchId == matchDetail.id)?.count;
+      apiResponse.data.matches[i].totalBet = bets?.reduce((prev, curr) => { return curr?.matchId == matchDetail.id ? prev + parseInt(curr?.count): prev }, 0);
 
       const redisIds = [`${redisKeys.userTeamARate}${matchDetail?.id}`, `${redisKeys.userTeamBRate}${matchDetail?.id}`];
 

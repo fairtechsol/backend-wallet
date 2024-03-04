@@ -1,12 +1,12 @@
 const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, matchBettingType } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
-const { insertCommissions, getCombinedCommission, deleteCommission } = require("../services/commissionService");
+const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
 const { mergeProfitLoss, settingBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData } = require("../services/userBalanceService");
-const { getUsersWithUserBalance, getUser, getUserById } = require("../services/userService");
+const { getUsersWithUserBalance, getUser, getUserById, getUsersWithoutCount } = require("../services/userService");
 const { sendMessageToUser } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -274,7 +274,6 @@ exports.declareSessionResult = async (req, res) => {
 
     let fwProfitLoss = 0;
     let exposure = 0;
-    let commissionWallet = 0;
 
     let bulkCommission = [];
     let totalCommissions = [];
@@ -443,11 +442,8 @@ exports.declareSessionResult = async (req, res) => {
           });
         }
         exposure += parseFloat(adminBalanceData?.exposure);
-        if (fgWallet.sessionCommission && item.domain == oldBetFairDomain) {
-          commissionWallet += Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(fgWallet?.sessionCommission).toFixed(2)) / 100).toFixed(2)) || 0;
-        }
+       
       };
-
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -470,32 +466,36 @@ exports.declareSessionResult = async (req, res) => {
     parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + fwProfitLoss).toFixed(2));
     parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - fwProfitLoss).toFixed(2));
     parentUser.exposure = parseFloat(parseFloat(parentExposure - exposure).toFixed(2));
-    if (fgWallet?.sessionCommission) {
-      parentUser.totalCommission += commissionWallet;
+    // if (fgWallet?.sessionCommission) {
+    const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
+    const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
+      return prev + parseFloat(parseFloat(curr.commissionAmount * curr.partnerShip / 100).toFixed(2))
+    }, 0);
+    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet).toFixed(2));
 
-      Object.keys(response?.bulkCommission)?.forEach((item) => {
-        response?.bulkCommission?.[item]?.forEach((items) => {
-          bulkCommission.push({
-            createBy: item,
-            matchId: items.matchId,
-            betId: items?.betId,
-            betPlaceId: items?.betPlaceId,
-            parentId: fgWallet.id,
-            teamName: items?.sessionName,
-            betPlaceDate: new Date(items?.betPlaceDate),
-            odds: items?.odds,
-            betType: items?.betType,
-            stake: items?.stake,
-            commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(fgWallet?.sessionCommission) / 100).toFixed(2)),
-            upLinePartnership: 100,
-            matchName: match?.title,
-            matchStartDate: new Date(match?.startAt),
-            userName: items.userName
+      // Object.keys(response?.bulkCommission)?.forEach((item) => {
+      //   response?.bulkCommission?.[item]?.forEach((items) => {
+      //     bulkCommission.push({
+      //       createBy: item,
+      //       matchId: items.matchId,
+      //       betId: items?.betId,
+      //       betPlaceId: items?.betPlaceId,
+      //       parentId: fgWallet.id,
+      //       teamName: items?.sessionName,
+      //       betPlaceDate: new Date(items?.betPlaceDate),
+      //       odds: items?.odds,
+      //       betType: items?.betType,
+      //       stake: items?.stake,
+      //       commissionAmount: parseFloat((parseFloat(items?.amount) * parseFloat(fgWallet?.sessionCommission) / 100).toFixed(2)),
+      //       upLinePartnership: 100,
+      //       matchName: match?.title,
+      //       matchStartDate: new Date(match?.startAt),
+      //       userName: items.userName
 
-          });
-        });
-      });
-    };
+      //     });
+      //   });
+      // });
+    // };
     if (parentExposure < 0) {
       logger.info({
         message: "Exposure in negative for user: ",
@@ -556,7 +556,7 @@ exports.declareSessionResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: resultProfitLoss }
+        data: { profitLoss: resultProfitLoss ,totalCommission:parseFloat(parseFloat(commissionWallet).toFixed(2))}
       },
       req,
       res
@@ -574,7 +574,6 @@ exports.declareSessionResult = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 }
-
 
 exports.declareSessionNoResult = async (req, res) => {
   try {
@@ -1037,10 +1036,16 @@ exports.unDeclareSessionResult = async (req, res) => {
     parentUser.exposure = parseFloat(parseFloat(parentExposure + exposure).toFixed(2));
 
 
-    let parentCommission = commissionData?.find((cData) => cData?.userId == fgWallet.id);
-    if (parentCommission) {
-      parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
-    }
+    // let parentCommission = commissionData?.find((cData) => cData?.userId == fgWallet.id);
+    // if (parentCommission) {
+    //   parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
+    // }
+
+    const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
+    const commissionWallet = await commissionData.filter((item) => allChildUsers.find((items) => items.id == item.userId) != undefined)?.reduce((prev, curr) => {
+      return prev + parseFloat(parseFloat(curr.amount).toFixed(2))
+    }, 0);
+    parentUser.totalCommission -= parseFloat(parseFloat(commissionWallet).toFixed(2));
 
 
     if (parentExposure < 0) {
@@ -1136,7 +1141,6 @@ exports.declareMatchResult = async (req, res) => {
 
     let fwProfitLoss = 0;
     let exposure = 0;
-    let commissionWallet = 0;
 
     let bulkCommission = [];
     let totalCommissions = [];
@@ -1256,7 +1260,8 @@ exports.declareMatchResult = async (req, res) => {
                   partnerShip: userCommission.fwPartnership,
                   matchName: match?.title,
                   matchStartDate: new Date(match?.startAt),
-                  userName: null
+                  userName: null,
+                  stake: adminBalanceData?.["userOriginalProfitLoss"]
 
                 });
               }
@@ -1305,7 +1310,7 @@ exports.declareMatchResult = async (req, res) => {
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
-    let userCommission = await getUserById(fgWallet.id, ["matchComissionType", "matchCommission", "fwPartnership"]);
+    
 
 
     let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -1327,50 +1332,12 @@ exports.declareMatchResult = async (req, res) => {
     parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) - fwProfitLoss;
     parentUser.exposure = parentExposure - exposure;
 
-    if (userCommission?.matchCommission && item.domain == oldBetFairDomain) {
-    
+    const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
+    const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
+      return prev + parseFloat(parseFloat(curr.commissionAmount * curr.partnerShip / 100).toFixed(2))
+    }, 0);
+    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet).toFixed(2));
 
-      Object.keys(response?.bulkCommission)?.forEach((item) => {
-        if (userCommission.matchComissionType == matchComissionTypeConstant.entryWise) {
-          response?.bulkCommission?.[item]?.forEach((items) => {
-
-            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)));
-            bulkCommission.push({
-              createBy: item,
-              matchId: items.matchId,
-              betId: items?.betId,
-              betPlaceId: items?.betPlaceId,
-              parentId: fgWallet.id,
-              teamName: items?.sessionName,
-              betPlaceDate: new Date(items?.betPlaceDate),
-              odds: items?.odds,
-              betType: items?.betType,
-              stake: items?.stake,
-              commissionAmount: Math.abs(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2))),
-              partnerShip: 100,
-              matchName: match?.title,
-              matchStartDate: new Date(match?.startAt),
-              userName: items.userName
-            });
-          });
-        }
-        else if (totalCommissionProfitLoss < 0) {
-          parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2)));
-          bulkCommission.push({
-            createBy: item,
-            matchId: matchId,
-            betId: matchDetails?.find((items) => items.type == matchBettingType.quickbookmaker1)?.id,
-            parentId: fgWallet.id,
-            commissionAmount: Math.abs(parseFloat((parseFloat(parseFloat(totalCommissionProfitLoss)) * parseFloat(fgWallet?.matchCommission) / 100).toFixed(2))),
-            partnerShip: 100,
-            matchName: match?.title,
-            matchStartDate: new Date(match?.startAt),
-            userName: null
-
-          });
-        }
-      });
-    };
     if (parentUser.exposure < 0) {
       logger.info({
         message: "Exposure in negative for user: ",
@@ -1412,7 +1379,7 @@ exports.declareMatchResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: resultProfitLoss }
+        data: { profitLoss: resultProfitLoss, totalCommission: parseFloat(parseFloat(commissionWallet).toFixed(2)) }
       },
       req,
       res
@@ -1610,11 +1577,16 @@ exports.unDeclareMatchResult = async (req, res) => {
     parentUser.myProfitLoss = parseFloat(parentMyProfitLoss) + parseFloat(fwProfitLoss);
     parentUser.exposure = parentExposure + parseFloat(exposure);
 
-    const parentCommission = commissionData?.find((item) => item?.userId == fgWallet.id);
-    if (parentCommission) {
-      parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
-    }
+    // const parentCommission = commissionData?.find((item) => item?.userId == fgWallet.id);
+    // if (parentCommission) {
+    //   parentUser.totalCommission = parentUser.totalCommission - parseFloat(parentCommission?.amount || 0);
+    // }
 
+    const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
+    const commissionWallet = await commissionData.filter((item) => allChildUsers.find((items) => items.id == item.userId) != undefined)?.reduce((prev, curr) => {
+      return prev + parseFloat(parseFloat(curr.amount).toFixed(2))
+    }, 0);
+    parentUser.totalCommission -= parseFloat(parseFloat(commissionWallet).toFixed(2));
 
     if (parentUser.exposure < 0) {
       logger.info({

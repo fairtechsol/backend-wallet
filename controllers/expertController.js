@@ -556,7 +556,7 @@ exports.declareSessionResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: resultProfitLoss }
+        data: { profitLoss: resultProfitLoss ,totalCommission:parseFloat(parseFloat(commissionWallet).toFixed(2))}
       },
       req,
       res
@@ -1310,7 +1310,7 @@ exports.declareMatchResult = async (req, res) => {
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
-    let userCommission = await getUserById(fgWallet.id, ["matchComissionType", "matchCommission", "fwPartnership"]);
+    
 
 
     let parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -1379,7 +1379,7 @@ exports.declareMatchResult = async (req, res) => {
       {
         statusCode: 200,
         message: { msg: "bet.resultDeclared" },
-        data: { profitLoss: resultProfitLoss }
+        data: { profitLoss: resultProfitLoss, totalCommission: parseFloat(parseFloat(commissionWallet).toFixed(2)) }
       },
       req,
       res

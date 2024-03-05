@@ -932,7 +932,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
     const userTotalBalance = await getUserBalanceDataByUserId(where.createBy, ["currentBalance"]);
 
     const totalBalance = await getUsersWithTotalUsersBalanceData(where, apiQuery, queryColumns);
-    totalBalance.currBalance = totalCurrentBalance + userTotalBalance.currentBalance;
+    totalBalance.currBalance = totalCurrentBalance;
     totalBalance.availableBalance = parseFloat(totalBalance.availableBalance || 0) - parseFloat(totalBalance.totalExposure || 0);
 
     return SuccessResponse(

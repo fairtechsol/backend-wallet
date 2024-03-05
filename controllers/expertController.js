@@ -1543,17 +1543,18 @@ exports.unDeclareMatchResult = async (req, res) => {
           });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
         };
-        Object.keys(response?.faAdminCal?.wallet)?.forEach((pLData) => {
-          if (profitLossDataWallet[pLData]) {
-            profitLossDataWallet[pLData] += response?.faAdminCal?.wallet?.[pLData];
-            profitLossDataWallet[pLData] = parseFloat(parseFloat(profitLossDataWallet[pLData]).toFixed(2));
-          }
-          else {
-            profitLossDataWallet[pLData] = parseFloat(parseFloat(response?.faAdminCal?.wallet?.[pLData]).toFixed(2));
-          }
-        });
+        
       }
       fwProfitLoss -= parseFloat(response?.faAdminCal?.fwWalletDeduction || 0);
+      Object.keys(response?.faAdminCal?.wallet)?.forEach((pLData) => {
+        if (profitLossDataWallet[pLData]) {
+          profitLossDataWallet[pLData] += response?.faAdminCal?.wallet?.[pLData];
+          profitLossDataWallet[pLData] = parseFloat(parseFloat(profitLossDataWallet[pLData]).toFixed(2));
+        }
+        else {
+          profitLossDataWallet[pLData] = parseFloat(parseFloat(response?.faAdminCal?.wallet?.[pLData]).toFixed(2));
+        }
+      });
     };
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);

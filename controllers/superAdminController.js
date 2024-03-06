@@ -989,3 +989,36 @@ exports.getPlacedBets = async (req, res, next) => {
     );
   }
 }
+
+exports.updateUserBalanceBySA = async (req, res, next) => {
+  try {
+
+    const { userId, balance } = req.body;
+
+    await updateUserBalanceByUserId(userId, {
+      currentBalance: balance
+    });
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    logger.error({
+      error: `Error at update super admin balance.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}

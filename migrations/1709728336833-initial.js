@@ -1,7 +1,7 @@
 const { MigrationInterface, QueryRunner } = require("typeorm");
 
-module.exports = class Initial1707454107222 {
-    name = 'Initial1707454107222'
+module.exports = class Initial1709728336833 {
+    name = 'Initial1709728336833'
 
     async up(queryRunner) {
         await queryRunner.query(`CREATE TABLE "userBalances" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "currentBalance" numeric(13,2) NOT NULL DEFAULT '0', "exposure" numeric(13,2) NOT NULL DEFAULT '0', "userId" uuid NOT NULL, "profitLoss" numeric(13,2) NOT NULL DEFAULT '0', "myProfitLoss" numeric(13,2) NOT NULL DEFAULT '0', "downLevelBalance" numeric(13,2) NOT NULL DEFAULT '0', "totalCommission" numeric(13,2) NOT NULL DEFAULT '0', CONSTRAINT "UQ_e0d46cb3619d6665866b54577ed" UNIQUE ("userId"), CONSTRAINT "REL_e0d46cb3619d6665866b54577e" UNIQUE ("userId"), CONSTRAINT "PK_e7210fe11b45cc7d53a3a8d35b8" PRIMARY KEY ("id"))`);
@@ -20,7 +20,7 @@ module.exports = class Initial1707454107222 {
         await queryRunner.query(`CREATE UNIQUE INDEX "domainData_userName" ON "domainDatas" ("id", "userName") `);
         await queryRunner.query(`CREATE TYPE "public"."commissions_bettype_enum" AS ENUM('YES', 'NO', 'BACK', 'LAY')`);
         await queryRunner.query(`CREATE TYPE "public"."commissions_commissiontype_enum" AS ENUM('totalLoss', 'entryWise', 'settled')`);
-        await queryRunner.query(`CREATE TABLE "commissions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createBy" uuid, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP WITH TIME ZONE, "userName" character varying, "matchId" uuid, "betId" uuid, "betPlaceId" uuid, "teamName" character varying, "betPlaceDate" TIMESTAMP WITH TIME ZONE, "odds" numeric(13) DEFAULT '0', "betType" "public"."commissions_bettype_enum", "stake" numeric(13) DEFAULT '0', "commissionAmount" numeric(13) NOT NULL DEFAULT '0', "commissionType" "public"."commissions_commissiontype_enum", "parentId" uuid NOT NULL, "partnerShip" integer DEFAULT '100', "matchName" character varying, "matchStartDate" TIME WITH TIME ZONE, "settled" boolean NOT NULL DEFAULT false, CONSTRAINT "PK_2701379966e2e670bb5ff0ae78e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "commissions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createBy" uuid, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP WITH TIME ZONE, "userName" character varying, "matchId" uuid, "betId" uuid, "betPlaceId" uuid, "teamName" character varying, "betPlaceDate" TIMESTAMP WITH TIME ZONE, "odds" numeric(13,2) DEFAULT '0', "betType" "public"."commissions_bettype_enum", "stake" numeric(13,2) DEFAULT '0', "commissionAmount" numeric(13,2) NOT NULL DEFAULT '0', "commissionType" "public"."commissions_commissiontype_enum", "parentId" uuid NOT NULL, "partnerShip" integer DEFAULT '100', "matchName" character varying, "matchStartDate" TIMESTAMP WITH TIME ZONE, "settled" boolean NOT NULL DEFAULT false, CONSTRAINT "PK_2701379966e2e670bb5ff0ae78e" PRIMARY KEY ("id"))`);
         await queryRunner.query(`ALTER TABLE "userBalances" ADD CONSTRAINT "FK_e0d46cb3619d6665866b54577ed" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "transactions" ADD CONSTRAINT "FK_6bb58f2b6e30cb51a6504599f41" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "transactions" ADD CONSTRAINT "FK_8cd147a85d1b45cfbff10260ed1" FOREIGN KEY ("actionByUserId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);

@@ -17,6 +17,7 @@ const {WalletMatchBetQueue} = require("./queue/consumer.js")
  * Enable Cross-Origin Resource Sharing (CORS)
  */
 app.use(cors({ origin: "*" }));
+app.enable('trust proxy');
 
 /**
  * Parse incoming JSON data

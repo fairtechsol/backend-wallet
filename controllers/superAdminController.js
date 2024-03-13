@@ -4,6 +4,7 @@ const {
   walletDescription,
   oldBetFairDomain,
   redisKeys,
+  partnershipPrefixByRole,
 } = require("../config/contants");
 const {
   getUserById,
@@ -17,6 +18,7 @@ const {
   getChildUser,
   getParentUsers,
   getFirstLevelChildUser,
+  getFirstLevelChildUserWithPartnership,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -1028,13 +1030,14 @@ exports.updateUserBalanceBySA = async (req, res, next) => {
 exports.getUserProfitLoss = async (req, res, next) => {
   try {
     const { matchId } = req.params;
-    const { id } = req.user;
+    const { id,roleName } = req.user;
 
-    const users = await getFirstLevelChildUser(id);
+    const users = await getFirstLevelChildUserWithPartnership(id, partnershipPrefixByRole[roleName] + "Partnership");
 
     let oldBetFairUserIds = [];
     const userProfitLossData = [];
     for (let element of users) {
+      element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet && !element.isUrl) {
         oldBetFairUserIds.push(element);
       }
@@ -1063,14 +1066,19 @@ exports.getUserProfitLoss = async (req, res, next) => {
   
         if (isUserExist) {
           let betsData = await getUserRedisKeys(element?.id, [redisKeys.userTeamARate + matchId, redisKeys.userTeamBRate + matchId, redisKeys.userTeamCRate + matchId]);
-          currUserProfitLossData.tramRateA = betsData?.[0]? parseFloat(betsData?.[0])?.toFixed(2):0;
-          currUserProfitLossData.tramRateB = betsData?.[1]? parseFloat(betsData?.[1])?.toFixed(2):0;
-          currUserProfitLossData.tramRateC = betsData?.[2]? parseFloat(betsData?.[2])?.toFixed(2):0;
+          currUserProfitLossData.teamRateA = betsData?.[0] ? parseFloat(betsData?.[0])?.toFixed(2) : 0;
+          currUserProfitLossData.teamRateB = betsData?.[1] ? parseFloat(betsData?.[1])?.toFixed(2) : 0;
+          currUserProfitLossData.teamRateC = betsData?.[2] ? parseFloat(betsData?.[2])?.toFixed(2) : 0;
+
+          currUserProfitLossData.percentTeamRateA = betsData?.[0] ? parseFloat(parseFloat(parseFloat(betsData?.[0])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
+          currUserProfitLossData.percentTeamRateB = betsData?.[1] ? parseFloat(parseFloat(parseFloat(betsData?.[1])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
+          currUserProfitLossData.percentTeamRateC = betsData?.[2] ? parseFloat(parseFloat(parseFloat(betsData?.[2])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
         }
         else {
           let betsData = await settingBetsDataAtLogin(element);
           currUserProfitLossData = {
-            tramRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2) : 0, tramRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2) : 0, teamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2) : 0
+            teamRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2) : 0, teamRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2) : 0, teamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2) : 0,
+            percentTeamRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0, percentTeamRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0, percentTeamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0
           }
       }
       currUserProfitLossData.userName = element?.userName;

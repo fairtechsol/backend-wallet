@@ -224,6 +224,10 @@ exports.getFirstLevelChildUser = async (id) => {
 
 }
 
+exports.getFirstLevelChildUserWithPartnership = async (id,partnership) => {
+  return await user.find({ where: { createBy: id }, select: { id: true, roleName: true, isUrl: true, userName: true, [partnership]: true } })
+
+}
 
 exports.getUserBalanceDataByUserIds = async (userIds, select) => {
   return await UserBalance.find({

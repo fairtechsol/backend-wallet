@@ -64,7 +64,7 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
 
   // Define a recursive SQL query to fetch user hierarchy for the given 'userId'
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
-            SELECT id, "roleName", "createBy"
+            SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
             WHERE id = '${userId}'
             UNION
@@ -99,7 +99,7 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
 
   // Define a recursive SQL query to fetch user hierarchy for the given 'userId'
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
-            SELECT id, "roleName", "createBy"
+            SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
             WHERE id = '${userId}'
             UNION

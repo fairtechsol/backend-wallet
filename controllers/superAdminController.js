@@ -1063,14 +1063,14 @@ exports.getUserProfitLoss = async (req, res, next) => {
   
         if (isUserExist) {
           let betsData = await getUserRedisKeys(element?.id, [redisKeys.userTeamARate + matchId, redisKeys.userTeamBRate + matchId, redisKeys.userTeamCRate + matchId]);
-          currUserProfitLossData.tramRateA = betsData?.[0];
-          currUserProfitLossData.tramRateB = betsData?.[1];
-          currUserProfitLossData.tramRateC = betsData?.[2];
+          currUserProfitLossData.tramRateA = betsData?.[0]? parseFloat(betsData?.[0])?.toFixed(2):0;
+          currUserProfitLossData.tramRateB = betsData?.[1]? parseFloat(betsData?.[1])?.toFixed(2):0;
+          currUserProfitLossData.tramRateC = betsData?.[2]? parseFloat(betsData?.[2])?.toFixed(2):0;
         }
         else {
           let betsData = await settingBetsDataAtLogin(element);
           currUserProfitLossData = {
-            tramRateA: betsData?.[redisKeys.userTeamARate + matchId], tramRateB: betsData?.[redisKeys.userTeamBRate + matchId], teamCRate: betsData?.[redisKeys.userTeamCRate + matchId]
+            tramRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2) : 0, tramRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2) : 0, teamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2) : 0
           }
       }
       currUserProfitLossData.userName = element?.userName;

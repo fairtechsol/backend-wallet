@@ -3,6 +3,7 @@ const {
   transType,
   walletDescription,
   oldBetFairDomain,
+  redisKeys,
 } = require("../config/contants");
 const {
   getUserById,
@@ -15,12 +16,13 @@ const {
   betBlockUnblock,
   getChildUser,
   getParentUsers,
+  getFirstLevelChildUser,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const { forceLogoutIfLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, getFaAdminDomain, settingBetsDataAtLogin } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const {
   getUserBalanceDataByUserId,
@@ -41,7 +43,7 @@ const {
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
+const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -1009,6 +1011,101 @@ exports.updateUserBalanceBySA = async (req, res, next) => {
   } catch (error) {
     logger.error({
       error: `Error at update super admin balance.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}
+
+exports.getUserProfitLoss = async (req, res, next) => {
+  try {
+    const { matchId } = req.params;
+    const { id } = req.user;
+
+    const users = await getFirstLevelChildUser(id);
+
+    let oldBetFairUserIds = [];
+    const userProfitLossData = [];
+    for (let element of users) {
+      if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet && !element.isUrl) {
+        oldBetFairUserIds.push(element);
+      }
+      else if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+        const doaminData =await getDomainByUserId(element.id);
+
+          const response = await apiCall(apiMethod.get, doaminData?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
+            userIds: JSON.stringify(element),
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${doaminData?.domain} getting user rofit loss`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+            userProfitLossData.push(...response?.data);
+      }
+      else {
+        const isUserExist=await hasUserInCache(element?.id);
+        let currUserProfitLossData={};
+  
+        if (isUserExist) {
+          let betsData = await getUserRedisKeys(element?.id, [redisKeys.userTeamARate + matchId, redisKeys.userTeamBRate + matchId, redisKeys.userTeamCRate + matchId]);
+          currUserProfitLossData.tramRateA = betsData?.[0];
+          currUserProfitLossData.tramRateB = betsData?.[1];
+          currUserProfitLossData.tramRateC = betsData?.[2];
+        }
+        else {
+          let betsData = await settingBetsDataAtLogin(element);
+          currUserProfitLossData = {
+            tramRateA: betsData?.[redisKeys.userTeamARate + matchId], tramRateB: betsData?.[redisKeys.userTeamBRate + matchId], teamCRate: betsData?.[redisKeys.userTeamCRate + matchId]
+          }
+      }
+      currUserProfitLossData.userName = element?.userName;
+      userProfitLossData.push(currUserProfitLossData);
+    };
+  }
+    if (oldBetFairUserIds?.length > 0) {
+      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLoss + matchId, null,{}, {
+        userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${oldBetFairUserIds?.join(",")} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+        userProfitLossData.push(...response?.data);
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data:userProfitLossData
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    logger.error({
+      error: `Error at get user profit loss match.`,
       stack: error.stack,
       message: error.message,
     });

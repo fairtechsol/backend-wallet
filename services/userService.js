@@ -220,7 +220,7 @@ SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`;
 
 
 exports.getFirstLevelChildUser = async (id) => {
-  return await user.find({ where : { createBy: id}, select: { id: true, userName:true }})
+  return await user.find({ where: { createBy: id }, select: { id: true, roleName: true, isUrl: true, userName: true } })
 
 }
 

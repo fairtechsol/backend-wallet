@@ -472,6 +472,21 @@ exports.setExposureLimit = async (req, res, next) => {
       }
     });
     await addUser(user);
+
+
+    const domainData = await getFaAdminDomain(user);
+
+    for (let url of domainData) {
+       await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: userId, exposureLimit: amount, roleName: user.roleName }).then((data) => data).catch((err) => {
+        logger.error({
+          context: `error in ${url?.domain} exposure limit`,
+          process: `User ID : ${user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+      });
+     
+    }
     return SuccessResponse(
       {
         statusCode: 200,

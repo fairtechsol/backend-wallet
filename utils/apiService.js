@@ -56,6 +56,8 @@ exports.allApiRoutes = {
   commissionSettled:"/fairgameWallet/settle/commission",
   matchLock:"/fairgameWallet/userMatchLock",
   userProfitLoss:"/fairgameWallet/user/profitLossData/",
+  checkExposureLimit: "/fairgameWallet/user/exposureLimitCheck",
+
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

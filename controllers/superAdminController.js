@@ -1030,7 +1030,7 @@ exports.updateUserBalanceBySA = async (req, res, next) => {
 exports.getUserProfitLoss = async (req, res, next) => {
   try {
     const { matchId } = req.params;
-    const { id,roleName } = req.user;
+    const { id, roleName } = req.user;
 
     const users = await getFirstLevelChildUserWithPartnership(id, partnershipPrefixByRole[roleName] + "Partnership");
 

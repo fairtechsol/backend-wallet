@@ -1,8 +1,11 @@
 const { userRoleConstant, transType } = require("../config/contants");
+const { logger } = require("../config/logger");
+const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { insertTransactions } = require("../services/transactionService");
 const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
 const { getUserByUserName, addUser, getUserById, getChildUser, updateUser } = require("../services/userService");
+const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require('bcryptjs')
 exports.insertWallet = async (req, res) => {
@@ -164,7 +167,22 @@ exports.setExposureLimit = async (req, res, next) => {
                 await addUser(childUser);
             }
         });
-        await addUser(loginUser)
+        await addUser(loginUser);
+
+
+        const domainData = await getUserDomainWithFaId();
+
+        for (let url of domainData) {
+            await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: reqUser.id, exposureLimit: amount, roleName: reqUser.roleName }).then((data) => data).catch((err) => {
+                logger.error({
+                    context: `error in ${url?.domain} exposure limit.`,
+                    process: `User ID : ${reqUser.id} `,
+                    error: err.message,
+                    stake: err.stack,
+                });
+            });
+
+        }
         return SuccessResponse(
             {
                 statusCode: 200,

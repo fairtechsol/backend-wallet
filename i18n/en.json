@@ -10,6 +10,7 @@
   "add": "{key} added successfully.",
   "required": "{name} is required.",
   "fetched" : "{name} fetch successfully.",
+  "settleAccount": "Please settle this account first.",
   "settledCommission" : "Commission settled successfully.",
   "auth": {
     "loginSuccess": "Login successfully.",

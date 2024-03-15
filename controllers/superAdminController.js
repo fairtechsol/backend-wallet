@@ -1082,7 +1082,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
           }
       }
       currUserProfitLossData.userName = element?.userName;
-      userProfitLossData.push(currUserProfitLossData);
+
+        if (currUserProfitLossData.teamRateA || currUserProfitLossData.teamRateB || currUserProfitLossData.teamRateC) {
+        userProfitLossData.push(currUserProfitLossData);
+      }
     };
   }
     if (oldBetFairUserIds?.length > 0) {

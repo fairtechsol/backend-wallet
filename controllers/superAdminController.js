@@ -1044,13 +1044,13 @@ exports.getUserProfitLoss = async (req, res, next) => {
       else if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
         const doaminData =await getDomainByUserId(element.id);
 
-          const response = await apiCall(apiMethod.get, doaminData?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
+          const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLoss + matchId, null, {}, {
             userIds: JSON.stringify(element),
           })
             .then((data) => data)
             .catch((err) => {
               logger.error({
-                context: `error in ${doaminData?.domain} getting user rofit loss`,
+                context: `error in ${doaminData} getting user rofit loss`,
                 process: `User ID : ${req.user.id} `,
                 error: err.message,
                 stake: err.stack,
@@ -1082,7 +1082,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
           }
       }
       currUserProfitLossData.userName = element?.userName;
-      userProfitLossData.push(currUserProfitLossData);
+
+        if (currUserProfitLossData.teamRateA || currUserProfitLossData.teamRateB || currUserProfitLossData.teamRateC) {
+        userProfitLossData.push(currUserProfitLossData);
+      }
     };
   }
     if (oldBetFairUserIds?.length > 0) {

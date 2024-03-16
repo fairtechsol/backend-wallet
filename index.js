@@ -13,10 +13,24 @@ const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
 const {WalletMatchBetQueue} = require("./queue/consumer.js")
 
+const allowSubdomainsAndLocalhost = (origin, callback) => {
+  // Check if the request comes from the specified domain or localhost
+  if (
+    !origin ||
+    origin.includes("betfair.fairgame.club")
+  ) {
+    callback(null, true); // Allow the request
+  } else {
+    callback(new Error("Not allowed by CORS")); // Deny the request
+  }
+};
+// Enable CORS with the custom origin function
+app.use(cors({ credentials: true, origin: allowSubdomainsAndLocalhost }));
+
 /**
  * Enable Cross-Origin Resource Sharing (CORS)
  */
-app.use(cors({ origin: "*" }));
+// app.use(cors({ origin: "*" }));
 app.enable('trust proxy');
 
 /**

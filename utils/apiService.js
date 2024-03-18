@@ -57,6 +57,8 @@ exports.allApiRoutes = {
   matchLock:"/fairgameWallet/userMatchLock",
   userProfitLoss:"/fairgameWallet/user/profitLossData/",
   checkExposureLimit: "/fairgameWallet/user/exposureLimitCheck",
+  deleteUser: "/fairgameWallet/user/delete/",
+  checkUserBalance: "/fairgameWallet/check/userBalance",
 
   EXPERTS: {
     add: "/user/add",

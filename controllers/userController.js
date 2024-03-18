@@ -1445,11 +1445,13 @@ exports.getTotalProfitLoss = async (req, res) => {
         eventType,
         totalLoss: 0,
         totalBet: 0,
+        totalDeduction: 0,
         domainData: []
       };
 
       accumulator[eventType].totalLoss += parseFloat(currentValue.totalLoss);
       accumulator[eventType].totalBet += parseFloat(currentValue.totalBet);
+      accumulator[eventType].totalDeduction += parseFloat(currentValue.totalDeduction);
       accumulator[eventType].domainData.push(currentValue);
 
       return accumulator;

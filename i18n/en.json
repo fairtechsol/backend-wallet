@@ -12,6 +12,7 @@
   "fetched" : "{name} fetch successfully.",
   "settleAccount": "Please settle this account first.",
   "settledCommission" : "Commission settled successfully.",
+  "deleted": "{name} deleted successfully.",
   "auth": {
     "loginSuccess": "Login successfully.",
     "invalidPass": "Invalid {type} password.",

@@ -10,6 +10,7 @@ const error = require("./utils/error.js");
 const i18n = require("./config/i18n");
 const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
+const helmet = require('helmet');
 const { WalletMatchBetQueue } = require("./queue/consumer.js")
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
@@ -29,7 +30,7 @@ if (process.env.NODE_ENV == 'production') {
 }
 
 app.enable('trust proxy');
-
+app.use(helmet());
 /**
  * Parse incoming JSON data
  */

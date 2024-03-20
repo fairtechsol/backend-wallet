@@ -1301,7 +1301,7 @@ exports.lockUnlockUser = async (req, res, next) => {
       //   if blocktype is user and its block then user would be logout by socket
 
       for (let item of blockedUsers?.[0]) {
-        if (item?.roleName == userRoleConstant.superAdmin) {
+        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
           const body = {
             userId: item?.id,
             loginId,
@@ -1331,7 +1331,7 @@ exports.lockUnlockUser = async (req, res, next) => {
 
       const blockedBet = await betBlockUnblock(userId, loginId, betBlock);
       for (let item of blockedBet?.[0]) {
-        if (item?.roleName == userRoleConstant.superAdmin) {
+        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
           const body = {
             userId: item?.id,
             loginId,

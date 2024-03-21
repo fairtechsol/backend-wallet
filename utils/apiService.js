@@ -59,6 +59,7 @@ exports.allApiRoutes = {
   checkExposureLimit: "/fairgameWallet/user/exposureLimitCheck",
   deleteUser: "/fairgameWallet/user/delete/",
   checkUserBalance: "/fairgameWallet/check/userBalance",
+  getSearchList: "/fairgameWallet/user/searchList",
 
   EXPERTS: {
     add: "/user/add",

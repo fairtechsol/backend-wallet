@@ -990,8 +990,12 @@ exports.userSearchList = async (req, res, next) => {
     }
     let where = {};
     if (userName){ where.userName = ILike(`%${userName}%`);}
-    if (createdBy) {where.createdBy = createdBy;}
-
+    if (createdBy) { where.createdBy = createdBy; }
+    else{
+      const childIds=await getChildUser(req.user.id);
+      where.id = In(childIds?.map((item) => item.id));
+      where.roleName = In([userRoleConstant.fairGameAdmin, userRoleConstant.fairGameWallet])
+    }
     let users = await getUsers(where, ["id", "userName"]);
     let response = {
       users: (users[0] || []),

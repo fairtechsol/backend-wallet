@@ -989,14 +989,33 @@ exports.userSearchList = async (req, res, next) => {
       );
     }
     let where = {};
-    if (userName) where.userName = ILike(`%${userName}%`);
-    if (createdBy) where.createdBy = createdBy;
+    if (userName){ where.userName = ILike(`%${userName}%`);}
+    if (createdBy) {where.createdBy = createdBy;}
 
     let users = await getUsers(where, ["id", "userName"]);
     let response = {
-      users: users[0],
-      count: users[1],
+      users: (users[0] || []),
+      count: (users[1] || 0),
     };
+
+    const faDomains = req.user.roleName == userRoleConstant.fairGameAdmin ? await getFaAdminDomain(req.user) : await getUserDomainWithFaId();
+    for (let usersDomain of faDomains) {
+      let data = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.getSearchList, null, {}, { id: req.user.id, roleName: req.user.roleName, userName: userName })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${usersDomain?.domain} checking deleting user balance`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err?.response?.data;
+        });
+
+      response?.users?.push(...(data?.data || []));
+      response.count += (data?.data?.length || 0);
+    };
+
     return SuccessResponse(
       {
         statusCode: 200,

@@ -1145,3 +1145,33 @@ exports.getUserProfitLoss = async (req, res, next) => {
     );
   }
 }
+
+// Controller function for locking/unlocking a super admin
+exports.lockUnlockUserByUserPanel = async (req, res, next) => {
+  try {
+    // Extract relevant data from the request body and user object
+    const { userId, userBlock, parentId, autoBlock } = req.body;
+
+    await updateUser(userId, {
+      userBlock: userBlock,
+      userBlockedBy: parentId,
+      autoBlock: autoBlock
+    });
+
+    // Return success response
+    return SuccessResponse(
+      { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
+      req,
+      res
+    );
+  } catch (error) {
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+};

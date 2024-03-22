@@ -84,7 +84,7 @@ ${getUserChild}
     : `
 ${getUserChild}
     UPDATE users
-    SET "userBlock" = false, "userBlockedBy" = NULL
+    SET "userBlock" = false, "userBlockedBy" = NULL, "autoBlock" = false
     WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName";
     `;
 

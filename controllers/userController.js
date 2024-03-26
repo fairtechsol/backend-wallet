@@ -1533,7 +1533,6 @@ exports.getDomainProfitLoss = async (req, res) => {
   }
 }
 
-
 exports.getResultBetProfitLoss = async (req, res) => {
   try {
     const { matchId, betId, isSession, url, id } = req.query;
@@ -1656,7 +1655,6 @@ exports.getCommissionBetPlaced = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 }
-
 
 exports.deleteUser = async (req, res) => {
   try {

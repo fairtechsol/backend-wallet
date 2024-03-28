@@ -10,7 +10,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getUserById, getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
-const { forceLogoutIfLogin, settingBetsDataAtLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { updateUserDataRedis } = require("../services/redis/commonFunctions");
 
@@ -49,6 +49,7 @@ const setUserDetailsRedis = async (user) => {
   if (!redisUserData) {
     // Fetch and set betting data at login
     let betData = await settingBetsDataAtLogin(user);
+    let otherMatchBetData=await settingOtherMatchBetsDataAtLogin(user);
 
     // Set user details and partnerships in Redis
     await updateUserDataRedis(user.id, {
@@ -59,6 +60,7 @@ const setUserDetailsRedis = async (user) => {
       currentBalance: user?.userBal?.currentBalance || 0,
       roleName: user.roleName,
       ...(betData || {}),
+      ...(otherMatchBetData || {}),
       ...(user.roleName === userRoleConstant.user
         ? {
           partnerShips: await findUserPartnerShipObj(user),
@@ -274,5 +276,3 @@ exports.logout = async (req, res) => {
     );
   }
 };
-
-

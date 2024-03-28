@@ -84,7 +84,7 @@ ${getUserChild}
     : `
 ${getUserChild}
     UPDATE users
-    SET "userBlock" = false, "userBlockedBy" = NULL
+    SET "userBlock" = false, "userBlockedBy" = NULL, "autoBlock" = false
     WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName";
     `;
 
@@ -263,4 +263,33 @@ exports.getUserWithUserBalance = async (userName) => {
     .getOne();
 
   return userData;
+}
+
+exports.getChildUserBalanceAndData = async (id) => {
+  let query = `WITH RECURSIVE p AS (
+    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    UNION
+    SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
+  )
+SELECT p.*,"userBalances".*  FROM p JOIN "userBalances" ON "userBalances"."userId" = "p"."id" where "deletedAt" IS NULL;
+`
+
+  return await user.query(query)
+}
+
+exports.softDeleteAllUsers = (id) => {
+  const query = `WITH RECURSIVE p AS (
+    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    UNION
+    SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
+  )
+  UPDATE "users" AS u
+  SET "deletedAt" = NOW(), -- Assuming "deletedAt" is the column for soft deletion
+      "userName" = CONCAT('deleted_', u."userName", '_', EXTRACT(EPOCH FROM NOW()))
+  WHERE u."id" IN (
+    SELECT "id" FROM p
+  )
+  AND "deletedAt" IS NULL -- Only soft delete if not already deleted;  
+  `
+  return user.query(query);
 }

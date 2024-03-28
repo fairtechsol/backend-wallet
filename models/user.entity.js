@@ -155,6 +155,11 @@ const userSchema = new EntitySchema({
       nullable: false,
       default: false,
     },
+    autoBlock:{
+      type: 'boolean',
+      nullable: false,
+      default: false
+    },
     delayTime: {
       type: 'int',
       nullable: false,

@@ -146,8 +146,8 @@ exports.settleCommissions = async (req, res) => {
                 });
         }
         if (userData) {
-            settleCommission(userId);
-            insertCommissions({
+            await settleCommission(userId);
+            await insertCommissions({
                 userName: userData.userName,
                 commissionAmount: userData.userBal.totalCommission,
                 createBy: userData.id,

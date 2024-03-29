@@ -1030,27 +1030,64 @@ exports.updateUserBalanceBySA = async (req, res, next) => {
 exports.getUserProfitLoss = async (req, res, next) => {
   try {
     const { matchId } = req.params;
-    const { id,roleName } = req.user;
+    const { id, roleName } = req.user;
 
     const users = await getFirstLevelChildUserWithPartnership(id, partnershipPrefixByRole[roleName] + "Partnership");
 
     let oldBetFairUserIds = [];
-    const userProfitLossData = [];
-    for (let element of users) {
-      element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
-      if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet && !element.isUrl) {
-        oldBetFairUserIds.push(element);
-      }
-      else if (element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
-        const doaminData =await getDomainByUserId(element.id);
+    let userProfitLossData = [];
 
-          const response = await apiCall(apiMethod.get, doaminData?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
+    for (let element of users) {
+      let currUserProfitLossData = {};
+      element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
+      if (element?.roleName == userRoleConstant.fairGameAdmin) {
+        const faDomains =await getFaAdminDomain(element);
+        for (let usersDomain of faDomains) {
+       
+          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
             userIds: JSON.stringify(element),
           })
             .then((data) => data)
             .catch((err) => {
               logger.error({
-                context: `error in ${doaminData?.domain} getting user rofit loss`,
+                context: `error in ${usersDomain?.domain} getting user profit loss`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+          const mergeObjectsWithSum = (obj1, obj2) => Object.fromEntries(Object.entries(obj1).map(([k, v]) => [k, (v || 0) + (obj2[k] ?? 0)]).concat(Object.entries(obj2).filter(([k]) => !(k in obj1))));
+            currUserProfitLossData=mergeObjectsWithSum(response?.data?.reduce((prev,curr)=>{
+              prev.teamRateA = parseFloat(parseFloat(parseFloat(prev.teamRateA || 0) + parseFloat(curr.teamRateA || 0)).toFixed(2));
+              prev.teamRateB = parseFloat(parseFloat(parseFloat(prev.teamRateB || 0) + parseFloat(curr.teamRateB || 0)).toFixed(2));
+              prev.teamRateC = parseFloat(parseFloat(parseFloat(prev.teamRateC || 0) + parseFloat(curr.teamRateC || 0)).toFixed(2));
+
+              prev.percentTeamRateA = parseFloat(parseFloat(parseFloat(prev.percentTeamRateA || 0) + parseFloat(curr.percentTeamRateA || 0)).toFixed(2));
+              prev.percentTeamRateB = parseFloat(parseFloat(parseFloat(prev.percentTeamRateB || 0) + parseFloat(curr.percentTeamRateB || 0)).toFixed(2));
+              prev.percentTeamRateC = parseFloat(parseFloat(parseFloat(prev.percentTeamRateC || 0) + parseFloat(curr.percentTeamRateC || 0)).toFixed(2));
+              return prev;
+            }, {}), currUserProfitLossData);
+        
+          };
+          currUserProfitLossData.userName = element?.userName;
+          userProfitLossData.push(currUserProfitLossData);
+      }
+      else {
+        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+          oldBetFairUserIds.push(element);
+        }
+        else {
+          const doaminData =await getDomainByUserId(element.id);
+
+          const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLoss + matchId, null, {}, {
+            userIds: JSON.stringify(element),
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${doaminData} getting user profit loss`,
                 process: `User ID : ${req.user.id} `,
                 error: err.message,
                 stake: err.stack,
@@ -1059,32 +1096,11 @@ exports.getUserProfitLoss = async (req, res, next) => {
             });
 
             userProfitLossData.push(...response?.data);
-      }
-      else {
-        const isUserExist=await hasUserInCache(element?.id);
-        let currUserProfitLossData={};
-  
-        if (isUserExist) {
-          let betsData = await getUserRedisKeys(element?.id, [redisKeys.userTeamARate + matchId, redisKeys.userTeamBRate + matchId, redisKeys.userTeamCRate + matchId]);
-          currUserProfitLossData.teamRateA = betsData?.[0] ? parseFloat(betsData?.[0])?.toFixed(2) : 0;
-          currUserProfitLossData.teamRateB = betsData?.[1] ? parseFloat(betsData?.[1])?.toFixed(2) : 0;
-          currUserProfitLossData.teamRateC = betsData?.[2] ? parseFloat(betsData?.[2])?.toFixed(2) : 0;
-
-          currUserProfitLossData.percentTeamRateA = betsData?.[0] ? parseFloat(parseFloat(parseFloat(betsData?.[0])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
-          currUserProfitLossData.percentTeamRateB = betsData?.[1] ? parseFloat(parseFloat(parseFloat(betsData?.[1])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
-          currUserProfitLossData.percentTeamRateC = betsData?.[2] ? parseFloat(parseFloat(parseFloat(betsData?.[2])?.toFixed(2))*parseFloat(element?.partnerShip)/100).toFixed(2) : 0;
         }
-        else {
-          let betsData = await settingBetsDataAtLogin(element);
-          currUserProfitLossData = {
-            teamRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2) : 0, teamRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2) : 0, teamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2) : 0,
-            percentTeamRateA: betsData?.[redisKeys.userTeamARate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamARate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0, percentTeamRateB: betsData?.[redisKeys.userTeamBRate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamBRate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0, percentTeamRateC: betsData?.[redisKeys.userTeamCRate + matchId]? parseFloat(parseFloat(parseFloat(betsData?.[redisKeys.userTeamCRate + matchId]).toFixed(2))*parseFloat(element.partnerShip)/100).toFixed(2) : 0
-          }
       }
-      currUserProfitLossData.userName = element?.userName;
-      userProfitLossData.push(currUserProfitLossData);
     };
-  }
+
+   
     if (oldBetFairUserIds?.length > 0) {
       let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLoss + matchId, null,{}, {
         userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
@@ -1102,6 +1118,8 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
         userProfitLossData.push(...response?.data);
     }
+
+    userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
 
     return SuccessResponse(
       {
@@ -1127,3 +1145,33 @@ exports.getUserProfitLoss = async (req, res, next) => {
     );
   }
 }
+
+// Controller function for locking/unlocking a super admin
+exports.lockUnlockUserByUserPanel = async (req, res, next) => {
+  try {
+    // Extract relevant data from the request body and user object
+    const { userId, userBlock, parentId, autoBlock } = req.body;
+
+    await updateUser(userId, {
+      userBlock: userBlock,
+      userBlockedBy: parentId,
+      autoBlock: autoBlock
+    });
+
+    // Return success response
+    return SuccessResponse(
+      { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
+      req,
+      res
+    );
+  } catch (error) {
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+};

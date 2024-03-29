@@ -22,6 +22,9 @@ const {
   betBlockUnblock,
   getUsersWithUsersBalanceData,
   getUsersWithTotalUsersBalanceData,
+  getUserDataWithUserBalance,
+  getChildUserBalanceAndData,
+  softDeleteAllUsers,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -35,17 +38,19 @@ const {
   addInitialUserBalance,
   getBalanceSumByRoleName,
 } = require("../services/userBalanceService");
-const { ILike } = require("typeorm");
+const { ILike, In } = require("typeorm");
 const {
   getDomainByUserId,
   getUserDomainWithFaId,
   getDomainDataByUserId,
+  updateDomain,
 } = require("../services/domainDataService");
 const {
   calculatePartnership,
   checkUserCreationHierarchy,
   forceLogoutUser,
   getFaAdminDomain,
+  forceLogoutIfLogin,
 } = require("../services/commonService");
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
@@ -472,6 +477,21 @@ exports.setExposureLimit = async (req, res, next) => {
       }
     });
     await addUser(user);
+
+
+    const domainData = await getFaAdminDomain(user);
+
+    for (let url of domainData) {
+       await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: userId, exposureLimit: amount, roleName: user.roleName }).then((data) => data).catch((err) => {
+        logger.error({
+          context: `error in ${url?.domain} exposure limit`,
+          process: `User ID : ${user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+      });
+     
+    }
     return SuccessResponse(
       {
         statusCode: 200,
@@ -969,14 +989,37 @@ exports.userSearchList = async (req, res, next) => {
       );
     }
     let where = {};
-    if (userName) where.userName = ILike(`%${userName}%`);
-    if (createdBy) where.createdBy = createdBy;
-
+    if (userName){ where.userName = ILike(`%${userName}%`);}
+    if (createdBy) { where.createdBy = createdBy; }
+    else{
+      const childIds=await getChildUser(req.user.id);
+      where.id = In(childIds?.map((item) => item.id));
+      where.roleName = In([userRoleConstant.fairGameAdmin, userRoleConstant.fairGameWallet])
+    }
     let users = await getUsers(where, ["id", "userName"]);
     let response = {
-      users: users[0],
-      count: users[1],
+      users: (users[0] || []),
+      count: (users[1] || 0),
     };
+
+    const faDomains = req.user.roleName == userRoleConstant.fairGameAdmin ? await getFaAdminDomain(req.user) : await getUserDomainWithFaId();
+    for (let usersDomain of faDomains) {
+      let data = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.getSearchList, null, {}, { id: req.user.id, roleName: req.user.roleName, userName: userName })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${usersDomain?.domain} checking deleting user balance`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err?.response?.data;
+        });
+
+      response?.users?.push(...(data?.data || []));
+      response.count += (data?.data?.length || 0);
+    };
+
     return SuccessResponse(
       {
         statusCode: 200,
@@ -1281,7 +1324,7 @@ exports.lockUnlockUser = async (req, res, next) => {
       //   if blocktype is user and its block then user would be logout by socket
 
       for (let item of blockedUsers?.[0]) {
-        if (item?.roleName == userRoleConstant.superAdmin) {
+        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
           const body = {
             userId: item?.id,
             loginId,
@@ -1311,7 +1354,7 @@ exports.lockUnlockUser = async (req, res, next) => {
 
       const blockedBet = await betBlockUnblock(userId, loginId, betBlock);
       for (let item of blockedBet?.[0]) {
-        if (item?.roleName == userRoleConstant.superAdmin) {
+        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
           const body = {
             userId: item?.id,
             loginId,
@@ -1430,11 +1473,13 @@ exports.getTotalProfitLoss = async (req, res) => {
         eventType,
         totalLoss: 0,
         totalBet: 0,
+        totalDeduction: 0,
         domainData: []
       };
 
       accumulator[eventType].totalLoss += parseFloat(currentValue.totalLoss);
       accumulator[eventType].totalBet += parseFloat(currentValue.totalBet);
+      accumulator[eventType].totalDeduction += parseFloat(currentValue.totalDeduction);
       accumulator[eventType].domainData.push(currentValue);
 
       return accumulator;
@@ -1487,7 +1532,6 @@ exports.getDomainProfitLoss = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 }
-
 
 exports.getResultBetProfitLoss = async (req, res) => {
   try {
@@ -1605,6 +1649,109 @@ exports.getCommissionBetPlaced = async (req, res) => {
   } catch (error) {
     logger.error({
       context: `error in get commission report`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userData = await getUserDataWithUserBalance({ id: id });
+
+    if (!userData) {
+      return ErrorResponse(
+        { statusCode: 400, message: { msg: "notFound", keys: { name: "User" } } },
+        req,
+        res
+      );
+    }
+    if (parseFloat(userData?.userBal?.exposure || 0) != 0 || parseFloat(userData?.userBal?.currentBalance || 0) != 0 || parseFloat(userData?.userBal?.profitLoss || 0) != 0 || parseFloat(userData.creditRefrence || 0) != 0 || parseFloat(userData?.userBal?.totalCommission || 0) != 0) {
+      return ErrorResponse(
+        {
+          statusCode: 400, message: {
+            msg: "settleAccount", keys: {
+              name: "your"
+            }
+          }
+        },
+        req,
+        res
+      );
+    }
+
+    const childUsers = await getChildUserBalanceAndData(id);
+
+    for (let childData of childUsers) {
+      if (parseFloat(childData?.exposure || 0) != 0 || parseFloat(childData?.currentBalance || 0) != 0 || parseFloat(childData?.profitLoss || 0) != 0 || parseFloat(childData.creditRefrence || 0) != 0 || parseFloat(childData?.totalCommission || 0) != 0) {
+        return ErrorResponse(
+          {
+            statusCode: 400, message: {
+              msg: "settleAccount", keys: {
+                name: childData?.userName
+              }
+            }
+          },
+          req,
+          res
+        );
+      }
+
+      forceLogoutIfLogin(childData.id);
+    }
+
+    const faDomains = !userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? [{domain:oldBetFairDomain}] : userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? await getUserDomainWithFaId({ userId: id }) : await getFaAdminDomain(userData);
+    for (let usersDomain of faDomains) {
+      await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.checkUserBalance, { id:userData.id, roleName: userData.roleName  })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${usersDomain?.domain} checking deleting user balance`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err?.response?.data;
+        });
+    };
+    for (let usersDomain of faDomains) {
+      await apiCall(apiMethod.delete, usersDomain?.domain + allApiRoutes.deleteUser + userData.id, {  roleName: userData.roleName  })
+      .then((data) => data)
+      .catch((err) => {
+        logger.error({
+          context: `error in ${usersDomain?.domain} deleting user`,
+          process: `User ID : ${req.user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+      });
+    };
+
+
+    await softDeleteAllUsers(id);
+    await updateDomain({
+      domain: In(faDomains?.filter((item) => {
+        return item?.domain != oldBetFairDomain
+      })?.map((item) => item?.domain))
+    }, {
+      deletedAt: new Date()
+    });
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { "msg": "deleted", keys: { name: "User" } }
+      },
+      req,
+      res
+    );
+  }
+  catch (error) {
+    logger.error({
+      context: `error in delete user`,
       error: error.message,
       stake: error.stack,
     });

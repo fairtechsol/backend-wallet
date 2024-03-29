@@ -38,17 +38,21 @@ exports.updateUserBalanceByUserId = async(userId,body) =>{
     return updateUserBalance;
 }
 
-exports.getAllChildProfitLossSum = async(childUserIds)=>{
-    let queryColumns = 'SUM(userBalance.profitLoss) as firstLevelChildsProfitLossSum';
-  
-    let childUserData = await UserBalance
-      .createQueryBuilder('userBalance')
-      .select([queryColumns])
-      .where('userBalance.userId IN (:...childUserIds)', { childUserIds })
-      .getRawOne();
-    
-    return childUserData;
-    
+exports.getAllChildProfitLossSum = async (childUserIds) => {
+  let queryColumns = 'SUM(userBalance.profitLoss) as firstLevelChildsProfitLossSum';
+  // Check if childUserIds is empty
+  if (childUserIds.length === 0) {
+    return { firstLevelChildsProfitLossSum: 0 }; // Return 0 if no childUserIds provided
+  }
+
+  let childUserData = await UserBalance
+    .createQueryBuilder('userBalance')
+    .select([queryColumns])
+    .where('userBalance.userId IN (:...childUserIds)', { childUserIds })
+    .getRawOne();
+
+  return childUserData;
+
 }
 
 exports.getAllchildsCurrentBalanceSum = async (childUserIds) => {

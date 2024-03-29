@@ -30,8 +30,8 @@ exports.commissionMatchReport = (userId, matchId) => {
   return commissionMatches.getRawMany();
 }
 
-exports.settleCommission = (userId) => {
-  Commission.update({ parentId: userId },{
+exports.settleCommission = async (userId) => {
+  await Commission.update({ parentId: userId },{
     settled:true
   });
 }

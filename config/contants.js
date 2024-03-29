@@ -15,6 +15,11 @@ module.exports.userRoleConstant = {
   user: "user",
 };
 
+module.exports.gameType = {
+  cricket: "cricket",
+  football: "football",
+}
+
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]
 module.exports.blockType={
     userBlock:"userBlock",
@@ -178,6 +183,14 @@ module.exports.matchBettingType = {
   }, {})),
   halfTime: "halfTime"
 };
+
+module.exports.redisKeysMatchWise = {
+  [this.gameType.cricket]: [this.redisKeys.userTeamARate, this.redisKeys.userTeamBRate, this.redisKeys.userTeamCRate, this.redisKeys.noRateComplete, this.redisKeys.yesRateComplete, this.redisKeys.noRateTie, this.redisKeys.yesRateTie],
+  [this.gameType.football]: [this.redisKeys.userTeamARate, this.redisKeys.userTeamBRate, this.redisKeys.userTeamCRate, this.redisKeys.userTeamARateHalfTime, this.redisKeys.userTeamBRateHalfTime, this.redisKeys.userTeamCRateHalfTime, ...Array.from({ length: 20 }, (_, index) => this.redisKeys[`yesRateUnderOver${index}.5`]),
+  ...Array.from({ length: 20 }, (_, index) => this.redisKeys[`noRateUnderOver${index}.5`]),
+  ...Array.from({ length: 20 }, (_, index) => this.redisKeys[`yesRateFirstHalfGoal${index}.5`]),
+  ...Array.from({ length: 20 }, (_, index) => this.redisKeys[`noRateFirstHalfGoal${index}.5`])]
+}
 
 exports.marketBetType = {
   SESSION: "SESSION",

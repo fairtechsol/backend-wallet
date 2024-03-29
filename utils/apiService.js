@@ -70,6 +70,7 @@ exports.allApiRoutes = {
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",
+    otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
     MatchBettingDetail: "/superAdmin/matchBetting/",
   },

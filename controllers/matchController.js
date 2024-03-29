@@ -1,7 +1,7 @@
-const { expertDomain, redisKeys, marketBetType, userRoleConstant, betResultStatus } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
-const { getUserDomainWithFaId, getDomainDataByFaId } = require("../services/domainDataService");
+const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -87,6 +87,82 @@ exports.matchDetails = async (req, res) => {
   }
 };
 
+exports.otherMatchDetails = async (req, res) => {
+  const matchType = req.query.matchType;
+  try {
+    const userId = req.user.id;
+    let domain = expertDomain;
+    let apiResponse = {};
+    try {
+      apiResponse = await apiCall(
+        apiMethod.get,
+        domain + allApiRoutes.MATCHES.otherMatchDetails + req.params.id
+      );
+    } catch (error) {
+      throw error?.response?.data;
+    }
+    let matchId = req.params.id;
+    if (apiResponse?.data) {
+      if (Array.isArray(apiResponse?.data)) {
+        for (let i = 0; i < apiResponse?.data?.length; i++) {
+          const matchId = apiResponse?.data?.[i]?.id;
+          const redisIds = [];
+          redisIds.push(
+            ...redisKeysMatchWise[matchType].map(
+              (key) => key + matchId
+            )
+          );
+
+
+          let redisData = await getUserRedisKeys(userId, redisIds);
+
+          let matchResult = {};
+          redisData?.forEach((item, index) => {
+            if (item) {
+              matchResult[redisIds?.[index]?.split("_")[0]] = item;
+            }
+          });
+          apiResponse.data[i].profitLossDataMatch = matchResult;
+        }
+      }
+      else {
+        const redisIds = [];
+        redisIds.push(
+          ...redisKeysMatchWise[matchType].map(
+            (key) => key + matchId
+          )
+        );
+        let redisData = await getUserRedisKeys(userId, redisIds);
+
+        let matchResult = {};
+        redisData?.forEach((item, index) => {
+          if (item) {
+            matchResult[redisIds?.[index]?.split("_")[0]] = item;
+          }
+        });
+        apiResponse.data.profitLossDataMatch = matchResult;
+      }
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "match details", keys: { name: "Match" } },
+        data: apiResponse.data
+      },
+      req,
+      res
+    );
+  } catch (err) {
+    logger.error({
+      error: `Error at get match details for ${matchType}`,
+      stack: err.stack,
+      message: err.message,
+    });
+    return ErrorResponse(err, req, res);
+  }
+};
+
 exports.listMatch = async (req, res) => {
   try {
     let user = req.user;
@@ -152,7 +228,6 @@ exports.listMatch = async (req, res) => {
   }
 };
 
-
 exports.addMatch = async (req, res) => {
   try {
     const domainData = await getUserDomainWithFaId();
@@ -186,7 +261,6 @@ exports.addMatch = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
-
 
 exports.matchLock=async (req,res)=>{
   try {

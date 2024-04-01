@@ -1503,9 +1503,22 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    const { startDate, endDate, url, type, id } = req.query;
+    const { startDate, endDate, type, id } = req.query;
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
+    let domainData;
+    let where = {};
+
+    if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(req.user, null, where);
+    }
+    else {
+      domainData = await getUserDomainWithFaId(where);
+    }
+
+    let profitLoss = {};
+
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({
@@ -1516,9 +1529,25 @@ exports.getDomainProfitLoss = async (req, res) => {
         });
         throw err;
       });
+      data?.data?.result?.forEach((item) => {
+        if (profitLoss[item?.matchId]) {
+          profitLoss[item?.matchId] = {
+            ...profitLoss[item?.matchId],
+            rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(profitLoss?.[item?.matchId]?.rateProfitLoss)).toFixed(2)),
+            sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss) + parseFloat(profitLoss?.[item?.matchId]?.sessionProfitLoss)).toFixed(2)),
+            totalBet: parseFloat((parseFloat(item?.totalBet) + parseFloat(profitLoss?.[item?.matchId]?.totalBet)).toFixed(2)),
+            totalDeduction: parseFloat((parseFloat(item?.totalDeduction) + parseFloat(profitLoss?.[item?.matchId]?.totalDeduction)).toFixed(2)),
+          }
+        }
+        else {
+          profitLoss[item?.matchId] = item;
+        }
+      });
+    }
+
 
     return SuccessResponse(
-      { statusCode: 200, data: data },
+      {statusCode: 200, data: Object.values(profitLoss)},
       req,
       res
     );
@@ -1565,6 +1594,9 @@ exports.getResultBetProfitLoss = async (req, res) => {
   }
 }
 
+
+
+
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
     const { matchId, url,id } = req.query;
@@ -1590,6 +1622,215 @@ exports.getSessionBetProfitLoss = async (req, res) => {
   } catch (error) {
     logger.error({
       context: `error in get session bets profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getUserWiseBetProfitLoss = async (req, res) => {
+  try {
+    let { matchId, url, id, userId, roleName } = req.query;
+
+    roleName = roleName || req.user.roleName;
+    userId = userId || req.user.id;
+
+    if (url) {
+      let response = await apiCall(apiMethod.post, domain + allApiRoutes.userWiseProfitLoss, {
+        user: {
+          roleName: roleName,
+          id: userId
+        },
+        matchId: matchId,
+        searchId: id
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${domain} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+    
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          data: response?.data
+        },
+        req,
+        res
+      );
+    }
+    
+    let where = {
+      createBy: userId || req.user.id,
+    };
+    
+    let users = await getUsersWithUsersBalanceData(where,{});
+    
+    let response = {
+      count: 0,
+      list: [],
+    };
+    if (!users[1]) {
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          message: { msg: "fetched", keys: { name: "User list" } },
+          data: response,
+        },
+        req,
+        res
+      );
+    }
+    response.count = users[1];
+   
+    let usersData={};
+    
+    let oldBetFairUserIds = [];
+    for (let element of users[0]) {
+    
+    
+      if (element?.roleName == userRoleConstant.fairGameAdmin) {
+        const faDomains =await getFaAdminDomain(element);
+        for (let usersDomain of faDomains) {
+          let response = await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.userWiseProfitLoss, {
+            user: {
+              roleName: roleName,
+              id: element?.id
+            },
+            matchId: matchId,
+            searchId: id
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${usersDomain?.domain} getting user list`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+          response?.data?.forEach((item) => {
+
+            if (usersData[element?.id]) {
+              usersData[element?.id] = {
+                ...usersData[element?.id],
+                loss: parseFloat((parseFloat(item?.loss) + parseFloat(usersData[element?.id]?.loss)).toFixed(2)),
+                win: parseFloat((parseFloat(item?.win) + parseFloat(usersData[element?.id]?.win)).toFixed(2)),
+                rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(usersData[element?.id]?.rateProfitLoss)).toFixed(2)),
+                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss) + parseFloat(usersData[element?.id]?.sessionProfitLoss)).toFixed(2)),
+              }
+            }
+            else {
+              usersData[element?.id] = {
+                "userId": element?.id,
+                "roleName": element?.roleName,
+                "matchId": matchId,
+                "userName": element?.userName,
+                loss: parseFloat((parseFloat(item?.loss)).toFixed(2)),
+                win: parseFloat((parseFloat(item?.win)).toFixed(2)),
+                rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
+                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2)),
+              }
+            }
+          });
+        };
+
+      }
+      else {
+        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+          oldBetFairUserIds.push(element.id);
+        }
+        else {
+          const userDomain = await getDomainDataByUserId(element.id, ["domain"]);
+            let response = await apiCall(apiMethod.post, userDomain?.domain + allApiRoutes.userWiseProfitLoss, {
+              user: {
+                roleName: roleName,
+                id: element.id
+              },
+              matchId: matchId,
+              searchId: id
+            })
+              .then((data) => data)
+              .catch((err) => {
+                logger.error({
+                  context: `error in ${userDomain?.domain} getting user list`,
+                  process: `User ID : ${req.user.id} `,
+                  error: err.message,
+                  stake: err.stack,
+                });
+                throw err;
+              });
+
+          response?.data?.forEach((item) => {
+            if (usersData[element?.id]) {
+              usersData[element?.id] = {
+                ...usersData[element?.id],
+                loss: parseFloat((parseFloat(item?.loss) + parseFloat(usersData[element?.id]?.loss)).toFixed(2)),
+                win: parseFloat((parseFloat(item?.win) + parseFloat(usersData[element?.id]?.win)).toFixed(2)),
+                rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(usersData[element?.id]?.rateProfitLoss)).toFixed(2)),
+                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss) + parseFloat(usersData[element?.id]?.sessionProfitLoss)).toFixed(2)),
+              }
+            }
+            else {
+              usersData[element?.id] = {
+                "userId": element?.id,
+                "roleName": element?.roleName,
+                "matchId": matchId,
+                "userName": element?.userName,
+                loss: parseFloat((parseFloat(item?.loss)).toFixed(2)),
+                win: parseFloat((parseFloat(item?.win)).toFixed(2)),
+                rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
+                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2)),
+              }
+            }
+          });
+        }
+      }
+    };
+    
+    if (oldBetFairUserIds?.length > 0) {
+      let response = await apiCall(apiMethod.post,oldBetFairDomain + allApiRoutes.userWiseProfitLoss, {
+        user: {
+          roleName: roleName,
+          id: userId
+        },
+        matchId: matchId,
+        searchId: id,
+        userIds: oldBetFairUserIds?.join(",")
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${oldBetFairDomain} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      response?.data?.forEach((item) => {
+        usersData[item?.userId] = item;
+      });
+    }
+
+    return SuccessResponse(
+      { statusCode: 200, data: Object.values(usersData) },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get all bets profit loss`,
       error: error.message,
       stake: error.stack,
     });
@@ -1758,3 +1999,4 @@ exports.deleteUser = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 }
+

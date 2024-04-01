@@ -147,7 +147,7 @@ exports.getUsers = async (where, select, offset, limit, relations) => {
 };
 
 exports.getUsersWithUserBalance = async (where, offset, limit) => {
-  //get all users with user balance according to pagoination
+  //get all users with user balance according to pagination
 
   let Query = user.createQueryBuilder()
   .select()
@@ -168,7 +168,7 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
 }
 
 exports.getUsersWithUsersBalanceData = async (where, query) => {
-  //get all users with user balance according to pagoination
+  //get all users with user balance according to pagination
   let transactionQuery = new ApiFeature(user.createQueryBuilder()
   .where(where)
   .leftJoinAndMapOne("user.userBal","userBalances", "UB","user.id = UB.userId")
@@ -181,7 +181,7 @@ exports.getUsersWithUsersBalanceData = async (where, query) => {
 
 
 exports.getUsersWithTotalUsersBalanceData = (where, query, select) => {
-  //get all users with user balance according to pagoination
+  //get all users with user balance according to pagination
   let transactionQuery = new ApiFeature(user.createQueryBuilder()
     .where(where)
     .leftJoinAndMapOne("user.userBal", "userBalances", "UB", "user.id = UB.userId")

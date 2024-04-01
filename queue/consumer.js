@@ -109,7 +109,7 @@ let calculateRateAmount = async (jobData, userId) => {
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
               process: `User ID : ${userId} ${item} id ${partnershipId}`,
-              data: `My Stake : ${jobData.myStake}`
+              data: `My Stake : ${jobData.myStake} exposure: ${partnerExposure}`
             });
 
           }
@@ -234,7 +234,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
               data: `My Stake : ${(
                 (stake * parseFloat(partnership)) /
                 100
-              ).toFixed(2)}`,
+              ).toFixed(2)} exposure: ${partnerExposure}`,
             });
 
             // Update jobData with calculated stake

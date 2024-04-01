@@ -322,6 +322,14 @@ exports.declareSessionResult = async (req, res) => {
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+
+        logger.info({
+          message: "Updating user balance created by fgadmin or wallet in declare session: ",
+          data: {
+            superAdminData: response?.superAdminData?.[userId],
+            userId: userId
+          },
+        });
       }
 
       bulkCommission.push(...response?.faAdminCal?.commission?.map((item) => {
@@ -496,7 +504,7 @@ exports.declareSessionResult = async (req, res) => {
       //   });
       // });
     // };
-    if (parentExposure < 0) {
+    if (parentUser.exposure < 0) {
       logger.info({
         message: "Exposure in negative for user: ",
         data: {
@@ -628,6 +636,13 @@ exports.declareSessionNoResult = async (req, res) => {
         response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
 
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+        logger.info({
+          message: "Updating user balance created by fgadmin or wallet in declare session noresult: ",
+          data: {
+            superAdminData: response?.superAdminData?.[userId],
+            userId: userId
+          },
+        });
       }
 
       for (let userId in response?.faAdminCal) {
@@ -854,6 +869,14 @@ exports.unDeclareSessionResult = async (req, res) => {
           response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(userCommission?.amount || 0)).toFixed(2));
         }
         updateUserBalanceData(userIds, response?.superAdminData?.[userIds]);
+
+        logger.info({
+          message: "Updating user balance created by fgadmin or wallet in unDeclare session: ",
+          data: {
+            superAdminData: response?.superAdminData?.[userIds],
+            userId: userIds
+          },
+        });
       }
 
 
@@ -891,7 +914,7 @@ exports.unDeclareSessionResult = async (req, res) => {
             }
           }
 
-          if (parentExposure < 0) {
+          if (parentUser.exposure < 0) {
             logger.info({
               message: "Exposure in negative for user: ",
               data: {
@@ -1048,7 +1071,7 @@ exports.unDeclareSessionResult = async (req, res) => {
     parentUser.totalCommission -= parseFloat(parseFloat(commissionWallet).toFixed(2));
 
 
-    if (parentExposure < 0) {
+    if (parentUser.exposure < 0) {
       logger.info({
         message: "Exposure in negative for user: ",
         data: {
@@ -1184,6 +1207,13 @@ exports.declareMatchResult = async (req, res) => {
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+        logger.info({
+          message: "Updating user balance created by fgadmin or wallet in declare: ",
+          data: {
+            superAdminData: response?.superAdminData?.[userId],
+            userId: userId
+          },
+        });
       }
 
       bulkCommission.push(...response?.faAdminCal?.commission);
@@ -1454,6 +1484,14 @@ exports.unDeclareMatchResult = async (req, res) => {
         response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
         
         updateUserBalanceData(userIds, response?.superAdminData?.[userIds]);
+
+        logger.info({
+          message: "Updating user balance created by fgadmin or wallet in undeclare: ",
+          data: {
+            superAdminData: response?.superAdminData?.[userIds],
+            userId: userIds
+          },
+        });
       }
 
       for (let parentUserId in response?.faAdminCal.admin) {

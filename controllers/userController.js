@@ -1569,7 +1569,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
     userId = userId || req.user.id;
     if(url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: req.user.roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1599,7 +1599,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
       .then((data) => data)
       .catch((err) => {
         logger.error({
-          context: `error in ${domain} getting profit loss for all bets.`,
+          context: `error in ${domain?.domain} getting profit loss for all bets.`,
           process: `User ID : ${req.user.id} `,
           error: err.message,
           stake: err.stack,
@@ -1628,12 +1628,12 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    let { matchId, url, id, userId, roleName } = req.query;
+    let { matchId, url, id, userId, roleName  } = req.query;
     let data = [];
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
     if (url) {
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: req.user.roleName }, matchId: matchId, searchId: id }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName  }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1662,7 +1662,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
           .then((data) => data)
           .catch((err) => {
             logger.error({
-              context: `error in ${domain} getting profit loss for session bets.`,
+              context: `error in ${domain?.domain} getting profit loss for session bets.`,
               process: `User ID : ${req.user.id} `,
               error: err.message,
               stake: err.stack,
@@ -1702,7 +1702,8 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
           id: userId
         },
         matchId: matchId,
-        searchId: id
+        searchId: id,
+        partnerShipRoleName: req.user.roleName
       })
         .then((data) => data)
         .catch((err) => {
@@ -1765,11 +1766,12 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         for (let usersDomain of faDomains) {
           let response = await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.userWiseProfitLoss, {
             user: {
-              roleName: roleName,
+              roleName: element?.roleName,
               id: element?.id
             },
             matchId: matchId,
-            searchId: id
+            searchId: id,
+            partnerShipRoleName: req.user.roleName
           })
             .then((data) => data)
             .catch((err) => {
@@ -1787,8 +1789,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             if (usersData[element?.id]) {
               usersData[element?.id] = {
                 ...usersData[element?.id],
-                loss: parseFloat((parseFloat(item?.loss) + parseFloat(usersData[element?.id]?.loss)).toFixed(2)),
-                win: parseFloat((parseFloat(item?.win) + parseFloat(usersData[element?.id]?.win)).toFixed(2)),
+                totalLoss: parseFloat((parseFloat(item?.totalLoss) + parseFloat(usersData[element?.id]?.totalLoss)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(usersData[element?.id]?.rateProfitLoss)).toFixed(2)),
                 sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss) + parseFloat(usersData[element?.id]?.sessionProfitLoss)).toFixed(2)),
               }
@@ -1799,8 +1800,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
                 "roleName": element?.roleName,
                 "matchId": matchId,
                 "userName": element?.userName,
-                loss: parseFloat((parseFloat(item?.loss)).toFixed(2)),
-                win: parseFloat((parseFloat(item?.win)).toFixed(2)),
+                totalLoss: parseFloat((parseFloat(item?.totalLoss)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
                 sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2))
               }
@@ -1815,14 +1815,15 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         }
         else {
           const userDomain = await getDomainDataByUserId(element.id, ["domain"]);
-            let response = await apiCall(apiMethod.post, userDomain?.domain + allApiRoutes.userWiseProfitLoss, {
-              user: {
-                roleName: roleName,
-                id: element.id
-              },
-              matchId: matchId,
-              searchId: id
-            })
+          let response = await apiCall(apiMethod.post, userDomain?.domain + allApiRoutes.userWiseProfitLoss, {
+            user: {
+              roleName: element.roleName,
+              id: element.id
+            },
+            matchId: matchId,
+            searchId: id,
+            partnerShipRoleName: req.user.roleName
+          })
               .then((data) => data)
               .catch((err) => {
                 logger.error({
@@ -1838,8 +1839,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             if (usersData[element?.id]) {
               usersData[element?.id] = {
                 ...usersData[element?.id],
-                loss: parseFloat((parseFloat(item?.loss) + parseFloat(usersData[element?.id]?.loss)).toFixed(2)),
-                win: parseFloat((parseFloat(item?.win) + parseFloat(usersData[element?.id]?.win)).toFixed(2)),
+                totalLoss: parseFloat((parseFloat(item?.totalLoss) + parseFloat(usersData[element?.id]?.totalLoss)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(usersData[element?.id]?.rateProfitLoss)).toFixed(2)),
                 sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss) + parseFloat(usersData[element?.id]?.sessionProfitLoss)).toFixed(2)),
               }
@@ -1850,8 +1850,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
                 "roleName": element?.roleName,
                 "matchId": matchId,
                 "userName": element?.userName,
-                loss: parseFloat((parseFloat(item?.loss)).toFixed(2)),
-                win: parseFloat((parseFloat(item?.win)).toFixed(2)),
+                totalLoss: parseFloat((parseFloat(item?.totalLoss)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
                 sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2)),
                 url: userDomain?.domain
@@ -1865,12 +1864,13 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
     if (oldBetFairUserIds?.length > 0) {
       let response = await apiCall(apiMethod.post,oldBetFairDomain + allApiRoutes.userWiseProfitLoss, {
         user: {
-          roleName: roleName,
+          roleName: req.user.roleName,
           id: userId
         },
         matchId: matchId,
         searchId: id,
-        userIds: oldBetFairUserIds?.join(",")
+        userIds: oldBetFairUserIds?.join(","),
+        partnerShipRoleName: req.user.roleName
       })
         .then((data) => data)
         .catch((err) => {

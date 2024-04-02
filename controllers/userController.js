@@ -1457,12 +1457,12 @@ exports.getTotalProfitLoss = async (req, res) => {
           });
           throw err;
         });
-      data.data = (data?.data || [])?.map((item) => {
-        return {
-          ...item,
-          domainUrl: url?.domain
-        }
-      });
+      // data.data = (data?.data || [])?.map((item) => {
+      //   return {
+      //     ...item,
+      //     domainUrl: url?.domain
+      //   }
+      // });
       profitLoss.push(...(data?.data || []));
     }
 
@@ -1473,14 +1473,13 @@ exports.getTotalProfitLoss = async (req, res) => {
         eventType,
         totalLoss: 0,
         totalBet: 0,
-        totalDeduction: 0,
-        domainData: []
+        totalDeduction: 0
       };
 
       accumulator[eventType].totalLoss += parseFloat(currentValue.totalLoss);
       accumulator[eventType].totalBet += parseFloat(currentValue.totalBet);
       accumulator[eventType].totalDeduction += parseFloat(currentValue.totalDeduction);
-      accumulator[eventType].domainData.push(currentValue);
+      // accumulator[eventType].domainData.push(currentValue);
 
       return accumulator;
     }, {}));
@@ -1564,13 +1563,43 @@ exports.getDomainProfitLoss = async (req, res) => {
 
 exports.getResultBetProfitLoss = async (req, res) => {
   try {
-    const { matchId, betId, isSession, url, id } = req.query;
+    let { matchId, betId, isSession, url, id, userId, roleName } = req.query;
+    let data=[];
+    roleName = roleName || req.user.roleName;
+    userId = userId || req.user.id;
+    if(url) {
 
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true',searchId: id }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: req.user.roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url} getting profit loss for all bets.`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      data = response?.data;
+    }
+    else{
+      let domainData;
+      let where = {};
+
+    if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(req.user, null, where);
+    }
+    else {
+      domainData = await getUserDomainWithFaId(where);
+    }
+
+    for (let domain of domainData) {
+      let response = await apiCall(apiMethod.post, domain + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({
-          context: `error in ${url} getting profit loss for all bets.`,
+          context: `error in ${domain} getting profit loss for all bets.`,
           process: `User ID : ${req.user.id} `,
           error: err.message,
           stake: err.stack,
@@ -1578,6 +1607,9 @@ exports.getResultBetProfitLoss = async (req, res) => {
         throw err;
       });
 
+      data?.push(...response?.data);
+    }
+    }
     return SuccessResponse(
       { statusCode: 200, data: data },
       req,
@@ -1594,25 +1626,52 @@ exports.getResultBetProfitLoss = async (req, res) => {
   }
 }
 
-
-
-
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    const { matchId, url,id } = req.query;
-
-    let data = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId,searchId: id }, {})
-      .then((data) => data)
-      .catch((err) => {
-        logger.error({
-          context: `error in ${url} getting profit loss for session bets.`,
-          process: `User ID : ${req.user.id} `,
-          error: err.message,
-          stake: err.stack,
+    let { matchId, url, id, userId, roleName } = req.query;
+    let data = [];
+    roleName = roleName || req.user.roleName;
+    userId = userId || req.user.id;
+    if (url) {
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: req.user.roleName }, matchId: matchId, searchId: id }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url} getting profit loss for session bets.`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
         });
-        throw err;
-      });
+      data = response?.data;
+    }
+    else {
+      let domainData;
+      let where = {};
 
+      if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+        domainData = await getFaAdminDomain(req.user, null, where);
+      }
+      else {
+        domainData = await getUserDomainWithFaId(where);
+      }
+
+      for (let domain of domainData) {
+        let response = await apiCall(apiMethod.post, domain + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId, searchId: id }, {})
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${domain} getting profit loss for session bets.`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
+        data?.push(...response?.data);
+      }
+    }
     return SuccessResponse(
       { statusCode: 200, data: data },
       req,
@@ -1637,7 +1696,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
     userId = userId || req.user.id;
 
     if (url) {
-      let response = await apiCall(apiMethod.post, domain + allApiRoutes.userWiseProfitLoss, {
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.userWiseProfitLoss, {
         user: {
           roleName: roleName,
           id: userId
@@ -1648,14 +1707,20 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         .then((data) => data)
         .catch((err) => {
           logger.error({
-            context: `error in ${domain} getting user list`,
+            context: `error in ${url} getting user list`,
             process: `User ID : ${req.user.id} `,
             error: err.message,
             stake: err.stack,
           });
           throw err;
         });
-    
+
+      response.data = response?.data?.map((item) => {
+        return {
+          ...item, url: url
+        }
+      });
+
       return SuccessResponse(
         {
           statusCode: 200,
@@ -1667,7 +1732,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
     }
     
     let where = {
-      createBy: userId || req.user.id,
+      createBy: userId,
     };
     
     let users = await getUsersWithUsersBalanceData(where,{});
@@ -1737,7 +1802,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
                 loss: parseFloat((parseFloat(item?.loss)).toFixed(2)),
                 win: parseFloat((parseFloat(item?.win)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
-                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2)),
+                sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2))
               }
             }
           });
@@ -1789,6 +1854,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
                 win: parseFloat((parseFloat(item?.win)).toFixed(2)),
                 rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss)).toFixed(2)),
                 sessionProfitLoss: parseFloat((parseFloat(item?.sessionProfitLoss)).toFixed(2)),
+                url: userDomain?.domain
               }
             }
           });
@@ -1818,7 +1884,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         });
 
       response?.data?.forEach((item) => {
-        usersData[item?.userId] = item;
+        usersData[item?.userId] = { ...item, url: oldBetFairDomain };
       });
     }
 

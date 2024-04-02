@@ -79,13 +79,13 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
 ${getUserChild}
   UPDATE users
   SET "userBlock" = true, "userBlockedBy" = '${blockBy}'
-  WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" IS NULL RETURNING id,"roleName";
+  WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "userBlock" = false, "userBlockedBy" = NULL, "autoBlock" = false
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method
@@ -114,13 +114,13 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
 ${getUserChild}
   UPDATE users
   SET "betBlock" = true, "betBlockedBy" = '${blockBy}'
-  WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" IS NULL RETURNING id,"roleName";
+  WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "betBlock" = false, "betBlockedBy" = NULL
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = '${blockBy}' RETURNING id,"roleName";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method

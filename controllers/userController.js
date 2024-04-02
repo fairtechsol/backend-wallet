@@ -1595,7 +1595,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
     }
 
     for (let domain of domainData) {
-      let response = await apiCall(apiMethod.post, domain + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id }, {})
+      let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: req.user, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id }, {})
       .then((data) => data)
       .catch((err) => {
         logger.error({
@@ -1658,7 +1658,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId, searchId: id }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: req.user, matchId: matchId, searchId: id }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({

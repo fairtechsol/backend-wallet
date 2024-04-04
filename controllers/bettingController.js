@@ -62,7 +62,7 @@ exports.getSessionProfitLoss = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
-exports.deleteMultipleBetForFootball = async (req, res) => {
+exports.deleteMultipleBetForOther = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData } = req.body;
         let domain = expertDomain;

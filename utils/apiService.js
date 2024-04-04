@@ -37,6 +37,7 @@ exports.allApiRoutes = {
   updateUserBalance: "/fairgameWallet/update/balance",
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
   deleteMultipleBet: "/bet/deleteMultipleBet",
+  deleteMultipleBetForOther:"/bet/deleteMultipleBetForOther",
   declareResultSession: "/fairgameWallet/declare/result/session",
   unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",

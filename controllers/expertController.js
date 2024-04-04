@@ -4,7 +4,7 @@ const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
 const { mergeProfitLoss, settingBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis } = require("../services/redis/commonFunctions");
+const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData } = require("../services/userBalanceService");
 const { getUsersWithUserBalance, getUser, getUserById, getUsersWithoutCount } = require("../services/userService");
 const { sendMessageToUser } = require("../sockets/socketManager");
@@ -349,27 +349,18 @@ exports.declareSessionResult = async (req, res) => {
           let parentUser = await getUserBalanceDataByUserId(userId);
           let userCommission = await getUserById(userId, ["sessionCommission", "fwPartnership"]);
 
-
           let parentUserRedisData = await getUserRedisData(userId);
-
-          let parentProfitLoss = parseFloat(parentUser?.profitLoss || 0);
-          if (parentUserRedisData?.profitLoss) {
-            parentProfitLoss = parseFloat(parentUserRedisData.profitLoss);
-          }
-          let parentMyProfitLoss = parseFloat(parentUser?.myProfitLoss || 0);
-          if (parentUserRedisData?.myProfitLoss) {
-            parentMyProfitLoss = parseFloat(parentUserRedisData.myProfitLoss);
-          }
+        
           let parentExposure = parseFloat(parentUser?.exposure || 0);
           if (parentUserRedisData?.exposure) {
             parentExposure = parseFloat(parentUserRedisData?.exposure);
           }
 
-          parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + adminBalanceData?.["profitLoss"]).toFixed(2));
-          parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"]))).toFixed(2)).toFixed(2));
+          let tempCommission = 0;
+
           parentUser.exposure = parseFloat(parseFloat(parentExposure - adminBalanceData?.["exposure"]).toFixed(2));
           if (userCommission?.sessionCommission && item.domain == oldBetFairDomain) {
-            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
+            tempCommission += Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
 
             Object.keys(response?.bulkCommission)?.forEach((item) => {
               response?.bulkCommission?.[item]?.filter((items) => items?.superParent == userId)?.forEach((items) => {
@@ -403,9 +394,16 @@ exports.declareSessionResult = async (req, res) => {
                 parentUser,
               },
             });
+            adminBalanceData?.["exposure"] += parentUser.exposure;
             parentUser.exposure = 0;
           }
-          addInitialUserBalance(parentUser);
+
+          await updateUserBalanceData(parentUser.userId, {
+            profitLoss: adminBalanceData?.["profitLoss"],
+            myProfitLoss: -adminBalanceData?.["myProfitLoss"],
+            exposure: -adminBalanceData?.["exposure"],
+            totalCommission: tempCommission
+          });
           logger.info({
             message: "Declare result db update for parent ",
             data: {
@@ -414,10 +412,10 @@ exports.declareSessionResult = async (req, res) => {
             },
           });
           if (parentUserRedisData?.exposure) {
-            updateUserDataRedis(parentUser.userId, {
-              exposure: parentUser.exposure,
-              profitLoss: parentUser.profitLoss,
-              myProfitLoss: parentUser.myProfitLoss,
+            await incrementValuesRedis(parentUser.userId, {
+              profitLoss: adminBalanceData?.["profitLoss"],
+              myProfitLoss: -adminBalanceData?.["myProfitLoss"],
+              exposure: -adminBalanceData?.["exposure"],
             });
           }
           const redisSessionExposureName =
@@ -458,29 +456,17 @@ exports.declareSessionResult = async (req, res) => {
 
     let parentUserRedisData = await getUserRedisData(fgWallet.id);
 
-    let parentProfitLoss = parseFloat(parentUser?.profitLoss || 0);
-    if (parentUserRedisData?.profitLoss) {
-      parentProfitLoss = parseFloat(parentUserRedisData.profitLoss);
-    }
-    let parentMyProfitLoss = parseFloat(parentUser?.myProfitLoss || 0);
-    if (parentUserRedisData?.myProfitLoss) {
-      parentMyProfitLoss = parseFloat(parentUserRedisData.myProfitLoss);
-    }
     let parentExposure = parseFloat(parentUser?.exposure || 0);
     if (parentUserRedisData?.exposure) {
       parentExposure = parseFloat(parentUserRedisData?.exposure);
     }
 
-    parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + fwProfitLoss).toFixed(2));
-    parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - fwProfitLoss).toFixed(2));
     parentUser.exposure = parseFloat(parseFloat(parentExposure - exposure).toFixed(2));
     // if (fgWallet?.sessionCommission) {
     const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
     const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
       return prev + parseFloat(parseFloat(curr.commissionAmount * curr.partnerShip / 100).toFixed(2))
     }, 0);
-    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet).toFixed(2));
-
       // Object.keys(response?.bulkCommission)?.forEach((item) => {
       //   response?.bulkCommission?.[item]?.forEach((items) => {
       //     bulkCommission.push({
@@ -513,9 +499,15 @@ exports.declareSessionResult = async (req, res) => {
           parentUser,
         },
       });
+      exposure += parentUser.exposure;
       parentUser.exposure = 0;
     }
-    addInitialUserBalance(parentUser);
+    await updateUserBalanceData(parentUser.userId, {
+      profitLoss: fwProfitLoss,
+      myProfitLoss: -fwProfitLoss,
+      exposure: -exposure,
+      totalCommission: parseFloat(parseFloat(commissionWallet).toFixed(2))
+    });
     logger.info({
       message: "Declare result db update for parent ",
       data: {
@@ -524,10 +516,10 @@ exports.declareSessionResult = async (req, res) => {
       },
     });
     if (parentUserRedisData?.exposure) {
-      updateUserDataRedis(parentUser.userId, {
-        exposure: parentUser.exposure,
-        profitLoss: parentUser.profitLoss,
-        myProfitLoss: parentUser.myProfitLoss,
+      await incrementValuesRedis(parentUser.userId, {
+        profitLoss: fwProfitLoss,
+        myProfitLoss: -fwProfitLoss,
+        exposure: -exposure,
       });
     }
     const redisSessionExposureName = redisKeys.userSessionExposure + matchId;
@@ -569,8 +561,6 @@ exports.declareSessionResult = async (req, res) => {
       req,
       res
     );
-
-
 
   } catch (error) {
     logger.error({

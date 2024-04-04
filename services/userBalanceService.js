@@ -27,6 +27,10 @@ exports.updateUserBalanceExposure =async (userIds, data) => {
   await UserBalance.query(`update "userBalances" set  "exposure" = "exposure" + $1 where "userId" IN('${userIds?.join("','")}')`,[ (data.exposure || 0) ]);
 }
 
+exports.updateUserExposure =async (userId, exposure) => {
+  await UserBalance.query(`update "userBalances" set "exposure" = "exposure" + $2 where "userId" = $1`, [userId, exposure || 0]);
+}
+
 
 exports.addInitialUserBalance = async (body) => {
     let insertUserBalance = await UserBalance.save(body);

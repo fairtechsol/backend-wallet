@@ -1,31 +1,47 @@
 const internalRedis = require("../../config/internalRedisConnection");
 
-exports.getUserRedisData = async (userId)=>{
-  
-    // Retrieve all user data for the match from Redis
-    const userData = await internalRedis.hgetall(userId);
-  
-    // Return the user data as an object or null if no data is found
-    return Object.keys(userData)?.length == 0 ? null : userData;
-  }
+exports.getUserRedisData = async (userId) => {
 
-  exports.updateUserDataRedis = async (userId, value) => {
-    await internalRedis.hmset(userId, value);
-  };
-  
-  exports.hasUserInCache = async (userId) => {
-    return await internalRedis.exists(userId);
-  }
-  
-  
-  exports.deleteKeyFromUserRedis = async (userId,...key) => {
-    return await internalRedis.hdel(userId,key);
-  }
+  // Retrieve all user data for the match from Redis
+  const userData = await internalRedis.hgetall(userId);
 
-  exports.getUserRedisKeys = async (userId,keys)=>{
-    // Retrieve all user data for the match from Redis
-    const userData = await internalRedis.hmget(userId,keys);
-  
-    // Return the user data as an object or null if no data is found
-    return  userData;
+  // Return the user data as an object or null if no data is found
+  return Object.keys(userData)?.length == 0 ? null : userData;
+}
+
+exports.updateUserDataRedis = async (userId, value) => {
+  await internalRedis.hmset(userId, value);
+};
+
+exports.hasUserInCache = async (userId) => {
+  return await internalRedis.exists(userId);
+}
+
+
+exports.deleteKeyFromUserRedis = async (userId, ...key) => {
+  return await internalRedis.hdel(userId, key);
+}
+
+exports.getUserRedisKeys = async (userId, keys) => {
+  // Retrieve all user data for the match from Redis
+  const userData = await internalRedis.hmget(userId, keys);
+
+  // Return the user data as an object or null if no data is found
+  return userData;
+}
+
+// Assuming internalRedis is the Redis client instance
+exports.incrementValuesRedis = async (userId, value, updateValues) => {
+  // Start pipelining
+  const pipeline = internalRedis.pipeline();
+  // Queue up HINCRBY commands for each field in 'value' object
+  Object.entries(value).forEach(([field, increment]) => {
+    pipeline.hincrby(userId, field, increment);
+  });
+  // If there are additional values to update, queue an HMSET command
+  if (updateValues) {
+    pipeline.hmset(userId, updateValues);
   }
+  // Execute the pipeline
+  await pipeline.exec();
+};

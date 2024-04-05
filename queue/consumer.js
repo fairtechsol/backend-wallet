@@ -291,7 +291,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
 
     const userIds = usersData?.map((item) => item.id);
 
-    updateUserBalanceExposure(userIds, {
+    await updateUserBalanceExposure(userIds, {
       exposure: -exposureDiff
     });
 
@@ -346,7 +346,12 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
                 [redisSesionExposureName]: sessionExposure
               };
 
-              await updateUserDataRedis(partnershipId, redisObj);
+              await incrementValuesRedis(partnershipId, {
+                exposure: -exposureDiff,
+                [redisSesionExposureName]: - oldMaxLossParent + newMaxLossParent,
+              }, {
+                [redisName]: JSON.stringify(oldProfitLossParent)
+              });
 
               // Log information about exposure and stake update
               logger.info({
@@ -429,7 +434,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
 
     const userIds = usersData?.map((item) => item.id);
 
-    updateUserBalanceExposure(userIds, {
+   await updateUserBalanceExposure(userIds, {
       exposure: -exposureDiff
     });
 
@@ -480,7 +485,13 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
                 ...(teamCrateRedisKey ? { [teamCrateRedisKey]: masterTeamRates.teamC } : {})
               }
 
-              await updateUserDataRedis(partnershipId, redisObj);
+              await incrementValuesRedis(partnershipId, {
+                exposure: -exposureDiff
+              }, {
+                [teamArateRedisKey]: masterTeamRates.teamA,
+                [teamBrateRedisKey]: masterTeamRates.teamB,
+                ...(teamCrateRedisKey ? { [teamCrateRedisKey]: masterTeamRates.teamC } : {})
+              });
 
               // Log information about exposure and stake update
               logger.info({

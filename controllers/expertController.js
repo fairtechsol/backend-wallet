@@ -947,18 +947,17 @@ exports.unDeclareSessionResult = async (req, res) => {
           }
         }
 
+        let parentRedisUpdateObj = {
+          ...(profitLossDataAdmin[parentUser.userId] ? {
+            [betId + redisKeys.profitLoss]: JSON.stringify(
+              profitLossDataAdmin[parentUser.userId]
+            )
+          } : {}),
+        };
           if (
             parentUserRedisData?.exposure
           ) {
             const redisSessionExposureName = redisKeys.userSessionExposure + matchId;
-
-            let parentRedisUpdateObj = {
-              ...(profitLossDataAdmin[parentUser.userId] ? {
-                [betId + redisKeys.profitLoss]: JSON.stringify(
-                  profitLossDataAdmin[parentUser.userId]
-                )
-              } : {}),
-            };
             await incrementValuesRedis(parentUser.userId, {
               profitLoss: -adminBalanceData?.["profitLoss"],
               myProfitLoss: adminBalanceData["myProfitLoss"],
@@ -1071,17 +1070,16 @@ exports.unDeclareSessionResult = async (req, res) => {
 
     const redisSessionExposureName = redisKeys.userSessionExposure + matchId;
 
+    let parentRedisUpdateObj = {
+      ...(profitLossDataWallet ? {
+        [betId + redisKeys.profitLoss]: JSON.stringify(
+          profitLossDataWallet
+        )
+      } : {}),
+    };
     if (
       parentUserRedisData?.exposure
     ) {
-
-      let parentRedisUpdateObj = {
-        ...(profitLossDataWallet ? {
-          [betId + redisKeys.profitLoss]: JSON.stringify(
-            profitLossDataWallet
-          )
-        } : {}),
-      };
 
       await incrementValuesRedis(parentUser.userId, {
         profitLoss: -fwProfitLoss,
@@ -1094,7 +1092,6 @@ exports.unDeclareSessionResult = async (req, res) => {
       ...parentUser,
       betId,
       matchId,
-      sessionExposure: sessionExposure,
       parentRedisUpdateObj
     });
     deleteCommission(betId);

@@ -320,6 +320,7 @@ exports.declareSessionResult = async (req, res) => {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
           // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
+          response.superAdminData[userId].balance = 0;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
 
@@ -410,6 +411,7 @@ exports.declareSessionResult = async (req, res) => {
           }
 
           await updateUserBalanceData(parentUser.userId, {
+            balance:0,
             profitLoss: adminBalanceData?.["profitLoss"],
             myProfitLoss: -adminBalanceData?.["myProfitLoss"],
             exposure: -adminBalanceData?.["exposure"],
@@ -524,6 +526,7 @@ exports.declareSessionResult = async (req, res) => {
       parentUser.exposure = 0;
     }
     await updateUserBalanceData(parentUser.userId, {
+      balance: 0,
       profitLoss: fwProfitLoss,
       myProfitLoss: -fwProfitLoss,
       exposure: -exposure,
@@ -836,6 +839,7 @@ exports.unDeclareSessionResult = async (req, res) => {
           response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
+          response.superAdminData[userIds].balance = 0;
         }
         let userCommission = commissionData?.find((cData) => cData?.userId == userIds);
         if (userCommission) {
@@ -907,7 +911,8 @@ exports.unDeclareSessionResult = async (req, res) => {
             profitLoss: -adminBalanceData?.["profitLoss"],
             myProfitLoss: adminBalanceData["myProfitLoss"],
             exposure: adminBalanceData["exposure"],
-            totalCommission: -parentCommissionData
+            totalCommission: -parentCommissionData,
+            balance: 0
           });
 
           logger.info({
@@ -947,18 +952,17 @@ exports.unDeclareSessionResult = async (req, res) => {
           }
         }
 
+        let parentRedisUpdateObj = {
+          ...(profitLossDataAdmin[parentUser.userId] ? {
+            [betId + redisKeys.profitLoss]: JSON.stringify(
+              profitLossDataAdmin[parentUser.userId]
+            )
+          } : {}),
+        };
           if (
             parentUserRedisData?.exposure
           ) {
             const redisSessionExposureName = redisKeys.userSessionExposure + matchId;
-
-            let parentRedisUpdateObj = {
-              ...(profitLossDataAdmin[parentUser.userId] ? {
-                [betId + redisKeys.profitLoss]: JSON.stringify(
-                  profitLossDataAdmin[parentUser.userId]
-                )
-              } : {}),
-            };
             await incrementValuesRedis(parentUser.userId, {
               profitLoss: -adminBalanceData?.["profitLoss"],
               myProfitLoss: adminBalanceData["myProfitLoss"],
@@ -1053,10 +1057,11 @@ exports.unDeclareSessionResult = async (req, res) => {
       exposure += parentUser.exposure;
       parentUser.exposure = 0;
     }
-    
+
     await updateUserBalanceData(parentUser.userId, {
+      balance: 0,
       profitLoss: -fwProfitLoss,
-      myProfitLoss:  parseFloat((parseFloat(fwProfitLoss)).toFixed(2)),
+      myProfitLoss: parseFloat((parseFloat(fwProfitLoss)).toFixed(2)),
       exposure: exposure,
       totalCommission: -(parseFloat(parseFloat(commissionWallet).toFixed(2)) || 0)
     });
@@ -1071,17 +1076,16 @@ exports.unDeclareSessionResult = async (req, res) => {
 
     const redisSessionExposureName = redisKeys.userSessionExposure + matchId;
 
+    let parentRedisUpdateObj = {
+      ...(profitLossDataWallet ? {
+        [betId + redisKeys.profitLoss]: JSON.stringify(
+          profitLossDataWallet
+        )
+      } : {}),
+    };
     if (
       parentUserRedisData?.exposure
     ) {
-
-      let parentRedisUpdateObj = {
-        ...(profitLossDataWallet ? {
-          [betId + redisKeys.profitLoss]: JSON.stringify(
-            profitLossDataWallet
-          )
-        } : {}),
-      };
 
       await incrementValuesRedis(parentUser.userId, {
         profitLoss: -fwProfitLoss,
@@ -1094,7 +1098,6 @@ exports.unDeclareSessionResult = async (req, res) => {
       ...parentUser,
       betId,
       matchId,
-      sessionExposure: sessionExposure,
       parentRedisUpdateObj
     });
     deleteCommission(betId);
@@ -1174,6 +1177,7 @@ exports.declareMatchResult = async (req, res) => {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
           // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
+          response.superAdminData[userId].balance = 0;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
         logger.info({
@@ -1292,7 +1296,8 @@ exports.declareMatchResult = async (req, res) => {
             profitLoss: parseFloat(adminBalanceData?.["profitLoss"]),
             myProfitLoss: -parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2)),
             exposure: -adminBalanceData?.["exposure"],
-            totalCommission: totalCommissionData
+            totalCommission: totalCommissionData,
+            balance: 0
           });
 
           logger.info({
@@ -1364,8 +1369,9 @@ exports.declareMatchResult = async (req, res) => {
       exposure += parentUser.exposure;
       parentUser.exposure = 0;
     }
-    
+
     await updateUserBalanceData(parentUser.userId, {
+      balance: 0,
       profitLoss: fwProfitLoss,
       myProfitLoss: -fwProfitLoss,
       exposure: -exposure,
@@ -1470,6 +1476,7 @@ exports.unDeclareMatchResult = async (req, res) => {
           response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
+          response.superAdminData[userIds].balance = 0;
         }
         
         response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));
@@ -1537,7 +1544,8 @@ exports.unDeclareMatchResult = async (req, res) => {
             profitLoss: -parseFloat(adminBalanceData?.["profitLoss"]),
             myProfitLoss: parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2)),
             exposure: parseFloat(adminBalanceData?.["exposure"]),
-            totalCommission: -totalCommissionData
+            totalCommission: -totalCommissionData,
+            balance: 0
           });
           logger.info({
             message: "Un declare result db update for parent ",
@@ -1631,8 +1639,9 @@ exports.unDeclareMatchResult = async (req, res) => {
       exposure += parentUser.exposure;
       parentUser.exposure = 0;
     }
-    
+
     await updateUserBalanceData(parentUser.userId, {
+      balance: 0,
       profitLoss: -parseFloat(fwProfitLoss),
       myProfitLoss: parseFloat(fwProfitLoss),
       exposure: exposure,

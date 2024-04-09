@@ -31,7 +31,7 @@ module.exports.fileType = {
   excel: "excel",
 };
 
-module.exports.redisTimeOut = 24 * 60 * 60;
+module.exports.redisTimeOut = 10 * 60 * 60;
 
 module.exports.matchComissionTypeConstant = {
   totalLoss: "totalLoss",

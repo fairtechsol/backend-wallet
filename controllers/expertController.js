@@ -320,6 +320,7 @@ exports.declareSessionResult = async (req, res) => {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
           // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
+          response.superAdminData[userId].balance = 0;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
 
@@ -863,6 +864,7 @@ exports.unDeclareSessionResult = async (req, res) => {
           response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
+          response.superAdminData[userIds].balance = 0;
         }
         let userCommission = commissionData?.find((cData) => cData?.userId == userIds);
         if (userCommission) {
@@ -1205,6 +1207,7 @@ exports.declareMatchResult = async (req, res) => {
           response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
           // response.superAdminData[userId].profitLoss = -response?.superAdminData?.[userId].profitLoss;
           response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
+          response.superAdminData[userId].balance = 0;
         }
         updateUserBalanceData(userId, response?.superAdminData?.[userId]);
         logger.info({
@@ -1479,6 +1482,7 @@ exports.unDeclareMatchResult = async (req, res) => {
           response.superAdminData[userIds].myProfitLoss = -response?.superAdminData?.[userIds].myProfitLoss;
         } else {
           response.superAdminData[userIds].profitLoss = -response?.superAdminData?.[userIds].profitLoss;
+          response.superAdminData[userIds].balance = 0;
         }
         
         response.superAdminData[userIds].totalCommission = -parseFloat((parseFloat(response.superAdminData[userIds].totalCommission || 0)).toFixed(2));

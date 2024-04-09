@@ -1319,7 +1319,8 @@ exports.declareMatchResult = async (req, res) => {
 
           sendMessageToUser(parentUser.userId, socketData.matchResult, {
             ...parentUser,
-            matchId
+            matchId,
+            gameType: match?.matchType
           });
           exposure += parseFloat(adminBalanceData?.exposure);
          
@@ -1397,7 +1398,8 @@ exports.declareMatchResult = async (req, res) => {
 
     sendMessageToUser(parentUser.userId, socketData.matchResult, {
       ...parentUser,
-      matchId
+      matchId,
+      gameType: match?.matchType
     });
 
     insertCommissions(bulkCommission);
@@ -1578,8 +1580,9 @@ exports.unDeclareMatchResult = async (req, res) => {
           sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
             ...parentUser,
             matchId,
-            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId]
-          });
+            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId],
+            gameType: match?.matchType
+    });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
         };
         
@@ -1667,7 +1670,8 @@ exports.unDeclareMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossDataWallet
+      profitLossDataWallet,
+      gameType: match?.matchType
     });
     deleteCommission(matchOddId);
 

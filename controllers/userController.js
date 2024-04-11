@@ -1063,7 +1063,7 @@ exports.userBalanceDetails = async (req, res, next) => {
     const userBalanceData = getUserBalanceDataByUserId(loginUser.id, ["id", "currentBalance", "profitLoss", "myProfitLoss"]);
 
     // Fetch profit/loss sum for first-level child users
-    const firstLevelChildBalanceData = getAllChildProfitLossSum(firstLevelChildUserIds);
+    const firstLevelChildBalanceData = getAllChildProfitLossSum(firstLevelChildUserIds, reqUser?.roleName);
 
     let totalCurrentBalance = 0;
 

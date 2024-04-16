@@ -696,6 +696,7 @@ exports.userList = async (req, res, next) => {
         }
 
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
+        element["exposure"] = element?.userBal?.["exposure"]
         let partner_ships = 100;
         if (partnershipCol && partnershipCol.length) {
           partner_ships = partnershipCol.reduce(
@@ -731,6 +732,7 @@ exports.userList = async (req, res, next) => {
           element["balance"] = Number((parseFloat(element.userBal["currentBalance"])));
         }
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
+        element["profit_loss"] = element?.userBal?.["profitLoss"];
         element["commission"] = element?.userBal?.["totalCommission"];
         if (partnershipCol && partnershipCol.length) {
           let partnerShips = partnershipCol.reduce(
@@ -763,7 +765,7 @@ exports.userList = async (req, res, next) => {
         { excelHeader: "Balance", dbKey: "balance" },
         { excelHeader: "Client P/L", dbKey: "profit_loss" },
         { excelHeader: "% P/L", dbKey: "percentProfitLoss" },
-        { excelHeader: "Comission", dbKey: "TotalCommission" },
+        { excelHeader: "Comission", dbKey: "commission" },
         { excelHeader: "Exposure", dbKey: "exposure" },
         { excelHeader: "Available Balance", dbKey: "availableBalance" },
         { excelHeader: "UL", dbKey: "userBlock" },

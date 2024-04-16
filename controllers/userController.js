@@ -696,7 +696,6 @@ exports.userList = async (req, res, next) => {
         }
 
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
-        element["exposure"] = element?.userBal?.["exposure"]
         let partner_ships = 100;
         if (partnershipCol && partnershipCol.length) {
           partner_ships = partnershipCol.reduce(
@@ -732,7 +731,6 @@ exports.userList = async (req, res, next) => {
           element["balance"] = Number((parseFloat(element.userBal["currentBalance"])));
         }
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
-        element["profit_loss"] = element?.userBal?.["profitLoss"];
         element["commission"] = element?.userBal?.["totalCommission"];
         if (partnershipCol && partnershipCol.length) {
           let partnerShips = partnershipCol.reduce(
@@ -798,7 +796,10 @@ exports.userList = async (req, res, next) => {
           ]
           : []),
       ];
-
+      data.forEach(element => {
+        element.profit_loss = element.userBal?.profitLoss || 0;
+        element.exposure = element.userBal?.exposure || 0;
+      });
       const fileGenerate = new FileGenerate(type);
       const file = await fileGenerate.generateReport(data, header);
       const fileName = `accountList_${new Date()}`;

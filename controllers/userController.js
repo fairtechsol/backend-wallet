@@ -1546,7 +1546,7 @@ exports.getDomainProfitLoss = async (req, res) => {
 
 
     return SuccessResponse(
-      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => b.startAt - a.startAt) },
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.startAt) - new Date(a.startAt)) },
       req,
       res
     );

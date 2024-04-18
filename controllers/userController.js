@@ -6,6 +6,7 @@ const {
   fileType,
   expertDomain,
   oldBetFairDomain,
+  uplinePartnerShipForAllUsers,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -1126,10 +1127,18 @@ exports.userBalanceDetails = async (req, res, next) => {
       downLevelCreditReference: loginUser?.downLevelCreditRefrence,
       availableBalance: parseFloat(userBalance?.value?.currentBalance || 0),
       totalMasterBalance: parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(totalCurrentBalance || 0),
-      upperLevelBalance: parseFloat(loginUser?.creditRefrence) - parseFloat(userBalance?.value?.currentBalance || 0) - parseFloat(totalCurrentBalance || 0),
-      downLevelProfitLoss: -firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0,
-      availableBalanceWithProfitLoss: ((parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(userBalance?.value?.myProfitLoss || 0))),
-      profitLoss: userBalance?.value?.myProfitLoss || 0
+      upperLevelBalance: -parseFloat((parseFloat(firstLevelChildBalance?.value?.profitLoss) * parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0)) / 100).toFixed(2)),
+      downLevelProfitLoss: -parseFloat((parseFloat(firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0) + parseFloat((parseFloat(firstLevelChildBalance?.value?.profitLoss) * parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0)) / 100).toFixed(2))).toFixed(2)),
+      availableBalanceWithProfitLoss: ((parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(userBalance?.value?.profitLoss || 0))),
+      profitLoss: -firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0,
+      totalProfitLoss: parseFloat(userBalance?.value?.profitLoss || 0),
+      upperLevelProfitLossPercent: parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0))
     };
 
     // Send success response
@@ -1521,7 +1530,7 @@ exports.getDomainProfitLoss = async (req, res) => {
         .then((data) => data)
         .catch((err) => {
           logger.error({
-            context: `error in ${url} getting profit loss for specific domain.`,
+            context: `error in ${url?.domain} getting profit loss for specific domain.`,
             process: `User ID : ${req.user.id} `,
             error: err.message,
             stake: err.stack,
@@ -1546,7 +1555,7 @@ exports.getDomainProfitLoss = async (req, res) => {
 
 
     return SuccessResponse(
-      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => b.startAt - a.startAt) },
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.startAt) - new Date(a.startAt)) },
       req,
       res
     );
@@ -1669,7 +1678,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
             });
             throw err;
           });
-        data?.push(...response?.data);
+        data?.push(...(response?.data || []));
       }
     }
     return SuccessResponse(

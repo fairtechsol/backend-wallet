@@ -76,6 +76,15 @@ module.exports.partnershipPrefixByRole = {
   [this.userRoleConstant.fairGameWallet]: "fw",
 };
 
+module.exports.uplinePartnerShipForAllUsers = {
+  [this.userRoleConstant.fairGameAdmin]: ["fw"],
+  [this.userRoleConstant.superAdmin]: ["fw", "fa"],
+  [this.userRoleConstant.admin]: ["fw", "fa", "sa"],
+  [this.userRoleConstant.superMaster]: ["fw","fa","sa","a"],
+  [this.userRoleConstant.master]: ["fw", "fa", "sa", "a", "sm"],
+  [this.userRoleConstant.agent]: ["fw", "fa", "sa", "a", "sm", "m"],
+};
+
 module.exports.differLoginTypeByRoles = {
   admin: [
     this.userRoleConstant.admin,

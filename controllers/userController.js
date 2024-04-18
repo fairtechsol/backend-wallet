@@ -1530,7 +1530,7 @@ exports.getDomainProfitLoss = async (req, res) => {
         .then((data) => data)
         .catch((err) => {
           logger.error({
-            context: `error in ${url} getting profit loss for specific domain.`,
+            context: `error in ${url?.domain} getting profit loss for specific domain.`,
             process: `User ID : ${req.user.id} `,
             error: err.message,
             stake: err.stack,
@@ -1678,7 +1678,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
             });
             throw err;
           });
-        data?.push(...response?.data);
+        data?.push(...(response?.data || []));
       }
     }
     return SuccessResponse(

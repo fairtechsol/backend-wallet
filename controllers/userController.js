@@ -2075,3 +2075,16 @@ exports.deleteUser = async (req, res) => {
   }
 }
 
+exports.checkOldPasswordData = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { oldPassword } = req.body;
+    let isOldPassword = await checkOldPassword(id, oldPassword);
+
+    return SuccessResponse({ statusCode: 200, data: { isPasswordMatch: isOldPassword } }, req, res);
+    
+  } catch (error) {
+    logger.error({ message: "Error in checking old password.", stack: error?.stack, context: error?.message });
+    return ErrorResponse(error, req, res);
+  }
+}

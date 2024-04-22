@@ -1017,7 +1017,9 @@ exports.userSearchList = async (req, res, next) => {
           throw err?.response?.data;
         });
 
-      response?.users?.push(...(data?.data || []));
+      response?.users?.push(...(data?.data?.map((item)=>{
+        return { ...item, domain: usersDomain.domain };
+      }) || []));
       response.count += (data?.data?.length || 0);
     };
 
@@ -1758,7 +1760,9 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       );
     }
 
-    let where = {
+    let where = id ? {
+      id: id
+    } : {
       createBy: userId,
     };
 
@@ -1773,7 +1777,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         {
           statusCode: 200,
           message: { msg: "fetched", keys: { name: "User list" } },
-          data: response,
+          data: [],
         },
         req,
         res

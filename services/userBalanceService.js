@@ -53,7 +53,7 @@ exports.getAllChildProfitLossSum = async (childUserIds, roleName) => {
   let childUserData = await UserBalance
     .createQueryBuilder('userBalance')
     .leftJoinAndMapOne("userBalance.user", "users", "user", "user.id = userBalance.userId")
-    .select([queryColumns])
+    .select([queryColumns, 'SUM(userBalance.profitLoss) as "profitLoss"'])
     .where('userBalance.userId IN (:...childUserIds)', { childUserIds })
     .getRawOne();
 

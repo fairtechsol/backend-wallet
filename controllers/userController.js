@@ -1729,7 +1729,6 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         matchId: matchId,
         searchId: id,
         partnerShipRoleName: req.user.roleName
-     
       })
         .then((data) => data)
         .catch((err) => {
@@ -1773,7 +1772,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         {
           statusCode: 200,
           message: { msg: "fetched", keys: { name: "User list" } },
-          data: response,
+          data: [],
         },
         req,
         res

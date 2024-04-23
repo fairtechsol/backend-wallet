@@ -1017,9 +1017,7 @@ exports.userSearchList = async (req, res, next) => {
           throw err?.response?.data;
         });
 
-      response?.users?.push(...(data?.data?.map((item)=>{
-        return { ...item, domain: usersDomain.domain };
-      }) || []));
+      response?.users?.push(...(data?.data || []));
       response.count += (data?.data?.length || 0);
     };
 
@@ -1731,7 +1729,6 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         matchId: matchId,
         searchId: id,
         partnerShipRoleName: req.user.roleName
-     
       })
         .then((data) => data)
         .catch((err) => {
@@ -1760,9 +1757,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       );
     }
 
-    let where = id ? {
-      id: id
-    } : {
+    let where = {
       createBy: userId,
     };
 

@@ -462,6 +462,7 @@ exports.declareSessionResult = async (req, res) => {
         exposure += parseFloat(adminBalanceData?.exposure);
        
       };
+      exposure += parseFloat(response?.faAdminCal?.userData?.[fgWallet.id]?.exposure || 0);
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -719,6 +720,8 @@ exports.declareSessionNoResult = async (req, res) => {
           exposure += adminBalanceData?.exposure;
         }
       };
+      exposure += parseFloat(response?.faAdminCal?.[fgWallet.id]?.exposure || 0);
+
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -1008,6 +1011,7 @@ exports.unDeclareSessionResult = async (req, res) => {
 
         }
       }
+      exposure += parseFloat(response?.faAdminCal?.userData?.[fgWallet.id]?.exposure || 0);
 
     };
 
@@ -1319,7 +1323,8 @@ exports.declareMatchResult = async (req, res) => {
 
           sendMessageToUser(parentUser.userId, socketData.matchResult, {
             ...parentUser,
-            matchId
+            matchId,
+            gameType: match?.matchType
           });
           exposure += parseFloat(adminBalanceData?.exposure);
          
@@ -1328,6 +1333,7 @@ exports.declareMatchResult = async (req, res) => {
       }
 
       fwProfitLoss += parseFloat(response?.faAdminCal?.fwWalletDeduction || 0);
+      exposure += parseFloat(response?.faAdminCal?.userData?.[fgWallet.id]?.exposure || 0);
     }
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -1397,7 +1403,8 @@ exports.declareMatchResult = async (req, res) => {
 
     sendMessageToUser(parentUser.userId, socketData.matchResult, {
       ...parentUser,
-      matchId
+      matchId,
+      gameType: match?.matchType
     });
 
     insertCommissions(bulkCommission);
@@ -1578,8 +1585,9 @@ exports.unDeclareMatchResult = async (req, res) => {
           sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
             ...parentUser,
             matchId,
-            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId]
-          });
+            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId],
+            gameType: match?.matchType
+    });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
         };
         
@@ -1594,6 +1602,8 @@ exports.unDeclareMatchResult = async (req, res) => {
           profitLossDataWallet[pLData] = parseFloat(parseFloat(response?.faAdminCal?.wallet?.[pLData]).toFixed(2));
         }
       });
+      exposure += parseFloat(response?.faAdminCal?.admin?.[fgWallet.id]?.exposure || 0);
+
     };
 
     let parentUser = await getUserBalanceDataByUserId(fgWallet.id);
@@ -1667,7 +1677,8 @@ exports.unDeclareMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossDataWallet
+      profitLossDataWallet,
+      gameType: match?.matchType
     });
     deleteCommission(matchOddId);
 

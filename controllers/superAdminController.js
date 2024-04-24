@@ -381,7 +381,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "phoneNumber",
       "city",
       "remark",
-      (isOldFairGame ? ["sessionCommission",
+      ...(isOldFairGame ? ["sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
     ]);

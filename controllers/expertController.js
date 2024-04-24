@@ -1561,15 +1561,21 @@ exports.unDeclareMatchResult = async (req, res) => {
             },
           });
 
-          Object.keys(adminBalanceData)?.forEach((pLData) => {
-            if (profitLossDataAdmin?.[parentUser.userId]?.[pLData]) {
-              profitLossDataAdmin[parentUser.userId][pLData] += adminBalanceData?.[pLData];
-              profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(profitLossDataAdmin[parentUser.userId][pLData]).toFixed(2));
+          let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss,role, ...adminPLData } = adminBalanceData;
 
+          Object.keys(adminPLData)?.forEach((pLData) => {
+            if (profitLossDataAdmin?.[parentUser.userId]) {
+              if (profitLossDataAdmin?.[parentUser.userId]?.[pLData]) {
+                profitLossDataAdmin[parentUser.userId][pLData] += adminPLData?.[pLData];
+                profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(profitLossDataAdmin[parentUser.userId][pLData]).toFixed(2));
+              }
+              else {
+                profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(adminPLData?.[pLData]).toFixed(2));
+              }
             }
             else {
               profitLossDataAdmin[parentUser.userId] = {};
-              profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(adminBalanceData?.[pLData]).toFixed(2));
+              profitLossDataAdmin[parentUser.userId][pLData] = parseFloat(parseFloat(adminPLData?.[pLData]).toFixed(2));
             }
           });
 
@@ -1593,13 +1599,15 @@ exports.unDeclareMatchResult = async (req, res) => {
         
       }
       fwProfitLoss -= parseFloat(response?.faAdminCal?.fwWalletDeduction || 0);
-      Object.keys(response?.faAdminCal?.wallet)?.forEach((pLData) => {
+      let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss, role, ...adminPLData } = response?.faAdminCal?.wallet;
+
+      Object.keys(adminPLData)?.forEach((pLData) => {
         if (profitLossDataWallet[pLData]) {
-          profitLossDataWallet[pLData] += response?.faAdminCal?.wallet?.[pLData];
+          profitLossDataWallet[pLData] += adminPLData?.[pLData];
           profitLossDataWallet[pLData] = parseFloat(parseFloat(profitLossDataWallet[pLData]).toFixed(2));
         }
         else {
-          profitLossDataWallet[pLData] = parseFloat(parseFloat(response?.faAdminCal?.wallet?.[pLData]).toFixed(2));
+          profitLossDataWallet[pLData] = parseFloat(parseFloat(adminPLData?.[pLData]).toFixed(2));
         }
       });
       exposure += parseFloat(response?.faAdminCal?.admin?.[fgWallet.id]?.exposure || 0);

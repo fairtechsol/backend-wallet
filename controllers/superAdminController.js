@@ -397,7 +397,7 @@ exports.updateSuperAdmin = async (req, res) => {
     } catch (err) {
       return ErrorResponse(err?.response?.data, req, res);
     }
-    updateUser = await addUser(updateUser);
+    await addUser(updateUser);
     if (!isOldFairGame) {
        await updateDomain(domain.id, domainData);
     }

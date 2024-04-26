@@ -1601,11 +1601,11 @@ exports.getResultBetProfitLoss = async (req, res) => {
         id = null;
       }
     }
-    roleName = roleName || newUserTemp.roleName;
-    userId = userId || newUserTemp.id;
+    newUserTemp.roleName = roleName || newUserTemp.roleName;
+    newUserTemp.id = userId || newUserTemp.id;
     if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1677,8 +1677,10 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
     }
 
+    newUserTemp.roleName = roleName || newUserTemp.roleName;
+    newUserTemp.id = userId || newUserTemp.id;
     if (url) {
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1817,7 +1819,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
               id: element?.id
             },
             matchId: matchId,
-            searchId: id,
+            // searchId: id,
             partnerShipRoleName: req.user.roleName
           })
             .then((data) => data)

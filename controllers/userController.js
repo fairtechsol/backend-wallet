@@ -1017,7 +1017,7 @@ exports.userSearchList = async (req, res, next) => {
           throw err?.response?.data;
         });
 
-      response?.users?.push(...(data?.data?.map((item)=>{
+      response?.users?.push(...(data?.data?.map((item) => {
         return { ...item, domain: usersDomain.domain };
       }) || []));
       response.count += (data?.data?.length || 0);
@@ -1457,9 +1457,10 @@ exports.getTotalProfitLoss = async (req, res) => {
     let profitLoss = [];
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
-      const searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole.roleName === userRoleConstant.fairGameAdmin) {
-        newUserTemp = { id: searchUserRole.id, roleName: searchUserRole.roleName };
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
         id = null;
       }
     }
@@ -1533,9 +1534,10 @@ exports.getDomainProfitLoss = async (req, res) => {
     let profitLoss = {};
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole.roleName === userRoleConstant.fairGameAdmin) {
-        newUserTemp = { id: searchUserRole.id, roleName: searchUserRole.roleName };
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
         id = null;
       }
     }
@@ -1592,9 +1594,10 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole.roleName === userRoleConstant.fairGameAdmin) {
-        newUserTemp = { id: searchUserRole.id, roleName: searchUserRole.roleName };
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
         id = null;
       }
     }
@@ -1602,7 +1605,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
     userId = userId || newUserTemp.id;
     if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: newUserTemp?.id, roleName: newUserTemp?.roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1628,7 +1631,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: { id: newUserTemp?.id, roleName: newUserTemp?.roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1661,20 +1664,21 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    let { matchId, url, id, roleName } = req.query;
+    let { matchId, url, id, roleName, userId } = req.query;
     let data = [];
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole.roleName === userRoleConstant.fairGameAdmin) {
-        newUserTemp = { id: searchUserRole.id, roleName: searchUserRole.roleName };
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
         id = null;
       }
     }
 
     if (url) {
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: newUserTemp?.id, roleName: newUserTemp?.roleName }, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1699,7 +1703,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: { id: newUserTemp?.id, roleName: newUserTemp?.roleName }, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({

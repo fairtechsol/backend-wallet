@@ -26,6 +26,7 @@ const {
   getUserDataWithUserBalance,
   getChildUserBalanceAndData,
   softDeleteAllUsers,
+  getUserDetails
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -1282,13 +1283,7 @@ exports.lockUnlockUser = async (req, res, next) => {
     const userDetails = await getUserDetails(loginId);
     // Fetch details of the user who is performing the block/unblock operation,
     const blockingUserDetail = await getUserDetails(userId);
-    const getUserDetails = async (id) => {
-      return await getUserById(id, ["createBy",
-        "userBlock",
-        "betBlock",
-        "roleName",
-      ])
-    }
+    
     // Check if the current user is already blocked
     if (
       userDetails?.userBlock &&

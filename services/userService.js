@@ -51,6 +51,13 @@ exports.getUserByUserName = async (userName, select) => {
     select: select,
   });
 };
+exports.getUserDetails = async (id) => {
+  return await this.getUserById(id, ["createBy",
+    "userBlock",
+    "betBlock",
+    "roleName",
+  ])
+}
 /**
  * Block or unblock a user or bet based on the specified parameters.
  *

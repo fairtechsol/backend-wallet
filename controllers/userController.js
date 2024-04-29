@@ -1017,7 +1017,7 @@ exports.userSearchList = async (req, res, next) => {
           throw err?.response?.data;
         });
 
-      response?.users?.push(...(data?.data?.map((item)=>{
+      response?.users?.push(...(data?.data?.map((item) => {
         return { ...item, domain: usersDomain.domain };
       }) || []));
       response.count += (data?.data?.length || 0);
@@ -1442,13 +1442,10 @@ exports.getProfile = async (req, res) => {
 exports.getTotalProfitLoss = async (req, res) => {
   try {
     const { roleName } = req.user;
-    const { startDate, endDate, id } = req.query;
+    let { startDate, endDate, id } = req.query;
     let domainData;
     let where = {};
-    let searchUserRole =
-      roleName === userRoleConstant.fairGameWallet && id
-        ? await getUserById(id, ["roleName"])
-        : null;
+
 
     if (roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
@@ -1458,10 +1455,19 @@ exports.getTotalProfitLoss = async (req, res) => {
     }
 
     let profitLoss = [];
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (roleName === userRoleConstant.fairGameWallet && id) {
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
+        id = null;
+      }
+    }
 
     for (let url of domainData) {
       let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.profitLoss, {
-        user: req.user, startDate: startDate, endDate: endDate, searchId: id, searchUserRole: searchUserRole?.roleName
+        user: newUserTemp, startDate: startDate, endDate: endDate, searchId: id
       }, {})
         .then((data) => data)
         .catch((err) => {
@@ -1473,12 +1479,7 @@ exports.getTotalProfitLoss = async (req, res) => {
           });
           throw err;
         });
-      // data.data = (data?.data || [])?.map((item) => {
-      //   return {
-      //     ...item,
-      //     domainUrl: url?.domain
-      //   }
-      // });
+
       profitLoss.push(...(data?.data || []));
     }
 
@@ -1518,14 +1519,11 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    const { startDate, endDate, type, id } = req.query;
+    let { startDate, endDate, type, id } = req.query;
 
     let domainData;
     let where = {};
-    let searchUserRole =
-      req.user.roleName === userRoleConstant.fairGameWallet && id
-        ? await getUserById(id, ["roleName"])
-        : null;
+
     if (req.user.roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
     }
@@ -1534,9 +1532,18 @@ exports.getDomainProfitLoss = async (req, res) => {
     }
 
     let profitLoss = {};
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
+        id = null;
+      }
+    }
 
     for (let url of domainData) {
-      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id, searchUserRole: searchUserRole?.roleName }, {})
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1584,15 +1591,21 @@ exports.getResultBetProfitLoss = async (req, res) => {
   try {
     let { matchId, betId, isSession, url, id, userId, roleName } = req.query;
     let data = [];
-    roleName = roleName || req.user.roleName;
-    userId = userId || req.user.id;
-    let searchUserRole =
-      roleName === userRoleConstant.fairGameWallet && id
-        ? await getUserById(id, ["roleName"])
-        : null;
+
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
+        id = null;
+      }
+    }
+    newUserTemp.roleName = roleName || newUserTemp.roleName;
+    newUserTemp.id = userId || newUserTemp.id;
     if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1618,7 +1631,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1651,16 +1664,23 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    let { matchId, url, id, userId, roleName } = req.query;
+    let { matchId, url, id, roleName, userId } = req.query;
     let data = [];
-    roleName = roleName || req.user.roleName;
-    userId = userId || req.user.id;
-    let searchUserRole =
-      roleName === userRoleConstant.fairGameWallet && id
-        ? await getUserById(id, ["roleName"])
-        : null;
+
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+      let searchUserRole = await getUserById(id, ["id", "roleName"]);
+      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+        newUserTemp.id = searchUserRole?.id;
+        newUserTemp.roleName = searchUserRole?.roleName;
+        id = null;
+      }
+    }
+
+    newUserTemp.roleName = roleName || newUserTemp.roleName;
+    newUserTemp.id = userId || newUserTemp.id;
     if (url) {
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1685,7 +1705,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: newUserTemp, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1721,7 +1741,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
 
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
-    
+
     if (url) {
       let response = await apiCall(apiMethod.post, url + allApiRoutes.userWiseProfitLoss, {
         user: {
@@ -1799,7 +1819,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
               id: element?.id
             },
             matchId: matchId,
-            searchId: id,
+            // searchId: id,
             partnerShipRoleName: req.user.roleName
           })
             .then((data) => data)

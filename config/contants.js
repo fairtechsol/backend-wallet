@@ -3,6 +3,7 @@ module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
 
+
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",
   fairGameAdmin: "fairGameAdmin",

@@ -114,4 +114,10 @@ module.exports.LockUnlockUser = Joi.object({
   }),
   betBlock: Joi.boolean().required(),
   userBlock: Joi.boolean().required()
-})
+});
+
+module.exports.CheckOldPassword = Joi.object({
+  oldPassword: Joi.string().required().label('password').messages({
+    'any.required': 'Password is required',
+  })
+});

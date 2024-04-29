@@ -1,3 +1,4 @@
+const { partnershipPrefixByRole } = require("../config/contants");
 const { AppDataSource } = require("../config/postGresConnection");
 const userBalanceSchema = require("../models/userBalance.entity");
 const { In } = require('typeorm');
@@ -42,8 +43,8 @@ exports.updateUserBalanceByUserId = async(userId,body) =>{
     return updateUserBalance;
 }
 
-exports.getAllChildProfitLossSum = async (childUserIds) => {
-  let queryColumns = 'SUM(userBalance.profitLoss) as firstLevelChildsProfitLossSum';
+exports.getAllChildProfitLossSum = async (childUserIds, roleName) => {
+  let queryColumns = `SUM(userBalance.profitLoss * user.${partnershipPrefixByRole[roleName] + "Partnership"} /100) as firstLevelChildsProfitLossSum`;
   // Check if childUserIds is empty
   if (childUserIds.length === 0) {
     return { firstLevelChildsProfitLossSum: 0 }; // Return 0 if no childUserIds provided
@@ -51,7 +52,8 @@ exports.getAllChildProfitLossSum = async (childUserIds) => {
 
   let childUserData = await UserBalance
     .createQueryBuilder('userBalance')
-    .select([queryColumns])
+    .leftJoinAndMapOne("userBalance.user", "users", "user", "user.id = userBalance.userId")
+    .select([queryColumns, 'SUM(userBalance.profitLoss) as "profitLoss"'])
     .where('userBalance.userId IN (:...childUserIds)', { childUserIds })
     .getRawOne();
 

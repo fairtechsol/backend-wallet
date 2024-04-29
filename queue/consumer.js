@@ -100,7 +100,6 @@ let calculateRateAmount = async (jobData, userId) => {
               [jobData.teamBrateRedisKey]: teamData.teamB,
               ...(jobData.teamCrateRedisKey ? { [jobData.teamCrateRedisKey]: teamData.teamC } : {})
             }
-            await updateUserDataRedis(partnershipId, userRedisObj);
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
             sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData })
@@ -168,8 +167,6 @@ const calculateSessionRateAmount = async (jobData, userId) => {
  updateUserBalanceExposure(userIds, {
    exposure: partnerSessionExposure
  });
-
-
 
   // Iterate through partnerships based on role and update exposure
   Object.keys(partnershipPrefixByRole)

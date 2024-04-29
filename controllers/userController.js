@@ -6,6 +6,7 @@ const {
   fileType,
   expertDomain,
   oldBetFairDomain,
+  uplinePartnerShipForAllUsers,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -205,7 +206,7 @@ exports.createUser = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
   try {
-    let { sessionCommission, matchComissionType, matchCommission, id ,remark} =
+    let { sessionCommission, matchComissionType, matchCommission, id, remark } =
       req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
@@ -482,7 +483,7 @@ exports.setExposureLimit = async (req, res, next) => {
     const domainData = await getFaAdminDomain(user);
 
     for (let url of domainData) {
-       await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: userId, exposureLimit: amount, roleName: user.roleName }).then((data) => data).catch((err) => {
+      await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: userId, exposureLimit: amount, roleName: user.roleName }).then((data) => data).catch((err) => {
         logger.error({
           context: `error in ${url?.domain} exposure limit`,
           process: `User ID : ${user.id} `,
@@ -490,7 +491,7 @@ exports.setExposureLimit = async (req, res, next) => {
           stake: err.stack,
         });
       });
-     
+
     }
     return SuccessResponse(
       {
@@ -514,10 +515,10 @@ exports.userList = async (req, res, next) => {
   try {
     let reqUser = req.user;
     // let loginUser = await getUserById(reqUser.id)
-    const { type, userId,domain,roleName, ...apiQuery } = req.query;
+    const { type, userId, domain, roleName, ...apiQuery } = req.query;
 
-    if(domain){
-      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userList,null,{}, {
+    if (domain) {
+      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userList, null, {}, {
         ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
       })
         .then((data) => data)
@@ -615,16 +616,16 @@ exports.userList = async (req, res, next) => {
     ) {
       partnershipCol = ["fwPartnership"];
     }
-    let usersBalance={};
+    let usersBalance = {};
 
     let oldBetFairUserIds = [];
     for (let element of users[0]?.filter((item) => item?.roleName != userRoleConstant.user)) {
-    
+
 
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
+        const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
-       
+
           const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + element.id, null, {}, {
             roleName: element.roleName,
 
@@ -712,13 +713,13 @@ exports.userList = async (req, res, next) => {
             parseFloat(element.userBal["currentBalance"]).toFixed(2)
           ) - Number(
             parseFloat(element.userBal["exposure"]).toFixed(2)
-            );
+          );
 
 
           if (element.roleName == userRoleConstant.fairGameAdmin) {
             element["balance"] = Number((parseFloat(element.userBal["currentBalance"] || 0) + parseFloat(usersBalance[element.id] || 0)).toFixed(2));
           }
-          else{
+          else {
             element["balance"] = Number((parseFloat(usersBalance[element.id] || 0)).toFixed(2));
           }
         } else {
@@ -747,7 +748,7 @@ exports.userList = async (req, res, next) => {
             partnerShips +
             "%)";
 
-          element['upLinePartnership'] =  partnerShips;
+          element['upLinePartnership'] = partnerShips;
 
         }
 
@@ -761,10 +762,10 @@ exports.userList = async (req, res, next) => {
         { excelHeader: "Role", dbKey: "roleName" },
         { excelHeader: "Credit Ref", dbKey: "creditRefrence" },
         { excelHeader: "Balance", dbKey: "balance" },
-        { excelHeader: "Client P/L", dbKey: "profit_loss" },
+        { excelHeader: "Client P/L", dbKey: "userBal.profitLoss" },
         { excelHeader: "% P/L", dbKey: "percentProfitLoss" },
-        { excelHeader: "Comission", dbKey: "TotalCommission" },
-        { excelHeader: "Exposure", dbKey: "exposure" },
+        { excelHeader: "Comission", dbKey: "commission" },
+        { excelHeader: "Exposure", dbKey: "userBal.exposure" },
         { excelHeader: "Available Balance", dbKey: "availableBalance" },
         { excelHeader: "UL", dbKey: "userBlock" },
         { excelHeader: "BL", dbKey: "betBlock" },
@@ -813,7 +814,7 @@ exports.userList = async (req, res, next) => {
     }
 
     response.list = data;
-    
+
     return SuccessResponse(
       {
         statusCode: 200,
@@ -828,8 +829,8 @@ exports.userList = async (req, res, next) => {
   }
 };
 
-exports.getTotalUserListBalance = async (req, res, next) => { 
-  try{
+exports.getTotalUserListBalance = async (req, res, next) => {
+  try {
 
     let reqUser = req.user;
     // let loginUser = await getUserById(reqUser.id)
@@ -923,12 +924,12 @@ exports.getTotalUserListBalance = async (req, res, next) => {
 
         totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
       }
-      
+
     }
     else if (userRole == userRoleConstant.fairGameAdmin) {
       const faDomains = await getFaAdminDomain({ id: where.createBy });
       for (let usersDomain of faDomains) {
-     
+
         const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + where.createBy, null, {}, {
           roleName: userRole,
 
@@ -944,7 +945,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
             throw err;
           });
 
-          totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
       };
 
     }
@@ -959,7 +960,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       {
         statusCode: 200,
         message: { msg: "fetched", keys: { name: "User list" } },
-        data:  totalBalance ,
+        data: totalBalance,
       },
       req,
       res
@@ -989,10 +990,10 @@ exports.userSearchList = async (req, res, next) => {
       );
     }
     let where = {};
-    if (userName){ where.userName = ILike(`%${userName}%`);}
+    if (userName) { where.userName = ILike(`%${userName}%`); }
     if (createdBy) { where.createdBy = createdBy; }
-    else{
-      const childIds=await getChildUser(req.user.id);
+    else {
+      const childIds = await getChildUser(req.user.id);
       where.id = In(childIds?.map((item) => item.id));
       where.roleName = In([userRoleConstant.fairGameAdmin, userRoleConstant.fairGameWallet])
     }
@@ -1016,7 +1017,9 @@ exports.userSearchList = async (req, res, next) => {
           throw err?.response?.data;
         });
 
-      response?.users?.push(...(data?.data || []));
+      response?.users?.push(...(data?.data?.map((item)=>{
+        return { ...item, domain: usersDomain.domain };
+      }) || []));
       response.count += (data?.data?.length || 0);
     };
 
@@ -1063,7 +1066,7 @@ exports.userBalanceDetails = async (req, res, next) => {
     const userBalanceData = getUserBalanceDataByUserId(loginUser.id, ["id", "currentBalance", "profitLoss", "myProfitLoss"]);
 
     // Fetch profit/loss sum for first-level child users
-    const firstLevelChildBalanceData = getAllChildProfitLossSum(firstLevelChildUserIds);
+    const firstLevelChildBalanceData = getAllChildProfitLossSum(firstLevelChildUserIds, reqUser?.roleName);
 
     let totalCurrentBalance = 0;
 
@@ -1090,12 +1093,12 @@ exports.userBalanceDetails = async (req, res, next) => {
 
         totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
       }
-      
+
     }
     else if (loginUser.roleName == userRoleConstant.fairGameAdmin) {
       const faDomains = await getFaAdminDomain({ id: loginUser.id });
       for (let usersDomain of faDomains) {
-     
+
         const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + loginUser.id, null, {}, {
           roleName: loginUser.roleName,
 
@@ -1111,7 +1114,7 @@ exports.userBalanceDetails = async (req, res, next) => {
             throw err;
           });
 
-          totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
       };
 
     }
@@ -1126,10 +1129,19 @@ exports.userBalanceDetails = async (req, res, next) => {
       downLevelCreditReference: loginUser?.downLevelCreditRefrence,
       availableBalance: parseFloat(userBalance?.value?.currentBalance || 0),
       totalMasterBalance: parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(totalCurrentBalance || 0),
-      upperLevelBalance: parseFloat(loginUser?.creditRefrence) - parseFloat(userBalance?.value?.currentBalance || 0) - parseFloat(totalCurrentBalance || 0),
-      downLevelProfitLoss: -firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0,
-      availableBalanceWithProfitLoss: ((parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(userBalance?.value?.myProfitLoss || 0))),
-      profitLoss: userBalance?.value?.myProfitLoss || 0
+      upperLevelBalance: -parseFloat((parseFloat(userBalance?.value?.profitLoss) * parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0)) / 100).toFixed(2)),
+      downLevelProfitLoss: -parseFloat((parseFloat(firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0) + parseFloat((parseFloat(firstLevelChildBalance?.value?.profitLoss) * parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0)) / 100).toFixed(2))).toFixed(2)),
+      availableBalanceWithProfitLoss: ((parseFloat(userBalance?.value?.currentBalance || 0) + parseFloat(-firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0))),
+      profitLoss: -firstLevelChildBalance?.value?.firstlevelchildsprofitlosssum || 0,
+      totalProfitLossUpperlevel: parseFloat(userBalance?.value?.profitLoss || 0),
+      totalProfitLossDownlevel: parseFloat(firstLevelChildBalance?.value?.profitLoss),
+      upperLevelProfitLossPercent: parseFloat(uplinePartnerShipForAllUsers[loginUser.roleName]?.reduce((prev, curr) => {
+        return (parseFloat(loginUser[`${curr}Partnership`]) + prev);
+      }, 0))
     };
 
     // Send success response
@@ -1433,6 +1445,10 @@ exports.getTotalProfitLoss = async (req, res) => {
     const { startDate, endDate, id } = req.query;
     let domainData;
     let where = {};
+    let searchUserRole =
+      roleName === userRoleConstant.fairGameWallet && id
+        ? await getUserById(id, ["roleName"])
+        : null;
 
     if (roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
@@ -1445,7 +1461,7 @@ exports.getTotalProfitLoss = async (req, res) => {
 
     for (let url of domainData) {
       let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.profitLoss, {
-        user: req.user, startDate: startDate, endDate: endDate, searchId: id
+        user: req.user, startDate: startDate, endDate: endDate, searchId: id, searchUserRole: searchUserRole?.roleName
       }, {})
         .then((data) => data)
         .catch((err) => {
@@ -1506,7 +1522,10 @@ exports.getDomainProfitLoss = async (req, res) => {
 
     let domainData;
     let where = {};
-
+    let searchUserRole =
+      req.user.roleName === userRoleConstant.fairGameWallet && id
+        ? await getUserById(id, ["roleName"])
+        : null;
     if (req.user.roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
     }
@@ -1517,17 +1536,17 @@ exports.getDomainProfitLoss = async (req, res) => {
     let profitLoss = {};
 
     for (let url of domainData) {
-      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
-      .then((data) => data)
-      .catch((err) => {
-        logger.error({
-          context: `error in ${url} getting profit loss for specific domain.`,
-          process: `User ID : ${req.user.id} `,
-          error: err.message,
-          stake: err.stack,
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: req.user, startDate: startDate, endDate: endDate, type: type, searchId: id, searchUserRole: searchUserRole?.roleName }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} getting profit loss for specific domain.`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
         });
-        throw err;
-      });
       data?.data?.result?.forEach((item) => {
         if (profitLoss[item?.matchId]) {
           profitLoss[item?.matchId] = {
@@ -1546,7 +1565,7 @@ exports.getDomainProfitLoss = async (req, res) => {
 
 
     return SuccessResponse(
-      {statusCode: 200, data: Object.values(profitLoss)},
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.startAt) - new Date(a.startAt)) },
       req,
       res
     );
@@ -1564,12 +1583,16 @@ exports.getDomainProfitLoss = async (req, res) => {
 exports.getResultBetProfitLoss = async (req, res) => {
   try {
     let { matchId, betId, isSession, url, id, userId, roleName } = req.query;
-    let data=[];
+    let data = [];
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
-    if(url) {
+    let searchUserRole =
+      roleName === userRoleConstant.fairGameWallet && id
+        ? await getUserById(id, ["roleName"])
+        : null;
+    if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1583,32 +1606,32 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
       data = response?.data;
     }
-    else{
+    else {
       let domainData;
       let where = {};
 
-    if (req.user.roleName == userRoleConstant.fairGameAdmin) {
-      domainData = await getFaAdminDomain(req.user, null, where);
-    }
-    else {
-      domainData = await getUserDomainWithFaId(where);
-    }
+      if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+        domainData = await getFaAdminDomain(req.user, null, where);
+      }
+      else {
+        domainData = await getUserDomainWithFaId(where);
+      }
 
-    for (let domain of domainData) {
-      let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
-      .then((data) => data)
-      .catch((err) => {
-        logger.error({
-          context: `error in ${domain?.domain} getting profit loss for all bets.`,
-          process: `User ID : ${req.user.id} `,
-          error: err.message,
-          stake: err.stack,
-        });
-        throw err;
-      });
+      for (let domain of domainData) {
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${domain?.domain} getting profit loss for all bets.`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
 
-      data?.push(...response?.data);
-    }
+        data?.push(...response?.data);
+      }
     }
     return SuccessResponse(
       { statusCode: 200, data: data },
@@ -1628,12 +1651,16 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
-    let { matchId, url, id, userId, roleName  } = req.query;
+    let { matchId, url, id, userId, roleName } = req.query;
     let data = [];
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
+    let searchUserRole =
+      roleName === userRoleConstant.fairGameWallet && id
+        ? await getUserById(id, ["roleName"])
+        : null;
     if (url) {
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName  }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1658,7 +1685,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.sessionBetProfitLoss, { user: { id: userId, roleName: roleName }, matchId: matchId, searchId: id, searchUserRole: searchUserRole?.roleName, partnerShipRoleName: req.user.roleName }, {})
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1669,7 +1696,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
             });
             throw err;
           });
-        data?.push(...response?.data);
+        data?.push(...(response?.data || []));
       }
     }
     return SuccessResponse(
@@ -1694,7 +1721,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
 
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
-
+    
     if (url) {
       let response = await apiCall(apiMethod.post, url + allApiRoutes.userWiseProfitLoss, {
         user: {
@@ -1731,13 +1758,15 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         res
       );
     }
-    
-    let where = {
+
+    let where = id ? {
+      id: id
+    } : {
       createBy: userId,
     };
-    
-    let users = await getUsersWithUsersBalanceData(where,{});
-    
+
+    let users = await getUsersWithUsersBalanceData(where, {});
+
     let response = {
       count: 0,
       list: [],
@@ -1747,22 +1776,22 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         {
           statusCode: 200,
           message: { msg: "fetched", keys: { name: "User list" } },
-          data: response,
+          data: [],
         },
         req,
         res
       );
     }
     response.count = users[1];
-   
-    let usersData={};
-    
+
+    let usersData = {};
+
     let oldBetFairUserIds = [];
     for (let element of users[0]) {
-    
-    
+
+
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
+        const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
           let response = await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.userWiseProfitLoss, {
             user: {
@@ -1824,16 +1853,16 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             searchId: id,
             partnerShipRoleName: req.user.roleName
           })
-              .then((data) => data)
-              .catch((err) => {
-                logger.error({
-                  context: `error in ${userDomain?.domain} getting user list`,
-                  process: `User ID : ${req.user.id} `,
-                  error: err.message,
-                  stake: err.stack,
-                });
-                throw err;
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${userDomain?.domain} getting user list`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
               });
+              throw err;
+            });
 
           response?.data?.forEach((item) => {
             if (usersData[element?.id]) {
@@ -1860,9 +1889,9 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         }
       }
     };
-    
+
     if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.post,oldBetFairDomain + allApiRoutes.userWiseProfitLoss, {
+      let response = await apiCall(apiMethod.post, oldBetFairDomain + allApiRoutes.userWiseProfitLoss, {
         user: {
           roleName: req.user.roleName,
           id: userId
@@ -2010,9 +2039,9 @@ exports.deleteUser = async (req, res) => {
       forceLogoutIfLogin(childData.id);
     }
 
-    const faDomains = !userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? [{domain:oldBetFairDomain}] : userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? await getUserDomainWithFaId({ userId: id }) : await getFaAdminDomain(userData);
+    const faDomains = !userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? [{ domain: oldBetFairDomain }] : userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? await getUserDomainWithFaId({ userId: id }) : await getFaAdminDomain(userData);
     for (let usersDomain of faDomains) {
-      await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.checkUserBalance, { id:userData.id, roleName: userData.roleName  })
+      await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.checkUserBalance, { id: userData.id, roleName: userData.roleName })
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -2025,16 +2054,16 @@ exports.deleteUser = async (req, res) => {
         });
     };
     for (let usersDomain of faDomains) {
-      await apiCall(apiMethod.delete, usersDomain?.domain + allApiRoutes.deleteUser + userData.id, {  roleName: userData.roleName  })
-      .then((data) => data)
-      .catch((err) => {
-        logger.error({
-          context: `error in ${usersDomain?.domain} deleting user`,
-          process: `User ID : ${req.user.id} `,
-          error: err.message,
-          stake: err.stack,
+      await apiCall(apiMethod.delete, usersDomain?.domain + allApiRoutes.deleteUser + userData.id, { roleName: userData.roleName })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${usersDomain?.domain} deleting user`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
         });
-      });
     };
 
 
@@ -2066,3 +2095,16 @@ exports.deleteUser = async (req, res) => {
   }
 }
 
+exports.checkOldPasswordData = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { oldPassword } = req.body;
+    let isOldPassword = await checkOldPassword(id, oldPassword);
+
+    return SuccessResponse({ statusCode: 200, data: { isPasswordMatch: isOldPassword } }, req, res);
+
+  } catch (error) {
+    logger.error({ message: "Error in checking old password.", stack: error?.stack, context: error?.message });
+    return ErrorResponse(error, req, res);
+  }
+}

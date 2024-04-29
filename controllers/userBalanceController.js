@@ -12,15 +12,14 @@ const { __mf } = require('i18n');
 
 exports.updateUserBalance = async (req, res) => {
     try {
-        let { userId, transactionType, amount, transactionPassword, remark } = req.body
+        let { userId, transactionType, amount, remark } = req.body
         let reqUser = req.user;
 
         const userExistRedis = await hasUserInCache(userId);
 
 
         amount = parseFloat(amount);
-        // let loginUser = await getUserById(reqUser.id || createBy)
-        // if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "invalidData" } }, req, res);
+       
         let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
         if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "User" } } }, req, res);
 

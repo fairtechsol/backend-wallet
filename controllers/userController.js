@@ -1278,11 +1278,21 @@ exports.lockUnlockUser = async (req, res, next) => {
     // Extract relevant data from the request body and user object
     const { userId, betBlock, userBlock } = req.body;
     const { id: loginId } = req.user;
+   // Fetch user details of the current user, including block information
+   const userDetails = await getUserById(loginId, [
+    "userBlock",
+    "betBlock",
+    "roleName",
+  ]);
 
-    // Fetch user details of the current user, including block information
-    const userDetails = await getUserDetails(loginId);
-    // Fetch details of the user who is performing the block/unblock operation,
-    const blockingUserDetail = await getUserDetails(userId);
+  // Fetch details of the user who is performing the block/unblock operation,
+  // including the hierarchy and block information
+  const blockingUserDetail = await getUserById(userId, [
+    "createBy",
+    "userBlock",
+    "betBlock",
+    "roleName",
+  ]);
     
     // Check if the current user is already blocked
     if (

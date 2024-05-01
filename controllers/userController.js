@@ -1278,22 +1278,22 @@ exports.lockUnlockUser = async (req, res, next) => {
     // Extract relevant data from the request body and user object
     const { userId, betBlock, userBlock } = req.body;
     const { id: loginId } = req.user;
-   // Fetch user details of the current user, including block information
-   const userDetails = await getUserById(loginId, [
-    "userBlock",
-    "betBlock",
-    "roleName",
-  ]);
+    // Fetch user details of the current user, including block information
+    const userDetails = await getUserById(loginId, [
+      "userBlock",
+      "betBlock",
+      "roleName",
+    ]);
 
-  // Fetch details of the user who is performing the block/unblock operation,
-  // including the hierarchy and block information
-  const blockingUserDetail = await getUserById(userId, [
-    "createBy",
-    "userBlock",
-    "betBlock",
-    "roleName",
-  ]);
-    
+    // Fetch details of the user who is performing the block/unblock operation,
+    // including the hierarchy and block information
+    const blockingUserDetail = await getUserById(userId, [
+      "createBy",
+      "userBlock",
+      "betBlock",
+      "roleName",
+    ]);
+
     // Check if the current user is already blocked
     if (
       userDetails?.userBlock &&
@@ -1457,12 +1457,9 @@ exports.getTotalProfitLoss = async (req, res) => {
     let profitLoss = [];
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
-      let searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
-        newUserTemp.id = searchUserRole?.id;
-        newUserTemp.roleName = searchUserRole?.roleName;
-        id = null;
-      }
+      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
+      newUserTemp = newUserDetails.newUserTemp;
+      id = newUserDetails.id;
     }
 
     for (let url of domainData) {
@@ -1534,12 +1531,9 @@ exports.getDomainProfitLoss = async (req, res) => {
     let profitLoss = {};
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      let searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
-        newUserTemp.id = searchUserRole?.id;
-        newUserTemp.roleName = searchUserRole?.roleName;
-        id = null;
-      }
+      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
+      newUserTemp = newUserDetails.newUserTemp;
+      id = newUserDetails.id;
     }
 
     for (let url of domainData) {
@@ -1594,12 +1588,9 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      let searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
-        newUserTemp.id = searchUserRole?.id;
-        newUserTemp.roleName = searchUserRole?.roleName;
-        id = null;
-      }
+      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
+      newUserTemp = newUserDetails.newUserTemp;
+      id = newUserDetails.id;
     }
     newUserTemp.roleName = roleName || newUserTemp.roleName;
     newUserTemp.id = userId || newUserTemp.id;
@@ -1669,12 +1660,9 @@ exports.getSessionBetProfitLoss = async (req, res) => {
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      let searchUserRole = await getUserById(id, ["id", "roleName"]);
-      if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
-        newUserTemp.id = searchUserRole?.id;
-        newUserTemp.roleName = searchUserRole?.roleName;
-        id = null;
-      }
+      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
+      newUserTemp = newUserDetails.newUserTemp;
+      id = newUserDetails.id;
     }
 
     newUserTemp.roleName = roleName || newUserTemp.roleName;
@@ -2127,4 +2115,13 @@ exports.checkOldPasswordData = async (req, res) => {
     logger.error({ message: "Error in checking old password.", stack: error?.stack, context: error?.message });
     return ErrorResponse(error, req, res);
   }
+}
+const updateNewUserTemp = async (newUserTemp, id) => {
+  let searchUserRole = await getUserById(id, ["id", "roleName"]);
+  if (searchUserRole?.roleName == userRoleConstant.fairGameAdmin) {
+    newUserTemp.id = searchUserRole?.id;
+    newUserTemp.roleName = searchUserRole?.roleName;
+    id = null;
+  }
+  return { newUserTemp, id }
 }

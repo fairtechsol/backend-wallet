@@ -1907,7 +1907,8 @@ exports.declareOtherMatchResult = async (req, res) => {
             ...parentUser,
             matchId,
             gameType: match?.matchType,
-            betId: matchOddId
+            betId: matchOddId,
+            betType: matchBettingType
           });
           exposure += parseFloat(adminBalanceData?.exposure);
          
@@ -1988,7 +1989,8 @@ exports.declareOtherMatchResult = async (req, res) => {
       ...parentUser,
       matchId,
       betId: matchOddId,
-      gameType: match?.matchType
+      gameType: match?.matchType,
+      betType: matchBettingType
     });
 
     // await insertCommissions(bulkCommission);

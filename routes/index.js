@@ -13,14 +13,32 @@ const matchRoutes = require("./matchRoutes");
 const betRoutes = require("./betRoutes.js");
 
 // Define routes
-router.use('/auth', authRoutes);
-router.use('/user', userRoutes);
-router.use('/transaction', transactionsRoutes);
-router.use('/balance', userBalanceRoutes);
-router.use("/superadmin", superAdminRoutes);
-router.use("/wallet", walletRoutes);
-router.use("/expert", expertRoutes);
-router.use("/match", matchRoutes);
-router.use("/bet", betRoutes);
+router.use('/auth', authRoutes
+// #swagger.tags = ['auth']
+);
+router.use('/user', userRoutes
+// #swagger.tags = ['user']
+);
+router.use('/transaction', transactionsRoutes
+// #swagger.tags = ['transaction']
+);
+router.use('/balance', userBalanceRoutes
+// #swagger.tags = ['balance']
+);
+router.use("/superadmin", superAdminRoutes
+// #swagger.tags = ['superadmin']
+);
+router.use("/wallet", walletRoutes
+// #swagger.tags = ['wallet']
+);
+router.use("/expert", expertRoutes
+// #swagger.tags = ['expert']
+);
+router.use("/match", matchRoutes
+// #swagger.tags = ['match']
+);
+router.use("/bet", betRoutes
+// #swagger.tags = ['bet']
+);
 
 module.exports = router;

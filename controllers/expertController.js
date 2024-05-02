@@ -1713,7 +1713,7 @@ exports.unDeclareMatchResult = async (req, res) => {
 exports.declareOtherMatchResult = async (req, res) => {
   try {
 
-    const { result, matchDetails, userId, matchId, matchOddId, match, matchBettingType } = req.body;
+    const { result, matchBettingDetails, userId, matchId, matchOddId, match, matchBettingType } = req.body;
 
     const domainData = await getUserDomainWithFaId();
 
@@ -1734,7 +1734,7 @@ exports.declareOtherMatchResult = async (req, res) => {
       let response;
       try {
         response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultOtherMatch, {
-          result, matchDetails, userId, matchId, match, betType: matchBettingType, betId: matchOddId
+          result, matchDetails: matchBettingDetails, userId, matchId, match, betType: matchBettingType, betId: matchOddId
         });
         response = response?.data;
         resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2));

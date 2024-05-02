@@ -26,7 +26,7 @@ const {
   getUserDataWithUserBalance,
   getChildUserBalanceAndData,
   softDeleteAllUsers,
-  getUserDetails
+
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
@@ -1279,114 +1279,32 @@ exports.lockUnlockUser = async (req, res, next) => {
     const { userId, betBlock, userBlock } = req.body;
     const { id: loginId } = req.user;
     // Fetch user details of the current user, including block information
-    const userDetails = await getUserById(loginId, [
-      "userBlock",
-      "betBlock",
-      "roleName",
-    ]);
+    const userDetailsFields = ["userBlock", "betBlock", "roleName"];
+    const blockingUserFields = [...userDetailsFields, "createBy"];
+    const userDetails = await getUserById(loginId, userDetailsFields);
 
     // Fetch details of the user who is performing the block/unblock operation,
     // including the hierarchy and block information
-    const blockingUserDetail = await getUserById(userId, [
-      "createBy",
-      "userBlock",
-      "betBlock",
-      "roleName",
-    ]);
+    const blockingUserDetail = await getUserById(userId, blockingUserFields);
 
     // Check if the current user is already blocked
-    if (
-      userDetails?.userBlock &&
-      blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
-      userDetails.roleName != userRoleConstant.fairGameWallet
-    ) {
-      throw new Error("user.userBlockError");
-    }
-
+    checkUserBlock(userDetails, blockingUserDetail)
     // Check if the block type is 'betBlock' and the user is already bet-blocked
-    if (
-      !betBlock &&
-      userDetails?.betBlock &&
-      blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
-      userDetails.roleName != userRoleConstant.fairGameWallet
-    ) {
-      throw new Error("user.betBlockError");
-    }
-
+    checkBetBlock(betBlock, userDetails, blockingUserDetail)
     // Check if the user performing the block/unblock operation has the right access
-    if (
-      blockingUserDetail?.createBy != loginId &&
-      blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
-      userDetails.roleName != userRoleConstant.fairGameWallet
-    ) {
-      return ErrorResponse(
-        {
-          statusCode: 403,
-          message: { msg: "user.blockCantAccess" },
-        },
-        req,
-        res
-      );
-    }
+    checkCanAcess(userDetails, blockingUserDetail, loginId)
+
+
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {
-      // Perform the user block/unblock operation
-      const blockedUsers = await userBlockUnblock(userId, loginId, userBlock);
-      //   if blocktype is user and its block then user would be logout by socket
-
-      for (let item of blockedUsers?.[0]) {
-        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
-          const body = {
-            userId: item?.id,
-            loginId,
-            betBlock: null,
-            userBlock,
-          };
-          //fetch domain details of user
-          const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
-          try {
-            await apiCall(
-              apiMethod.post,
-              domain + allApiRoutes.lockUnlockSuperAdmin,
-              body
-            );
-          } catch (err) {
-            return ErrorResponse(err?.response?.data, req, res);
-          }
-        } else if (userBlock) {
-          forceLogoutUser(item?.id);
-        }
+      await performUserBlockOperation(userId, loginId, userBlock)
       }
-    }
 
     // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.betBlock != betBlock) {
-      // Perform the bet block/unblock operation
-
-      const blockedBet = await betBlockUnblock(userId, loginId, betBlock);
-      for (let item of blockedBet?.[0]) {
-        if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
-          const body = {
-            userId: item?.id,
-            loginId,
-            betBlock,
-            userBlock: null,
-          };
-          //fetch domain details of user
-          const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
-          try {
-            await apiCall(
-              apiMethod.post,
-              domain + allApiRoutes.lockUnlockSuperAdmin,
-              body
-            );
-          } catch (err) {
-            return ErrorResponse(err?.response?.data, req, res);
-          }
-        }
-      }
-    }
+      await performBetBlockOperation(userId, loginId, betBlock)
+   }
 
     // Return success response
     return SuccessResponse(
@@ -1398,6 +1316,7 @@ exports.lockUnlockUser = async (req, res, next) => {
     return ErrorResponse(error, req, res);
   }
 };
+
 
 exports.generateTransactionPassword = async (req, res) => {
   const { id } = req.user;
@@ -1458,7 +1377,6 @@ exports.getTotalProfitLoss = async (req, res) => {
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
       const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      newUserTemp = newUserDetails.newUserTemp;
       id = newUserDetails.id;
     }
 
@@ -1532,8 +1450,7 @@ exports.getDomainProfitLoss = async (req, res) => {
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
       const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      newUserTemp = newUserDetails.newUserTemp;
-      id = newUserDetails.id;
+    id = newUserDetails.id;
     }
 
     for (let url of domainData) {
@@ -1589,7 +1506,6 @@ exports.getResultBetProfitLoss = async (req, res) => {
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
       const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      newUserTemp = newUserDetails.newUserTemp;
       id = newUserDetails.id;
     }
     newUserTemp.roleName = roleName || newUserTemp.roleName;
@@ -1661,7 +1577,6 @@ exports.getSessionBetProfitLoss = async (req, res) => {
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
       const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      newUserTemp = newUserDetails.newUserTemp;
       id = newUserDetails.id;
     }
 
@@ -2124,4 +2039,95 @@ const updateNewUserTemp = async (newUserTemp, id) => {
     id = null;
   }
   return { newUserTemp, id }
+}
+const checkUserBlock = (userDetails, blockingUserDetail) => {
+  if (
+    userDetails?.userBlock &&
+    blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
+    userDetails.roleName != userRoleConstant.fairGameWallet
+  ) {
+    throw new Error("user.userBlockError");
+  }
+}
+const checkBetBlock = (betBlock, userDetails, blockingUserDetail) => {
+  if (
+    !betBlock &&
+    userDetails?.betBlock &&
+    blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
+    userDetails.roleName != userRoleConstant.fairGameWallet
+  ) {
+    throw new Error("user.betBlockError");
+  }
+}
+const checkCanAcess = (userDetails, blockingUserDetail, loginId) => {
+  if (
+    blockingUserDetail?.createBy != loginId &&
+    blockingUserDetail.roleName != userRoleConstant.fairGameWallet &&
+    userDetails.roleName != userRoleConstant.fairGameWallet
+  ) {
+    return ErrorResponse(
+      {
+        statusCode: 403,
+        message: { msg: "user.blockCantAccess" },
+      },
+      req,
+      res
+    );
+  }
+}
+
+const performUserBlockOperation = async (userId, loginId, userBlock) => {
+  // Perform the user block/unblock operation
+  const blockedUsers = await userBlockUnblock(userId, loginId, userBlock);
+  //   if blocktype is user and its block then user would be logout by socket
+
+  for (let item of blockedUsers?.[0]) {
+    if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
+      const body = {
+        userId: item?.id,
+        loginId,
+        betBlock: null,
+        userBlock,
+      };
+      //fetch domain details of user
+      const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
+      try {
+        await apiCall(
+          apiMethod.post,
+          domain + allApiRoutes.lockUnlockSuperAdmin,
+          body
+        );
+      } catch (err) {
+        return ErrorResponse(err?.response?.data, req, res);
+      }
+    } else if (userBlock) {
+      forceLogoutUser(item?.id);
+    }
+  }
+}
+const performBetBlockOperation = async (userId, loginId, betBlock) => {
+  // Perform the bet block/unblock operation
+  const blockedBet = await betBlockUnblock(userId, loginId, betBlock);
+  for (let item of blockedBet?.[0]) {
+    if ((item?.roleName == userRoleConstant.superAdmin && item?.isUrl) || (item?.roleName != userRoleConstant.fairGameAdmin && item?.roleName != userRoleConstant.fairGameWallet && !item?.isUrl)) {
+      const body = {
+        userId: item?.id,
+        loginId,
+        betBlock,
+        userBlock: null,
+      };
+      //fetch domain details of user
+      const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
+      try {
+        await apiCall(
+          apiMethod.post,
+          domain + allApiRoutes.lockUnlockSuperAdmin,
+          body
+        );
+      } catch (err) {
+        return ErrorResponse(err?.response?.data, req, res);
+      }
+    }
+  }
+
 }

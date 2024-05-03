@@ -2179,7 +2179,8 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
             matchId,
             betId: matchOddId,
             profitLossData: profitLossDataAdmin[parentUser.userId],
-            gameType: match?.matchType
+            gameType: match?.matchType,
+            betType: matchBettingType
     });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
         };
@@ -2274,7 +2275,8 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
       matchId,
       profitLossData: profitLossDataWallet,
       betId:matchOddId,
-      gameType: match?.matchType
+      gameType: match?.matchType,
+      betType: matchBettingType
     });
     // deleteCommission(matchOddId);
 

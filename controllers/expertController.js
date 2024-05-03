@@ -2147,7 +2147,7 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
             },
           });
 
-          let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss,role, ...adminPLData } = adminBalanceData;
+          let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss, role, ...adminPLData } = adminBalanceData;
 
           Object.keys(adminPLData)?.forEach((pLData) => {
             if (profitLossDataAdmin?.[parentUser.userId]) {
@@ -2178,7 +2178,7 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
             ...parentUser,
             matchId,
             betId: matchOddId,
-            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId],
+            profitLossData: profitLossDataAdmin[parentUser.userId],
             gameType: match?.matchType
     });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
@@ -2272,7 +2272,7 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossDataWallet,
+      profitLossData: profitLossDataWallet,
       betId:matchOddId,
       gameType: match?.matchType
     });

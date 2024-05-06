@@ -1406,8 +1406,7 @@ exports.getTotalProfitLoss = async (req, res) => {
     let profitLoss = [];
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
-      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      id = newUserDetails.id;
+      id=await updateNewUserTemp(newUserTemp, id)
     }
 
     for (let url of domainData) {
@@ -1479,8 +1478,8 @@ exports.getDomainProfitLoss = async (req, res) => {
     let profitLoss = {};
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      id = newUserDetails.id;
+
+      id = await updateNewUserTemp(newUserTemp, id)
     }
 
     for (let url of domainData) {
@@ -1535,8 +1534,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      id = newUserDetails.id;
+      id = await updateNewUserTemp(newUserTemp, id)
     }
     newUserTemp.roleName = roleName || newUserTemp.roleName;
     newUserTemp.id = userId || newUserTemp.id;
@@ -1606,8 +1604,8 @@ exports.getSessionBetProfitLoss = async (req, res) => {
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
-      const newUserDetails = await updateNewUserTemp(newUserTemp, id)
-      id = newUserDetails.id;
+
+      id = await updateNewUserTemp(newUserTemp, id)
     }
 
     newUserTemp.roleName = roleName || newUserTemp.roleName;
@@ -2068,7 +2066,7 @@ const updateNewUserTemp = async (newUserTemp, id) => {
     newUserTemp.roleName = searchUserRole?.roleName;
     id = null;
   }
-  return { newUserTemp, id }
+  return id
 }
 
 

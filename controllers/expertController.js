@@ -1,4 +1,4 @@
-const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, matchBettingType, redisKeysMarketWise, redisKeysMatchWise } = require("../config/contants");
+const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, matchBettingType, redisKeysMarketWise, redisKeysMatchWise, otherEventMatchBettingRedisKey } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
@@ -2147,7 +2147,7 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
             },
           });
 
-          let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss,role, ...adminPLData } = adminBalanceData;
+          let { exposure: tempExposure, profitLoss: tempProfitLoss, myProfitLoss: tempMyProfitLoss, role, ...adminPLData } = adminBalanceData;
 
           Object.keys(adminPLData)?.forEach((pLData) => {
             if (profitLossDataAdmin?.[parentUser.userId]) {
@@ -2178,8 +2178,12 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
             ...parentUser,
             matchId,
             betId: matchOddId,
-            profitLossDataAdmin: profitLossDataAdmin[parentUser.userId],
-            gameType: match?.matchType
+            profitLossData: profitLossDataAdmin[parentUser.userId],
+            gameType: match?.matchType,
+            betType: matchBettingType,
+            teamArateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.a}${matchId}`,
+            teamBrateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.b}${matchId}`,
+            teamCrateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.c}${matchId}`,
     });
           exposure += parseFloat(adminBalanceData?.["exposure"]);
         };
@@ -2272,9 +2276,13 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossDataWallet,
-      betId:matchOddId,
-      gameType: match?.matchType
+      profitLossData: profitLossDataWallet,
+      betId: matchOddId,
+      gameType: match?.matchType,
+      betType: matchBettingType,
+      teamArateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.a}${matchId}`,
+      teamBrateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.b}${matchId}`,
+      teamCrateRedisKey: `${otherEventMatchBettingRedisKey[matchBettingType]?.c}${matchId}`,
     });
     // deleteCommission(matchOddId);
 

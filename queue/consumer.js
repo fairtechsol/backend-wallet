@@ -168,8 +168,6 @@ const calculateSessionRateAmount = async (jobData, userId) => {
    exposure: partnerSessionExposure
  });
 
-
-
   // Iterate through partnerships based on role and update exposure
   Object.keys(partnershipPrefixByRole)
     ?.filter(

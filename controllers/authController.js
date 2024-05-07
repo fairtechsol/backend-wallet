@@ -3,6 +3,7 @@ const {
   redisTimeOut,
   partnershipPrefixByRole,
   differLoginTypeByRoles,
+  jwtSecret,
 } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -10,7 +11,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getUserById, getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
-const { forceLogoutIfLogin, settingBetsDataAtLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { updateUserDataRedis } = require("../services/redis/commonFunctions");
 
@@ -49,6 +50,7 @@ const setUserDetailsRedis = async (user) => {
   if (!redisUserData) {
     // Fetch and set betting data at login
     let betData = await settingBetsDataAtLogin(user);
+    let otherMatchBetData=await settingOtherMatchBetsDataAtLogin(user);
 
     // Set user details and partnerships in Redis
     await updateUserDataRedis(user.id, {
@@ -59,6 +61,7 @@ const setUserDetailsRedis = async (user) => {
       currentBalance: user?.userBal?.currentBalance || 0,
       roleName: user.roleName,
       ...(betData || {}),
+      ...(otherMatchBetData || {}),
       ...(user.roleName === userRoleConstant.user
         ? {
           partnerShips: await findUserPartnerShipObj(user),
@@ -115,7 +118,7 @@ const findUserPartnerShipObj = async (user) => {
 exports.login = async (req, res) => {
   try {
     const { password, loginType } = req.body;
-    const userName = req.body.userName.trim();
+    const userName = req.body.userName;
     const user = await validateUser(userName, password);
 
     if (user?.error) {
@@ -198,13 +201,13 @@ exports.login = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { id: user.id, roleName: user.roleName, userName: user.userName },
-      process.env.JWT_SECRET || "secret"
+      jwtSecret
     );
 
 
     // checking transition password
     const isTransPasswordCreated = Boolean(user.transPassword);
-    const forceChangePassword = !Boolean(user.loginAt);
+    const forceChangePassword = !user.loginAt;
 
     if (!forceChangePassword) {
       userLoginAtUpdate(user.id);
@@ -274,5 +277,3 @@ exports.logout = async (req, res) => {
     );
   }
 };
-
-

@@ -13,6 +13,13 @@ exports.deleteMultipleBet = async (req, res) => {
                 apiMethod.get,
                 domain + allApiRoutes.MATCHES.matchDetails + matchId
             );
+            if (!matchExist) {
+                return ErrorResponse(
+                    { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
+                    req,
+                    res
+                );
+            }
         } catch (error) {
             throw error?.response?.data;
         }
@@ -33,7 +40,7 @@ exports.deleteMultipleBet = async (req, res) => {
             .then(results => {
                 let urlDataArray = Object.keys(urlData);
                 results.forEach((result, index) => {
-                    if(result.status === 'rejected'){
+                    if (result.status === 'rejected') {
                         failedUrl.add(urlDataArray[index]);
                     }
                 });
@@ -62,6 +69,8 @@ exports.getSessionProfitLoss = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
+
+      
 exports.deleteMultipleBetForOther = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData } = req.body;

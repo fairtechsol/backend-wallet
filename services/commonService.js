@@ -512,9 +512,9 @@ exports.calculatePLAllBet = async (betPlace, userPartnerShip, oldLowerLimitOdds,
     }
 
     let i = 0;
-    for (var j = first - 5 > 0 ? first - 5 : 0; j <= last + 5; j++) {
+    for (let j = first - 5 > 0 ? first - 5 : 0; j <= last + 5; j++) {
       let profitLoss = 0.0;
-      for (var key in betPlace) {
+      for (let key in betPlace) {
         let partnership = 100;
         if (userPartnerShip) {
           partnership = userPartnerShip;

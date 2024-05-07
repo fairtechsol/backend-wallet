@@ -62,28 +62,6 @@ exports.getSessionProfitLoss = async (req, res) => {
         const { id: userId } = req.user;
         const { betId } = req.params;
 
-
-        const sessionProfitLoss = await getUserRedisKeys(
-            userId,
-            betId + redisKeys.profitLoss
-        );
-
-        return SuccessResponse(
-            {
-                statusCode: 200,
-                message: { msg: "fetched", keys: { type: "Session profit loss" } },
-                data: {
-                    profitLoss: sessionProfitLoss,
-                },
-            },
-            req,
-            res
-        );
-    } catch (err) {
-        return ErrorResponse(err, req, res);
-    }
-};
-
         const sessionProfitLoss = await getUserRedisKeys(userId, betId + redisKeys.profitLoss);
 
         return SuccessResponse({ statusCode: 200, message: { msg: "fetched", keys: { type: "Session profit loss" } }, data: { profitLoss: sessionProfitLoss } }, req, res);
@@ -91,6 +69,8 @@ exports.getSessionProfitLoss = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
+
+      
 exports.deleteMultipleBetForOther = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData } = req.body;

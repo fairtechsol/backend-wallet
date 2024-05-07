@@ -239,6 +239,7 @@ module.exports.tiedManualTeamName = {
 module.exports.lockType = {
   user: "user",
   bet: "bet"
+}
 
 module.exports.matchBettingsTeamName = {
   over: "OVER",

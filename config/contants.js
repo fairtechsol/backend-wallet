@@ -2,6 +2,7 @@ module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost
 module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
+module.exports.jwtSecret = process.env.JWT_SECRET || "secret";
 
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",

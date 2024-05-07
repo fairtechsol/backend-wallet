@@ -368,7 +368,7 @@ exports.declareSessionResult = async (req, res) => {
           let tempCommission = 0;
 
           parentUser.profitLoss = parseFloat(parseFloat(parentProfitLoss + adminBalanceData?.["profitLoss"]).toFixed(2));
-          parentUser.myProfitLoss = parseFloat(parseFloat(parseFloat(parentMyProfitLoss) - parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"]))).toFixed(2)).toFixed(2));
+          parentUser.myProfitLoss = parseFloat((parseFloat(parentMyProfitLoss) - parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2));
           parentUser.exposure = parseFloat(parseFloat(parentExposure - adminBalanceData?.["exposure"]).toFixed(2));
           if (userCommission?.sessionCommission && item.domain == oldBetFairDomain) {
             tempCommission += Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));

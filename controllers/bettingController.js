@@ -13,6 +13,13 @@ exports.deleteMultipleBet = async (req, res) => {
                 apiMethod.get,
                 domain + allApiRoutes.MATCHES.matchDetails + matchId
             );
+            if (!matchExist) {
+                return ErrorResponse(
+                    { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
+                    req,
+                    res
+                );
+            }
         } catch (error) {
             throw error?.response?.data;
         }
@@ -37,7 +44,7 @@ exports.deleteMultipleBet = async (req, res) => {
             .then(results => {
                 let urlDataArray = Object.keys(urlData);
                 results.forEach((result, index) => {
-                    if(result.status === 'rejected'){
+                    if (result.status === 'rejected') {
                         failedUrl.add(urlDataArray[index]);
                     }
                 });
@@ -60,27 +67,26 @@ exports.deleteMultipleBet = async (req, res) => {
 
 exports.getSessionProfitLoss = async (req, res) => {
     try {
-      const { id: userId } = req.user;
-      const { betId } = req.params;
-  
-      const sessionProfitLoss = await getUserRedisKeys(
-        userId,
-        betId + redisKeys.profitLoss
-      );
-  
-      return SuccessResponse(
-        {
-          statusCode: 200,
-          message: { msg: "fetched", keys: { type: "Session profit loss" } },
-          data: {
-            profitLoss: sessionProfitLoss,
-          },
-        },
-        req,
-        res
-      );
+        const { id: userId } = req.user;
+        const { betId } = req.params;
+
+        const sessionProfitLoss = await getUserRedisKeys(
+            userId,
+            betId + redisKeys.profitLoss
+        );
+
+        return SuccessResponse(
+            {
+                statusCode: 200,
+                message: { msg: "fetched", keys: { type: "Session profit loss" } },
+                data: {
+                    profitLoss: sessionProfitLoss,
+                },
+            },
+            req,
+            res
+        );
     } catch (err) {
-      return ErrorResponse(err, req, res);
+        return ErrorResponse(err, req, res);
     }
-  };
-  
+};

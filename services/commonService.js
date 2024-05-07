@@ -872,8 +872,9 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
         return;
       }
       let redisData = await this.calculateRatesOtherMatch(betResult.match[placedBet], 100, apiResponse?.data?.match);
-
+      let maxLoss;
       Object.values(redisData)?.forEach((plData) => {
+       maxLoss = Math.abs(Math.min(...Object.values(plData?.rates), 0));
 
         matchResult = {
           ...matchResult,

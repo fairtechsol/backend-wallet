@@ -51,6 +51,7 @@ exports.getUserByUserName = async (userName, select) => {
     select: select,
   });
 };
+
 /**
  * Block or unblock a user or bet based on the specified parameters.
  *
@@ -162,7 +163,7 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
     Query = Query.limit(parseInt(limit));
   }
 
-  var result = await Query.getManyAndCount();
+  let result = await Query.getManyAndCount();
   return result;
 
 }

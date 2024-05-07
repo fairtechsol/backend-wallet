@@ -1,8 +1,10 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
 module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
+
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
 module.exports.jwtSecret = process.env.JWT_SECRET || "secret";
+
 
 module.exports.userRoleConstant = {
   fairGameWallet: "fairGameWallet",
@@ -15,6 +17,7 @@ module.exports.userRoleConstant = {
   expert: "expert",
   user: "user",
 };
+
 
 module.exports.gameType = {
   cricket: "cricket",
@@ -68,9 +71,9 @@ module.exports.baseColumnsSchemaPart = {
 module.exports.transType = {
   add: "add",
   withDraw: "withDraw",
-  win : "win",
-  loss : "loss",
-  creditRefer : "creditReference"
+  win: "win",
+  loss: "loss",
+  creditRefer: "creditReference"
 };
 
 module.exports.partnershipPrefixByRole = {
@@ -88,7 +91,7 @@ module.exports.uplinePartnerShipForAllUsers = {
   [this.userRoleConstant.fairGameAdmin]: ["fw"],
   [this.userRoleConstant.superAdmin]: ["fw", "fa"],
   [this.userRoleConstant.admin]: ["fw", "fa", "sa"],
-  [this.userRoleConstant.superMaster]: ["fw","fa","sa","a"],
+  [this.userRoleConstant.superMaster]: ["fw", "fa", "sa", "a"],
   [this.userRoleConstant.master]: ["fw", "fa", "sa", "a", "sm"],
   [this.userRoleConstant.agent]: ["fw", "fa", "sa", "a", "sm", "m"],
 };
@@ -101,52 +104,53 @@ module.exports.differLoginTypeByRoles = {
     this.userRoleConstant.superMaster,
     this.userRoleConstant.agent,
   ],
-  wallet:[
+  wallet: [
     this.userRoleConstant.fairGameAdmin,
     this.userRoleConstant.fairGameWallet,
   ]
 };
 
 module.exports.walletDescription = {
-    userCreate : "CREDIT REFRENCE as user create",
+  userCreate: "CREDIT REFRENCE as user create",
 }
 
 module.exports.passwordRegex = /^(?=.*[A-Z])(?=.*[a-zA-Z].*[a-zA-Z].*[a-zA-Z].*[a-zA-Z])(?=.*\d.*\d.*\d.*\d).{8,}$/;
 
-module.exports.socketData ={
-  userBalanceUpdateEvent : "userBalanceUpdate",
-  logoutUserForceEvent : "logoutUserForce",
-  SessionBetPlaced:"userSessionBetPlaced",
-  MatchBetPlaced:"userMatchBetPlaced",
+module.exports.socketData = {
+  userBalanceUpdateEvent: "userBalanceUpdate",
+  logoutUserForceEvent: "logoutUserForce",
+  SessionBetPlaced: "userSessionBetPlaced",
+  MatchBetPlaced: "userMatchBetPlaced",
   socketSessionEvent: "socketSessionEvent",
-  sessionResult:"sessionResult",
-  sessionNoResult:"sessionNoResult",
-  sessionResultUnDeclare:"sessionResultUnDeclare",
-  matchResult:"matchResult",
-  matchResultUnDeclare:"matchResultUnDeclare",
+  sessionResult: "sessionResult",
+  sessionNoResult: "sessionNoResult",
+  sessionResultUnDeclare: "sessionResultUnDeclare",
+  matchResult: "matchResult",
+  matchResultUnDeclare: "matchResultUnDeclare",
   sessionDeleteBet: "sessionDeleteBet",
   matchDeleteBet: "matchDeleteBet"
 };
 
 
 module.exports.betType = {
-  YES : "YES",
-  NO : "NO",
-  BACK : "BACK",
-  LAY : "LAY"
+  YES: "YES",
+  NO: "NO",
+  BACK: "BACK",
+  LAY: "LAY"
 }
 
 module.exports.redisKeys = {
-  userAllExposure : "exposure",
-  userMatchExposure : "matchExposure_",
-  userSessionExposure : "sessionExposure_",
-  userTeamARate : "teamARate_",
-  userTeamBRate : "teamBRate_",
-  userTeamCRate : "teamCRate_",
+  userAllExposure: "exposure",
+  userMatchExposure: "matchExposure_",
+  userSessionExposure: "sessionExposure_",
+  userTeamARate: "teamARate_",
+  userTeamBRate: "teamBRate_",
+  userTeamCRate: "teamCRate_",
   yesRateTie: "yesRateTie_",
   noRateTie: "noRateTie_",
   yesRateComplete: "yesRateComplete_",
   noRateComplete: "noRateComplete_",
+
   userExposureLimit : "exposureLimit",
   profitLoss:"_profitLoss",
   
@@ -174,11 +178,11 @@ module.exports.redisKeys = {
 }
 
 module.exports.betResultStatus = {
-  UNDECLARE : "UNDECLARE",
-  PENDING : "PENDING",
-  WIN : "WIN",
-  LOSS : "LOSS",
-  TIE : "TIE"
+  UNDECLARE: "UNDECLARE",
+  PENDING: "PENDING",
+  WIN: "WIN",
+  LOSS: "LOSS",
+  TIE: "TIE"
 }
 
 module.exports.matchBettingType = {
@@ -230,6 +234,11 @@ module.exports.tiedManualTeamName = {
   yes: "YES",
   no: "NO"
 }
+
+
+module.exports.lockType = {
+  user: "user",
+  bet: "bet"
 
 module.exports.matchBettingsTeamName = {
   over: "OVER",
@@ -394,4 +403,5 @@ module.exports.redisKeysMarketWise = {
     prev[`setWinner${curr}`] = [this.redisKeys[`userTeamARateSetWinner${curr}`], this.redisKeys[`userTeamBRateSetWinner${curr}`], this.redisKeys[`userTeamCRateSetWinner${curr}`]]
     return prev;
   }, {}))
+
 }

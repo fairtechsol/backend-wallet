@@ -57,7 +57,7 @@ class FileGenerate {
 
 
 
-      var docDefinition = {
+      let docDefinition = {
         pageSize: "A3",
         pageOrientation: "landscape",
         content: [

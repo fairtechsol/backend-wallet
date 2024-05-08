@@ -673,7 +673,7 @@ exports.settingBetsDataAtLogin = async (user) => {
     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{},{
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-      ...(user.roleName == userRoleConstant.fairGameAdmin ? { "user.superParentId": user.id } : {}),
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType:`eqcricket`
     }).then((data) => data).catch((err) => {
       logger.error({
@@ -801,7 +801,7 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{},{
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-      ...(user.roleName == userRoleConstant.fairGameAdmin ? { "user.superParentId": user.id } : {}),
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType:`necricket`
     }).then((data) => data).catch((err) => {
       logger.error({

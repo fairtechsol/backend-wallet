@@ -878,10 +878,11 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
 
         matchResult = {
           ...matchResult,
-          [otherEventMatchBettingRedisKey[plData?.type].a+ matchId]: plData?.rates?.a,
-          [otherEventMatchBettingRedisKey[plData?.type].b+ matchId]: plData?.rates?.b,
-          ...(plData?.rates?.c ? { [otherEventMatchBettingRedisKey[plData?.type].c + matchId]: plData?.rates?.c } : {}),
+          [otherEventMatchBettingRedisKey[plData?.type].a + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].a + matchId] || 0) + plData?.rates?.a,
+          [otherEventMatchBettingRedisKey[plData?.type].b + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].b + matchId] || 0) + plData?.rates?.b,
+          ...(plData?.rates?.c ? { [otherEventMatchBettingRedisKey[plData?.type].c + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].c + matchId] || 0) + plData?.rates?.c } : {}),
         }
+
       });
       matchExposure[`${redisKeys.userMatchExposure}${matchId}`] = parseFloat((parseFloat(matchExposure[`${redisKeys.userMatchExposure}${matchId}`] || 0) + maxLoss).toFixed(2));
 

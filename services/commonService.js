@@ -672,8 +672,8 @@ exports.settingBetsDataAtLogin = async (user) => {
   for (let url of domainData) {
     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{},{
       deleteReason: "isNull",
-      result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`,
-      ...(user.roleName == userRoleConstant.fairGameAdmin ? { "user.superParentId": user.id } : {}),
+      result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType:`eqcricket`
     }).then((data) => data).catch((err) => {
       logger.error({
@@ -800,8 +800,8 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
   for (let url of domainData) {
     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet,null,{},{
       deleteReason: "isNull",
-      result: `inArr${JSON.stringify([betResultStatus.PENDING, betResultStatus.UNDECLARE])}`,
-      ...(user.roleName == userRoleConstant.fairGameAdmin ? { "user.superParentId": user.id } : {}),
+      result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType:`necricket`
     }).then((data) => data).catch((err) => {
       logger.error({
@@ -878,10 +878,11 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
 
         matchResult = {
           ...matchResult,
-          [otherEventMatchBettingRedisKey[plData?.type].a+ matchId]: plData?.rates?.a,
-          [otherEventMatchBettingRedisKey[plData?.type].b+ matchId]: plData?.rates?.b,
-          ...(plData?.rates?.c ? { [otherEventMatchBettingRedisKey[plData?.type].c + matchId]: plData?.rates?.c } : {}),
+          [otherEventMatchBettingRedisKey[plData?.type].a + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].a + matchId] || 0) + plData?.rates?.a,
+          [otherEventMatchBettingRedisKey[plData?.type].b + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].b + matchId] || 0) + plData?.rates?.b,
+          ...(plData?.rates?.c ? { [otherEventMatchBettingRedisKey[plData?.type].c + matchId]: (matchResult?.[otherEventMatchBettingRedisKey[plData?.type].c + matchId] || 0) + plData?.rates?.c } : {}),
         }
+
       });
       matchExposure[`${redisKeys.userMatchExposure}${matchId}`] = parseFloat((parseFloat(matchExposure[`${redisKeys.userMatchExposure}${matchId}`] || 0) + maxLoss).toFixed(2));
 

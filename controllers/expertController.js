@@ -1277,7 +1277,6 @@ exports.declareMatchResult = async (req, res) => {
                   matchStartDate: new Date(match?.startAt),
                   userName: null,
                   stake: adminBalanceData?.["userOriginalProfitLoss"]
-
                 });
               }
             });
@@ -1300,7 +1299,7 @@ exports.declareMatchResult = async (req, res) => {
             profitLoss: parseFloat(adminBalanceData?.["profitLoss"]),
             myProfitLoss: -parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2)),
             exposure: -adminBalanceData?.["exposure"],
-            totalCommission: totalCommissionData,
+            totalCommission: parseFloat(parseFloat(totalCommissionData).toFixed(2)),
             balance: 0
           });
 
@@ -1551,7 +1550,7 @@ exports.unDeclareMatchResult = async (req, res) => {
             profitLoss: -parseFloat(adminBalanceData?.["profitLoss"]),
             myProfitLoss: parseFloat((parseFloat(adminBalanceData?.["myProfitLoss"])).toFixed(2)),
             exposure: parseFloat(adminBalanceData?.["exposure"]),
-            totalCommission: -totalCommissionData,
+            totalCommission: -parseFloat(parseFloat(totalCommissionData).toFixed(2)),
             balance: 0
           });
           logger.info({

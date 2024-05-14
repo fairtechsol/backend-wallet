@@ -62,12 +62,7 @@ const setUserDetailsRedis = async (user) => {
       roleName: user.roleName,
       ...(betData || {}),
       ...(otherMatchBetData || {}),
-      ...(user.roleName === userRoleConstant.user
-        ? {
-          partnerShips: await findUserPartnerShipObj(user),
-          userRole: user.roleName,
-        }
-        : {}),
+     
     });
 
     // Expire user data in Redis
@@ -79,41 +74,6 @@ const setUserDetailsRedis = async (user) => {
   }
 };
 
-const findUserPartnerShipObj = async (user) => {
-  const obj = {};
-
-  if (
-    user.roleName == userRoleConstant.user ||
-    user.roleName == userRoleConstant.expert
-  ) {
-    return JSON.stringify(obj);
-  }
-
-  const updateObj = (prefix, id) => {
-    obj[`${prefix}Partnership`] = user[`${prefix}Partnership`];
-    obj[`${prefix}PartnershipId`] = id;
-  };
-
-  const traverseHierarchy = async (currentUser) => {
-    if (!currentUser) {
-      return;
-    }
-
-    updateObj(partnershipPrefixByRole[currentUser.roleName], currentUser.id);
-
-    if (currentUser.createBy) {
-      const createdByUser = await getUserById(
-        currentUser.createBy,
-        ["id", "roleName", "createBy"]
-      );
-      await traverseHierarchy(createdByUser);
-    }
-  };
-
-  await traverseHierarchy(user);
-
-  return JSON.stringify(obj);
-};
 
 exports.login = async (req, res) => {
   try {
@@ -144,7 +104,7 @@ exports.login = async (req, res) => {
         req,
         res
       );
-    } else if (user.userBlock&&user.roleName!=userRoleConstant.fairGameWallet) {
+    } else if (user.userBlock && user.roleName != userRoleConstant.fairGameWallet) {
       return ErrorResponse(
         {
           statusCode: 403,
@@ -248,11 +208,6 @@ exports.logout = async (req, res) => {
   try {
     // Get the user from the request object
     const user = req.user;
-
-    // If the user is an expert, remove their ID from the "expertLoginIds" set in Redis
-    if (user.roleName === userRoleConstant.expert) {
-      await internalRedis.srem("expertLoginIds", user.id);
-    }
 
     // Remove the user's token from Redis using their ID as the key
     await internalRedis.del(user.id);

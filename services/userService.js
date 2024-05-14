@@ -67,7 +67,7 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
             SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
-            WHERE id = '${userId}'
+            WHERE id = $1
             UNION
             SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
@@ -79,18 +79,18 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
     ? `
 ${getUserChild}
   UPDATE users
-  SET "userBlock" = true, "userBlockedBy" = '${blockBy}'
+  SET "userBlock" = true, "userBlockedBy" = $2
   WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "userBlock" = false, "userBlockedBy" = NULL, "autoBlock" = false
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = $2 RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method
-  let query = await user.query(userBlockUnBlockQuery);
+  let query = await user.query(userBlockUnBlockQuery, [ userId, blockBy ]);
   // Return the result of the query
   return query;
 };
@@ -102,7 +102,7 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
             SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
-            WHERE id = '${userId}'
+            WHERE id = $1
             UNION
             SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
@@ -114,18 +114,18 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
     ? `
 ${getUserChild}
   UPDATE users
-  SET "betBlock" = true, "betBlockedBy" = '${blockBy}'
+  SET "betBlock" = true, "betBlockedBy" = $2
   WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "betBlock" = false, "betBlockedBy" = NULL
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = $2 RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method
-  let query = await user.query(userBlockUnBlockQuery);
+  let query = await user.query(userBlockUnBlockQuery, [ userId, blockBy ]);
   // Return the result of the query
   return query;
 };
@@ -199,24 +199,24 @@ exports.getUsersWithTotalUsersBalanceData = (where, query, select) => {
 
 exports.getChildUser = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
-SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`
+SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != $1;`
 
-  return await user.query(query)
+  return await user.query(query, [ id ])
 }
 
 exports.getParentUsers = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."id" = p."createBy"
   )
-SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`;
+SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != $1;`;
 
-  return await user.query(query);
+  return await user.query(query, [ id ]);
 };
 
 
@@ -268,19 +268,19 @@ exports.getUserWithUserBalance = async (userName) => {
 
 exports.getChildUserBalanceAndData = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
 SELECT p.*,"userBalances".*  FROM p JOIN "userBalances" ON "userBalances"."userId" = "p"."id" where "deletedAt" IS NULL;
 `
 
-  return await user.query(query)
+  return await user.query(query, [ id ])
 }
 
 exports.softDeleteAllUsers = (id) => {
   const query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
@@ -292,5 +292,5 @@ exports.softDeleteAllUsers = (id) => {
   )
   AND "deletedAt" IS NULL -- Only soft delete if not already deleted;  
   `
-  return user.query(query);
+  return user.query(query, [id]);
 }

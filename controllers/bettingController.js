@@ -69,8 +69,7 @@ exports.getSessionProfitLoss = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
-
-      
+    
 exports.deleteMultipleBetForOther = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData } = req.body;

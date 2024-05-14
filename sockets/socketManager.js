@@ -13,8 +13,7 @@ let io;
 const handleConnection = async (client) => {
   try {
     // Extract the token from the client's handshake headers or auth object
-    const token =
-      client.handshake.headers.authorization || client.handshake.auth.token;
+    const token = client.handshake.headers.authorization || client.handshake.auth.token;
 
     // If no token is provided, disconnect the client
     if (!token) {
@@ -32,7 +31,7 @@ const handleConnection = async (client) => {
     }
 
     // Extract user ID and role from the decoded user object
-    const { id: userId, roleName } = decodedUser;
+    const { id: userId } = decodedUser;
 
     // Retrieve the user's token from Redis
     const userTokenRedis = await getUserTokenFromRedis(userId);
@@ -59,8 +58,7 @@ const handleConnection = async (client) => {
 const handleDisconnect = async (client) => {
   try {
     // Extract the token from the client's handshake headers or auth object
-    const token =
-      client.handshake.headers.authorization || client.handshake.auth.token;
+    const token = client.handshake.headers.authorization || client.handshake.auth.token;
 
     // If no token is provided, disconnect the client
     if (!token) {
@@ -76,18 +74,11 @@ const handleDisconnect = async (client) => {
     }
 
     // Extract user ID and role from the decoded user object
-    const { id: userId, roleName } = decodedUser;
+    const { id: userId } = decodedUser;
 
     // Leave the room with the user's ID
     client.leave(userId);
 
-    // Handle additional logic based on the user's role
-    if (roleName === userRoleConstant.expert) {
-      // If the user is an expert, remove their ID from the "expertLoginIds" set
-      internalRedis.srem("expertLoginIds", userId);
-      // Leave the "expertUserCountRoom" room
-      client.leave("expertUserCountRoom");
-    }
   } catch (err) {
     // Handle any errors by disconnecting the client
     console.error(err);

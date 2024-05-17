@@ -674,7 +674,8 @@ exports.settingBetsDataAtLogin = async (user) => {
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-      eventType:`eqcricket`
+      eventType:`eqcricket`,
+      isTeamNameAllow: false
     }).then((data) => data).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
@@ -802,7 +803,8 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-      eventType:`necricket`
+      eventType:`necricket`,
+      isTeamNameAllow: false
     }).then((data) => data).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,

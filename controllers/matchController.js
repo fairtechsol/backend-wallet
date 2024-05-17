@@ -1,8 +1,10 @@
-const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise } = require("../config/contants");
+const { Not } = require("typeorm");
+const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
+const { getUser, getUsers, getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
@@ -262,29 +264,126 @@ exports.addMatch = async (req, res) => {
   }
 };
 
-exports.matchLock=async (req,res)=>{
+exports.matchLock = async (req, res) => {
   try {
-    let { domain } = req.body;
+    const { matchId, type, block } = req.body;
+    let reqUser = req.user;
 
-    try {
-      const response = await apiCall(apiMethod.post, domain + allApiRoutes.matchLock, req.body);
-      return SuccessResponse(
-        response,
-        req,
-        res
-      );
-    } catch (error) {
-      throw error?.response?.data
+    const childUsers = await getUsersWithoutCount(reqUser.roleName == userRoleConstant.fairGameWallet ? { id: Not(reqUser?.id) } : { createBy: reqUser.id }, ["id", "userName"]);
+    const allChildUserIds = [...childUsers.map(obj => obj.id), reqUser.id];
+
+    let returnData;
+    for (const blockUserId of allChildUserIds) {
+      returnData = await userBlockUnlockMatch(blockUserId, matchId, reqUser, block, type);
     }
 
-    
-  } catch (error) {
-    logger.error({
-      message: "Error at matchLock",
-      context: error.message,
-      stake: error.stack
+    let allChildMatchDeactive = true;
+    let allChildSessionDeactive = true;
+
+    const allDeactive = await isAllChildDeactive({ createBy: reqUser.id, id: Not(reqUser.id) }, ['userMatchLock.id'], matchId);
+    allDeactive.forEach(ob => {
+      if (!ob.userMatchLock_id || !ob.userMatchLock_matchLock) {
+        allChildMatchDeactive = false;
+      }
+      if (!ob.userMatchLock_id || !ob.userMatchLock_sessionLock) {
+        allChildSessionDeactive = false;
+      }
     });
 
+    let domainData;
+
+
+    if (reqUser.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(req.user, null, {});
+    }
+    else {
+      domainData = await getUserDomainWithFaId({});
+    }
+
+    for (let url of domainData) {
+      await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchLock, {
+        userId: reqUser.id, matchId: matchId, type: type, block: block, roleName: reqUser.roleName, operationToAll: true
+      }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} setting match lock`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+    }
+
+    return SuccessResponse({
+      statusCode: 200,
+      message: { msg: "updated", keys: { name: "User" } },
+      data: { returnData, allChildMatchDeactive, allChildSessionDeactive },
+    }, req, res);
+  } catch (error) {
     return ErrorResponse(error, req, res);
   }
+  async function userBlockUnlockMatch(userId, matchId, reqUser, block, type) {
+    let userAlreadyBlockExit = await getUserMatchLock({ userId, matchId, blockBy: reqUser.id });
+
+    if (!userAlreadyBlockExit) {
+      if (!block) {
+        throw { message: { msg: "notUnblockFirst" } };
+      }
+
+      const object = {
+        userId,
+        matchId,
+        blockBy: reqUser.id,
+        matchLock: type == matchWiseBlockType.match && block,
+        sessionLock: type != matchWiseBlockType.match && block
+      };
+
+      addUserMatchLock(object);
+      return object;
+    }
+
+    if (type == matchWiseBlockType.match) {
+      userAlreadyBlockExit.matchLock = block;
+    } else {
+      userAlreadyBlockExit.sessionLock = block;
+    }
+
+    if (!block && !(userAlreadyBlockExit.matchLock || userAlreadyBlockExit.sessionLock)) {
+      await deleteUserMatchLock({ id: userAlreadyBlockExit.id });
+      return userAlreadyBlockExit;
+    }
+
+    addUserMatchLock(userAlreadyBlockExit);
+    return userAlreadyBlockExit;
+  }
+
+}
+
+exports.checkChildDeactivate = async (req, res) => {
+  const { matchId } = req.query;
+  let reqUser = req.user;
+  let allChildMatchDeactive = true;
+  let allChildSessionDeactive = true;
+  let allDeactive = await isAllChildDeactive({ createBy: reqUser.id, id: Not(reqUser.id) }, ['userMatchLock.id', 'userMatchLock.matchLock', 'userMatchLock.sessionLock'], matchId);
+  allDeactive.forEach(ob => {
+    if (!ob.userMatchLock_id) {
+      allChildMatchDeactive = false;
+      allChildSessionDeactive = false;
+    } else {
+      if (!ob.userMatchLock_matchLock) {
+        allChildMatchDeactive = false;
+      }
+      if (!ob.userMatchLock_sessionLock) {
+        allChildSessionDeactive = false;
+      }
+    }
+  })
+
+  return SuccessResponse({
+    statusCode: 200,
+    message: { msg: "updated", keys: { name: "User unlock" } },
+    data: { allChildMatchDeactive, allChildSessionDeactive },
+  }, req, res);
 }

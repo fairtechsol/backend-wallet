@@ -13,6 +13,7 @@
   "settleAccount": "Please settle this account first.",
   "settledCommission" : "Commission settled successfully.",
   "deleted": "{name} deleted successfully.",
+  "notUnblockFirst" : "Can not unblock before block any user",
   "auth": {
     "loginSuccess": "Login successfully.",
     "invalidPass": "Invalid {type} password.",

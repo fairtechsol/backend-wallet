@@ -55,6 +55,7 @@ const {
   getFaAdminDomain,
   forceLogoutIfLogin,
 } = require("../services/commonService");
+const crypto = require('crypto');
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
@@ -288,10 +289,9 @@ exports.isUserExist = async (req, res) => {
   }
 }
 
-const generateTransactionPass = () => {
-  const randomNumber = Math.floor(100000 + Math.random() * 900000);
-  return `${randomNumber}`;
-};
+const generateTransactionPass =() => {
+ return crypto.randomInt(0, 999999).toString().padStart(6, '0'); 
+}
 
 // Check old password against the stored password
 const checkOldPassword = async (userId, oldPassword) => {
@@ -335,7 +335,7 @@ exports.changePassword = async (req, res, next) => {
   try {
     // Destructure request body
     const { oldPassword, newPassword, transactionPassword } = req.body;
-
+    
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
 

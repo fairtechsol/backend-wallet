@@ -235,6 +235,10 @@ module.exports.tiedManualTeamName = {
   no: "NO"
 }
 
+module.exports.matchWiseBlockType = {
+  match: "match",
+  session: "session",
+};
 
 module.exports.lockType = {
   user: "user",

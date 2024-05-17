@@ -2,8 +2,10 @@ const { AppDataSource } = require("../config/postGresConnection");
 const bcrypt = require("bcryptjs");
 const userSchema = require("../models/user.entity");
 const userBalanceSchema = require("../models/userBalance.entity");
+const userMatchLockSchema = require("../models/userMatchLock.entity");
 const user = AppDataSource.getRepository(userSchema);
 const UserBalance = AppDataSource.getRepository(userBalanceSchema);
+const userMatchLock = AppDataSource.getRepository(userMatchLockSchema);
 const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
 
@@ -293,4 +295,31 @@ exports.softDeleteAllUsers = (id) => {
   AND "deletedAt" IS NULL -- Only soft delete if not already deleted;  
   `
   return user.query(query, [id]);
+}
+
+exports.getUserMatchLock = (where, select) => {
+  return userMatchLock.findOne({ where: where, select: select });
+}
+
+exports.addUserMatchLock = async (body) => {
+  let inserted = await userMatchLock.save(body);
+  return inserted;
+};
+
+exports.deleteUserMatchLock = async (where) => {
+  let deleted = await userMatchLock.delete(where);
+  return deleted;
+};
+
+
+exports.isAllChildDeactive = (where, select, matchId) => {
+  try {
+    return user.createQueryBuilder('user')
+      .leftJoinAndMapMany('user.blockUser', 'userMatchLock', 'userMatchLock', `user.id = userMatchLock.userId AND userMatchLock.matchId = '${matchId}'`)
+      .select(select)
+      .where(where)
+      .getRawMany();
+  } catch (error) {
+    throw error;
+  }
 }

@@ -949,7 +949,7 @@ exports.getPlacedBets = async (req, res, next) => {
     let promiseArray = []
 
     for (let url of domainData) {
-      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id });
+      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id, isTeamNameAllow: true });
       promiseArray.push(promise);
     }
     await Promise.allSettled(promiseArray)

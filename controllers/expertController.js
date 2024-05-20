@@ -2,7 +2,7 @@ const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBet
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
-const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin } = require("../services/commonService");
+const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData, updateUserExposure } = require("../services/userBalanceService");
@@ -2309,7 +2309,8 @@ exports.getWalletBetsData = async (req, res) => {
     else {
       result = await settingBetsDataAtLogin(user);
       let result2 = await settingOtherMatchBetsDataAtLogin(user);
-      result = { ...result, ...result2 }
+      let racingResult = await settingRacingMatchBetsDataAtLogin(user);
+      result = { ...result, ...result2, ...racingResult }
     }
 
     return SuccessResponse(

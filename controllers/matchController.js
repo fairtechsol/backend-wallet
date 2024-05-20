@@ -4,7 +4,7 @@ const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
-const { getUser, getUsers, getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive } = require("../services/userService");
+const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
@@ -387,3 +387,64 @@ exports.checkChildDeactivate = async (req, res) => {
     data: { allChildMatchDeactive, allChildSessionDeactive },
   }, req, res);
 }
+
+exports.listRacingMatch = async (req, res) => {
+  try {
+    // let user = req.user;
+    let domain = expertDomain;
+    let apiResponse = {};
+    try {
+      apiResponse = await apiCall(
+        apiMethod.get,
+        domain + allApiRoutes.MATCHES.racingMatchList,
+        null,
+        null,
+        req.query
+      );
+    } catch (error) {
+      throw error?.response?.data;
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "match details", keys: { name: "Match" } },
+        data: apiResponse.data,
+      },
+      req,
+      res
+    );
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
+
+exports.listRacingCountryCode = async (req, res) => {
+  try {
+    let domain = expertDomain;
+    let apiResponse = {};
+    try {
+      apiResponse = await apiCall(
+        apiMethod.get,
+        domain + allApiRoutes.MATCHES.racingMatchCountryCodeList,
+        null,
+        null,
+        req.query
+      );
+    } catch (error) {
+      throw error?.response?.data;
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "match details", keys: { name: "Match" } },
+        data: apiResponse.data,
+      },
+      req,
+      res
+    );
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};

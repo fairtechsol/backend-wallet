@@ -306,6 +306,37 @@ exports.calculateRate = async (teamRates, data, partnership = 100) => {
   return newTeamRates;
 }
 
+exports.calculateRacingExpertRate = async (teamRates, data, partnership = 100) => {
+  let { runners, winAmount, lossAmount, bettingType, runnerId } = data;
+  let newTeamRates = { ...teamRates };
+
+  runners.forEach((item) => {
+    if (!newTeamRates[item?.id]) {
+      newTeamRates[item?.id] = 0;
+    }
+
+    if (item?.id == runnerId) {
+      if (bettingType == betType.BACK) {
+        newTeamRates[item?.id] -= ((winAmount * partnership) / 100);
+      }
+      else if (bettingType == betType.LAY) {
+        newTeamRates[item?.id] += ((lossAmount * partnership) / 100);
+      }
+    }
+    else {
+      if (bettingType == betType.BACK) {
+        newTeamRates[item?.id] += ((lossAmount * partnership) / 100);
+      }
+      else if (bettingType == betType.LAY) {
+        newTeamRates[item?.id] -= ((winAmount * partnership) / 100);
+      }
+    }
+
+    newTeamRates[item?.id] = this.parseRedisData(item?.id, newTeamRates);
+  });
+  return newTeamRates;
+}
+
 const calculateProfitLoss = (betData, odds, partnership) => {
   if (
     (betData?.betPlacedData?.betType === betType.NO &&
@@ -896,3 +927,7 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
       ...matchExposure, ...matchResult, ...sessionExp, ...sessionResult
     }
 }
+
+exports.parseRedisData = (redisKey, userRedisData) => {
+  return parseFloat((Number(userRedisData[redisKey]) || 0.0).toFixed(2));
+};

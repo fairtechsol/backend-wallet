@@ -46,6 +46,7 @@ exports.allApiRoutes = {
   unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
   unDeclareResultOtherMatch: "/fairgameWallet/unDeclare/result/other/match",
   addMatch:"/match/add",
+  addRace: "/match/raceAdd",
   profitLoss: "/fairgameWallet/total/profitLoss",
   matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
   userWiseProfitLoss:"/fairgameWallet/userwise/profitLoss",

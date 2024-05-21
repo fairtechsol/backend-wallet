@@ -1,15 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-<<<<<<< Updated upstream
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
-const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate } = require('../controllers/matchController');
-=======
-const { isAuthenticate } = require('../middleware/auth');
-const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, raceAdd } = require('../controllers/matchController');
->>>>>>> Stashed changes
-
-
+const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd} = require('../controllers/matchController');
 
 
 router.get('/list',isAuthenticate,listMatch);

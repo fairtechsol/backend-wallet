@@ -324,7 +324,7 @@ exports.matchLock = async (req, res) => {
   } catch (error) {
     return ErrorResponse(error, req, res);
   }
-<<<<<<< Updated upstream
+  
   async function userBlockUnlockMatch(userId, matchId, reqUser, block, type) {
     let userAlreadyBlockExit = await getUserMatchLock({ userId, matchId, blockBy: reqUser.id });
 
@@ -388,8 +388,6 @@ exports.checkChildDeactivate = async (req, res) => {
     data: { allChildMatchDeactive, allChildSessionDeactive },
   }, req, res);
 }
-=======
-}
 
 exports.raceAdd = async (req, res) => {
   try {
@@ -424,4 +422,3 @@ exports.raceAdd = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
->>>>>>> Stashed changes

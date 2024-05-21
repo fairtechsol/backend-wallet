@@ -22,7 +22,8 @@ module.exports.userRoleConstant = {
 module.exports.gameType = {
   cricket: "cricket",
   football: "football",
-  tennis:"tennis"
+  tennis:"tennis",
+  horseRacing: "horseRacing"
 };
 
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]

@@ -83,6 +83,8 @@ exports.allApiRoutes = {
     otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
     MatchBettingDetail: "/superAdmin/matchBetting/",
+    racingMatchList: "/superAdmin/match/racing/list",
+    racingMatchCountryCodeList: "/superAdmin/match/racing/countryCode",
   },
   bets: {
     placedBet: "/fairgameWallet/getBet",

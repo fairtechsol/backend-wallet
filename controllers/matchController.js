@@ -4,7 +4,7 @@ const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys } = require("../services/redis/commonFunctions");
-const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive } = require("../services/userService");
+const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
@@ -360,6 +360,30 @@ exports.matchLock = async (req, res) => {
     return userAlreadyBlockExit;
   }
 
+}
+
+exports.checkMatchLock = async (req, res) => {
+  try {
+    const { matchId } = req.query;
+    const { id, roleName } = req.user;
+
+    let parentBlock = false;
+    let selfBlock = false;
+    if (roleName == userRoleConstant.fairGameAdmin) {
+      const userData = await getUserById(id, ["createBy"]);
+      parentBlock = await getUserMatchLock({ userId: id, matchId, blockBy: userData.createBy });
+      selfBlock = await getUserMatchLock({ userId: id, matchId, blockBy: id });
+    }
+    else {
+      selfBlock = await getUserMatchLock({ userId: id, matchId, blockBy: id });
+    }
+
+    return SuccessResponse({ statusCode: 200, data: { parentBlock: !!parentBlock, selfBlock: !!selfBlock } }, req, res);
+
+  } catch (error) {
+    logger.error({ message: "Error in check match lock.", stack: error?.stack, context: error?.message });
+    return ErrorResponse(error, req, res);
+  }
 }
 
 exports.checkChildDeactivate = async (req, res) => {

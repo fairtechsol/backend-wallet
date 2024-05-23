@@ -82,6 +82,7 @@ exports.allApiRoutes = {
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",
+    raceDetails: "/superAdmin/match/racing/",
     otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
     MatchBettingDetail: "/superAdmin/matchBetting/",

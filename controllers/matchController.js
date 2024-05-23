@@ -103,7 +103,7 @@ exports.raceDetails = async (req, res) => {
     return SuccessResponse(
       {
         statusCode: 200,
-        message: { msg: "match details", keys: { name: "Match" } },
+        message: { msg: "match.matchDetails", keys: { name: "Match" } },
         data: apiResponse.data
       },
       req,

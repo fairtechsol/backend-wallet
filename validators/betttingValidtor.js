@@ -13,4 +13,4 @@ module.exports.deleteMultipleBetValidator = Joi.object({
             })
         )
     )
-})
+});

@@ -994,7 +994,7 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-      eventType: `inArr${JSON.stringify([gameType.horseRacing])}`,
+      eventType: `inArr${JSON.stringify([gameType.horseRacing, gameType.greyHound])}`,
       isTeamNameAllow: false
     }).then((data) => data).catch((err) => {
       logger.error({

@@ -391,18 +391,33 @@ exports.checkMatchLock = async (req, res) => {
     const { matchId } = req.query;
     const { id, roleName } = req.user;
 
-    let parentBlock = false;
-    let selfBlock = false;
+    let blockObj = {
+      match: {
+        parentBlock: false,
+        selfBlock: false
+      },
+      session: {
+        parentBlock: false,
+        selfBlock: false
+      }
+    };
+
     if (roleName == userRoleConstant.fairGameAdmin) {
       const userData = await getUserById(id, ["createBy"]);
-      parentBlock = await getUserMatchLock({ userId: id, matchId, blockBy: userData.createBy });
-      selfBlock = await getUserMatchLock({ userId: id, matchId, blockBy: id });
+
+      blockObj.match.parentBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: userData.createBy, sessionLock: false }));
+      blockObj.match.selfBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: id, sessionLock: false }));
+
+      blockObj.session.parentBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: userData.createBy, sessionLock: true }));
+      blockObj.session.selfBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: id, sessionLock: true }));
     }
     else {
-      selfBlock = await getUserMatchLock({ userId: id, matchId, blockBy: id });
+      blockObj.match.selfBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: id, sessionLock: false }));
+
+      blockObj.session.selfBlock = !!(await getUserMatchLock({ userId: id, matchId, blockBy: id, sessionLock: true }));
     }
 
-    return SuccessResponse({ statusCode: 200, data: { parentBlock: !!parentBlock, selfBlock: !!selfBlock } }, req, res);
+    return SuccessResponse({ statusCode: 200, data: blockObj }, req, res);
 
   } catch (error) {
     logger.error({ message: "Error in check match lock.", stack: error?.stack, context: error?.message });

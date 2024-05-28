@@ -1,5 +1,5 @@
 const { __mf } = require("i18n");
-const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain, profitLossKeys, matchesTeamName, otherEventMatchBettingRedisKey, gameType } = require("../config/contants");
+const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain, profitLossKeys, matchesTeamName, otherEventMatchBettingRedisKey, gameType, racingBettingType } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { logger } = require("../config/logger");
 const { sendMessageToUser } = require("../sockets/socketManager");
@@ -994,7 +994,7 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
       deleteReason: "isNull",
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-      eventType: `inArr${JSON.stringify([gameType.horseRacing])}`,
+      eventType: `inArr${JSON.stringify([gameType.horseRacing, gameType.greyHound])}`,
       isTeamNameAllow: false
     }).then((data) => data).catch((err) => {
       logger.error({
@@ -1031,7 +1031,7 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
 
       let apiResponse;
       try {
-        let url = expertDomain + allApiRoutes.MATCHES.MatchBettingDetail + matchId + "?type=" + matchBettingType.quickbookmaker1;
+        let url = expertDomain + allApiRoutes.MATCHES.raceBettingDetail + matchId + "?type=" + racingBettingType.matchOdd;
         apiResponse = await apiCall(apiMethod.get, url);
       } catch (error) {
         logger.info({

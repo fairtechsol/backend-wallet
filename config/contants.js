@@ -23,7 +23,8 @@ module.exports.gameType = {
   cricket: "cricket",
   football: "football",
   tennis:"tennis",
-  horseRacing: "horseRacing"
+  horseRacing: "horseRacing",
+  greyHound: "greyHound"
 };
 
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]
@@ -209,6 +210,10 @@ module.exports.matchBettingType = {
     prev[`setWinner${curr}`] = `setWinner${curr}`
     return prev;
   }, {}))
+};
+
+module.exports.racingBettingType = {
+  matchOdd: "matchOdd",
 };
 
 module.exports.redisKeysMatchWise = {

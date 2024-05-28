@@ -88,6 +88,30 @@ exports.matchDetails = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
+exports.raceDetails = async (req, res) => {
+  try {
+    let domain = expertDomain;
+    let apiResponse = {};
+    try {
+      apiResponse = await apiCall(
+        apiMethod.get,
+        domain + allApiRoutes.MATCHES.raceDetails + req.params.id
+      );
+    } catch (error) {
+      throw error?.response?.data;
+    }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: apiResponse.data
+      },
+      req,
+      res
+    );
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
 
 exports.otherMatchDetails = async (req, res) => {
   const matchType = req.query.matchType;

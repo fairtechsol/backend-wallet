@@ -717,7 +717,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
               }, {});
   
               let redisObj = {
-                [`${matchId}_${betId}`]: masterTeamRates
+                [`${matchId}_${betId}`]: JSON.stringify(masterTeamRates)
               }
 
               await incrementValuesRedis(partnershipId, {

@@ -30,6 +30,13 @@ exports.getUserRedisKeys = async (userId, keys) => {
   return userData;
 }
 
+exports.getUserRedisKey = async (userId, key) => {
+  // Retrieve all user data for the match from Redis
+  const userData = await internalRedis.hget(userId, key);
+
+  // Return the user data as an object or null if no data is found
+  return userData;
+}
 // Assuming internalRedis is the Redis client instance
 exports.incrementValuesRedis = async (userId, value, updateValues) => {
   // Start pipelining

@@ -189,7 +189,7 @@ let calculateRacingRateAmount = async (jobData, userId) => {
             let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
 
-            let teamRates = masterRedisData?.[`${jobData?.matchId}_${jobData?.betId}`];
+            let teamRates = masterRedisData?.[`${jobData?.matchId}${redisKeys.profitLoss}`];
 
             if (teamRates) {
               teamRates = JSON.parse(teamRates);
@@ -209,11 +209,11 @@ let calculateRacingRateAmount = async (jobData, userId) => {
 
             let teamData = await calculateRacingExpertRate(teamRates, obj, partnership);
             let userRedisObj = {
-              [`${jobData?.matchId}_${jobData?.betId}`]: JSON.stringify(teamData)
+              [`${jobData?.matchId}${redisKeys.profitLoss}`]: JSON.stringify(teamData)
             }
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
-            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData })
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj: teamData, jobData })
             // Log information about exposure and stake update
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
@@ -709,7 +709,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
 
             if (!lodash.isEmpty(masterRedisData)) {
               
-              let masterTeamRates = masterRedisData[`${matchId}_${betId}`];
+              let masterTeamRates = JSON.parse(masterRedisData[`${matchId}${redisKeys.profitLoss}`]);
 
               masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
                 acc[key] = parseFloat((parseRedisData(key, masterTeamRates) + ((newTeamRate[key] * partnership) / 100)).toFixed(2));
@@ -717,7 +717,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
               }, {});
   
               let redisObj = {
-                [`${matchId}_${betId}`]: masterTeamRates
+                [`${matchId}${redisKeys.profitLoss}`]: JSON.stringify(masterTeamRates)
               }
 
               await incrementValuesRedis(partnershipId, {

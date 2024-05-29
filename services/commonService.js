@@ -684,9 +684,8 @@ exports.calculateRatesRacingMatch = async (betPlace, partnerShip = 100, matchDat
   const { runners } = matchData;
 
   for (let placedBets of betPlace) {
-    const betId=placedBets?.betId;
     const matchId=placedBets?.matchId;
-    const teamRate = teamRates[`${matchId}_${betId}`] || runners.reduce((acc, key) => {
+    const teamRate = teamRates[`${matchId}${redisKeys.profitLoss}`] || runners.reduce((acc, key) => {
       acc[key?.id] = 0;
       return acc;
     }, {});
@@ -703,7 +702,7 @@ exports.calculateRatesRacingMatch = async (betPlace, partnerShip = 100, matchDat
       partnerShip
     );
 
-    teamRates[`${matchId}_${betId}`] = calculatedRates;
+    teamRates[`${matchId}${redisKeys.profitLoss}`] = calculatedRates;
   }
 
   return teamRates;
@@ -1042,7 +1041,7 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
       let redisData = await this.calculateRatesRacingMatch(betResult.match[placedBet], 100, apiResponse?.data);
       let maxLoss = 0;
       Object.keys(redisData)?.forEach((key) => {
-        maxLoss += Math.abs(Math.min(...Object.values(redisData[key] || 0), 0));
+        maxLoss += Math.abs(Math.min(...Object.values(redisData[key] || {}), 0));
         redisData[key]=JSON.stringify(redisData[key]);
       });
 
@@ -1062,3 +1061,8 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
 exports.parseRedisData = (redisKey, userRedisData) => {
   return parseFloat((Number(userRedisData[redisKey]) || 0.0).toFixed(2));
 };
+
+exports.isValidUUID = (uuid) => {
+  const regex = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+  return regex.test(uuid);
+}

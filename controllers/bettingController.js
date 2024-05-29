@@ -125,7 +125,7 @@ exports.deleteMultipleBetForRace = async (req, res) => {
         try {
             matchExist = await apiCall(
                 apiMethod.get,
-                domain + allApiRoutes.MATCHES.matchDetails + matchId
+                domain + allApiRoutes.MATCHES.raceDetails + matchId
             );
             if (!matchExist) {
                 return ErrorResponse(

@@ -3,7 +3,7 @@ const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWise
 const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisKeys } = require("../services/redis/commonFunctions");
+const { getUserRedisKeys, getUserRedisKey } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -90,6 +90,7 @@ exports.matchDetails = async (req, res) => {
 };
 exports.raceDetails = async (req, res) => {
   try {
+    let userId = req.user.id;
     let domain = expertDomain;
     let apiResponse = {};
     try {
@@ -99,6 +100,29 @@ exports.raceDetails = async (req, res) => {
       );
     } catch (error) {
       throw error?.response?.data;
+    }
+
+    if (apiResponse?.data) {
+      if (Array.isArray(apiResponse?.data)) {
+        for (let [index, matchData] of apiResponse?.data?.entries() || []) {
+          const matchId = matchData?.id;
+
+          let redisData = await getUserRedisKey(userId, `${matchId}${redisKeys.profitLoss}`);
+          if (redisData) {
+            redisData = JSON.parse(redisData);
+          }
+          apiResponse.data[index].profitLossDataMatch = redisData;
+        }
+      }
+      else {
+        const matchId = apiResponse?.data?.id;
+        let redisData = await getUserRedisKey(userId, `${matchId}${redisKeys.profitLoss}`);
+        
+        if (redisData) {
+          redisData = JSON.parse(redisData);
+        }
+        apiResponse.data.profitLossDataMatch = redisData;
+      }
     }
     return SuccessResponse(
       {

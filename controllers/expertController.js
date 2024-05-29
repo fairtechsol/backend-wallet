@@ -2,7 +2,7 @@ const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBet
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
-const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin } = require("../services/commonService");
+const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin, isValidUUID } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData, updateUserExposure } = require("../services/userBalanceService");
@@ -2301,10 +2301,10 @@ exports.getWalletBetsData = async (req, res) => {
     const betData = await getUserRedisData(user.id);
     if (betData) {
       Object.keys(betData)?.forEach((item) => {
-        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0]+"_")) {
+        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0] + "_") || item?.includes(redisKeys.profitLoss)) {
           result[item] = betData[item];
         }
-      })
+      });
     }
     else {
       result = await settingBetsDataAtLogin(user);
@@ -2553,7 +2553,7 @@ exports.declareRacingMatchResult = async (req, res) => {
             });
           }
 
-          await deleteKeyFromUserRedis(parentUser.userId, `${matchId}_${matchOddId}`);
+          await deleteKeyFromUserRedis(parentUser.userId, `${matchId}${redisKeys.profitLoss}`);
 
           sendMessageToUser(parentUser.userId, socketData.matchResult, {
             ...parentUser,
@@ -2951,7 +2951,7 @@ exports.unDeclareRaceMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossData: profitLossDataWallet,
+      profitLossData: profitLossDataWallet?.[`${matchId}${redisKeys.profitLoss}`],
       betId: matchOddId,
       gameType: match?.matchType,
       betType: matchBettingType,

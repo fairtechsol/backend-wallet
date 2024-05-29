@@ -1416,7 +1416,6 @@ exports.getTotalProfitLoss = async (req, res) => {
     let domainData;
     let where = {};
 
-
     if (roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
     }
@@ -1484,7 +1483,7 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    let { startDate, endDate, type, id } = req.query;
+    let { startDate, endDate, type, id, isRacing } = req.query;
 
     let domainData;
     let where = {};
@@ -1504,7 +1503,7 @@ exports.getDomainProfitLoss = async (req, res) => {
     }
 
     for (let url of domainData) {
-      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, type: type, searchId: id, isRacing: isRacing }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({

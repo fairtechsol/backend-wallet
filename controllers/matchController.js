@@ -90,6 +90,7 @@ exports.matchDetails = async (req, res) => {
 };
 exports.raceDetails = async (req, res) => {
   try {
+    let userId = req.user.id;
     let domain = expertDomain;
     let apiResponse = {};
     try {
@@ -109,7 +110,7 @@ exports.raceDetails = async (req, res) => {
 
           let redisData = await getUserRedisKey(userId, `${matchId}_${betId}`);
           if (redisData) {
-            JSON.parse(redisData);
+            redisData = JSON.parse(redisData);
           }
           apiResponse.data[index].profitLossDataMatch = redisData;
         }
@@ -120,7 +121,7 @@ exports.raceDetails = async (req, res) => {
         let redisData = await getUserRedisKey(userId, `${matchId}_${betId}`);
         
         if (redisData) {
-          JSON.parse(redisData);
+          redisData = JSON.parse(redisData);
         }
         apiResponse.data.profitLossDataMatch = redisData;
       }

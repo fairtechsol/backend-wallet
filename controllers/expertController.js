@@ -2301,10 +2301,10 @@ exports.getWalletBetsData = async (req, res) => {
     const betData = await getUserRedisData(user.id);
     if (betData) {
       Object.keys(betData)?.forEach((item) => {
-        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0] + "_") || (isValidUUID(item?.split("_")[0]) && isValidUUID(item?.split("_")[1]))) {
+        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0] + "_") || item?.includes(redisKeys.profitLoss)) {
           result[item] = betData[item];
         }
-      })
+      });
     }
     else {
       result = await settingBetsDataAtLogin(user);
@@ -2553,7 +2553,7 @@ exports.declareRacingMatchResult = async (req, res) => {
             });
           }
 
-          await deleteKeyFromUserRedis(parentUser.userId, `${matchId}_${matchOddId}`);
+          await deleteKeyFromUserRedis(parentUser.userId, `${matchId}${redisKeys.profitLoss}`);
 
           sendMessageToUser(parentUser.userId, socketData.matchResult, {
             ...parentUser,
@@ -2951,7 +2951,7 @@ exports.unDeclareRaceMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossData: profitLossDataWallet?.[`${matchId}_${matchOddId}`],
+      profitLossData: profitLossDataWallet?.[`${matchId}${redisKeys.profitLoss}`],
       betId: matchOddId,
       gameType: match?.matchType,
       betType: matchBettingType,

@@ -2951,7 +2951,7 @@ exports.unDeclareRaceMatchResult = async (req, res) => {
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
       ...parentUser,
       matchId,
-      profitLossData: profitLossDataWallet,
+      profitLossData: profitLossDataWallet?.[`${matchId}_${matchOddId}`],
       betId: matchOddId,
       gameType: match?.matchType,
       betType: matchBettingType,

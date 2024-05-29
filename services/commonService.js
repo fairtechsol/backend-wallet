@@ -1042,7 +1042,7 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
       let redisData = await this.calculateRatesRacingMatch(betResult.match[placedBet], 100, apiResponse?.data);
       let maxLoss = 0;
       Object.keys(redisData)?.forEach((key) => {
-        maxLoss += Math.abs(Math.min(...Object.values(redisData[key] || 0), 0));
+        maxLoss += Math.abs(Math.min(...Object.values(redisData[key] || {}), 0));
         redisData[key]=JSON.stringify(redisData[key]);
       });
 

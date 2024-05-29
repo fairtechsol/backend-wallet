@@ -709,7 +709,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
 
             if (!lodash.isEmpty(masterRedisData)) {
               
-              let masterTeamRates = masterRedisData[`${matchId}_${betId}`];
+              let masterTeamRates = JSON.parse(masterRedisData[`${matchId}_${betId}`]);
 
               masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
                 acc[key] = parseFloat((parseRedisData(key, masterTeamRates) + ((newTeamRate[key] * partnership) / 100)).toFixed(2));

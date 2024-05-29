@@ -1062,3 +1062,8 @@ exports.settingRacingMatchBetsDataAtLogin = async (user) => {
 exports.parseRedisData = (redisKey, userRedisData) => {
   return parseFloat((Number(userRedisData[redisKey]) || 0.0).toFixed(2));
 };
+
+exports.isValidUUID = (uuid) => {
+  const regex = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+  return regex.test(uuid);
+}

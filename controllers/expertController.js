@@ -2,7 +2,7 @@ const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBet
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
-const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin } = require("../services/commonService");
+const { mergeProfitLoss, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin, isValidUUID } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getUserBalance, addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData, updateUserExposure } = require("../services/userBalanceService");
@@ -2301,7 +2301,7 @@ exports.getWalletBetsData = async (req, res) => {
     const betData = await getUserRedisData(user.id);
     if (betData) {
       Object.keys(betData)?.forEach((item) => {
-        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0]+"_")) {
+        if (Object.values(redisKeysMatchWise)?.flat(2)?.includes(item?.split("_")?.[0] + "_") || (isValidUUID(item?.split("_")[0]) && isValidUUID(item?.split("_")[1]))) {
           result[item] = betData[item];
         }
       })

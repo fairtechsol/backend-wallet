@@ -64,6 +64,7 @@ exports.allApiRoutes = {
   commissionSettled:"/fairgameWallet/settle/commission",
   matchLock:"/fairgameWallet/userMatchLock",
   userProfitLoss:"/fairgameWallet/user/profitLossData/",
+  userProfitLossRacing:"/fairgameWallet/user/profitLossData/race/",
   checkExposureLimit: "/fairgameWallet/user/exposureLimitCheck",
   deleteUser: "/fairgameWallet/user/delete/",
   checkUserBalance: "/fairgameWallet/check/userBalance",

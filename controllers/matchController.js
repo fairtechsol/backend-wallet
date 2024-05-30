@@ -1,5 +1,5 @@
 const { Not } = require("typeorm");
-const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
@@ -567,6 +567,71 @@ exports.raceAdd = async (req, res) => {
       message: err.message,
       stake: err.stack
     });
+    return ErrorResponse(err, req, res);
+  }
+};
+
+exports.raceMarketAnalysis = async (req, res) => {
+  try {
+    let user = req.user;
+    const matchId = req.query.matchId;
+    let apiResponse = {};
+    try {
+      let url = expertDomain + allApiRoutes.MATCHES.raceBettingDetail + matchId + "?type=" + racingBettingType.matchOdd;
+      apiResponse = await apiCall(apiMethod.get, url);
+    } catch (error) {
+      throw error?.response?.data;
+    }
+
+    let domainData;
+    if (user.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(user);
+    }
+    else {
+      domainData = await getUserDomainWithFaId();
+    }
+
+    let bets = [];
+    
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.betCount, null, {}, { ...(user.roleName == userRoleConstant.fairGameAdmin ? { parentId: user.id } : {}), matchId: matchId }).then((data) => data).catch((err) => {
+        logger.error({
+          context: `error in ${url?.domain} setting bet placed redis`,
+          process: `User ID : ${user.id} `,
+          error: err.message,
+          stake: err.stack,
+        });
+      });
+      bets.push(...(data?.data ?? []));
+    }
+
+
+    let runners = apiResponse.data?.runners;
+    let totalBet = bets?.reduce((prev, curr) => { return curr?.matchId == matchId ? prev + parseInt(curr?.count) : prev }, 0);
+
+    let redisData = await getUserRedisKey(user.id, `${matchId}${redisKeys.profitLoss}`);
+    redisData = JSON.parse(redisData);
+    runners = runners?.map((item) => (
+      {
+        name: item?.runnerName,
+        id: item?.id,
+        profitLoss: redisData[item?.id]
+      }
+    ));    
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "fetched", keys: { name: "Market analysis" } },
+        data: {
+          profitLoss: runners,
+          totalBet: totalBet
+        },
+      },
+      req,
+      res
+    );
+  } catch (err) {
     return ErrorResponse(err, req, res);
   }
 };

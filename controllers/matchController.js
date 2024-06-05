@@ -615,7 +615,7 @@ exports.raceMarketAnalysis = async (req, res) => {
       {
         name: item?.runnerName,
         id: item?.id,
-        profitLoss: redisData[item?.id]
+        profitLoss: redisData?.[item?.id]
       }
     ));    
 

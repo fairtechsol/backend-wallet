@@ -152,7 +152,7 @@ exports.cardDetails = async (req, res) => {
     }
 
     if (apiResponse?.data) {
-      const roundData = null;
+      let roundData = null;
     try {
       const url = casinoMicroServiceDomain + allApiRoutes.MICROSERVICE.casinoData + type
 

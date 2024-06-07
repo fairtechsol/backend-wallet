@@ -1,5 +1,6 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
 module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
+module.exports.casinoMicroServiceDomain = process.env.CASINOMICROSERVICEURL || "http://localhost:3201";
 
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
@@ -119,6 +120,7 @@ module.exports.walletDescription = {
 module.exports.passwordRegex = /^(?=.*[A-Z])(?=.*[a-zA-Z].*[a-zA-Z].*[a-zA-Z].*[a-zA-Z])(?=.*\d.*\d.*\d.*\d).{8,}$/;
 
 module.exports.socketData = {
+  CardBetPlaced: "userCardBetPlaced",
   userBalanceUpdateEvent: "userBalanceUpdate",
   logoutUserForceEvent: "logoutUserForce",
   SessionBetPlaced: "userSessionBetPlaced",
@@ -152,6 +154,7 @@ module.exports.redisKeys = {
   noRateTie: "noRateTie_",
   yesRateComplete: "yesRateComplete_",
   noRateComplete: "noRateComplete_",
+  card: "_card",
 
   userExposureLimit : "exposureLimit",
   profitLoss:"_profitLoss",

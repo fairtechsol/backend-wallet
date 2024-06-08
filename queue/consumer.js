@@ -295,12 +295,12 @@ let calculateCardMatchRateAmount = async (jobData, userId) => {
             let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
 
-            let teamRates = masterRedisData?.[`${jobData?.mid}_${jobData?.selectionId}_${redisKeys.card}`];
+            let teamRates = masterRedisData?.[`${jobData?.mid}_${jobData?.selectionId}${redisKeys.card}`];
 
             let cardProfitLossAndExposure = new CardProfitLoss(jobData?.matchType, teamRates, { bettingType: jobData?.bettingType, winAmount: jobData?.winAmount, lossAmount: jobData?.lossAmount, playerName: jobData?.betOnTeam, partnership: partnership }, userOldExposure).getCardGameProfitLoss()
 
             let userRedisObj = {
-              [`${jobData?.mid}_${jobData?.selectionId}_${redisKeys.card}`]: cardProfitLossAndExposure?.profitLoss
+              [`${jobData?.mid}_${jobData?.selectionId}${redisKeys.card}`]: cardProfitLossAndExposure?.profitLoss
             }
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));

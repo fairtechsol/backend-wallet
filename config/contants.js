@@ -419,3 +419,11 @@ module.exports.redisKeysMarketWise = {
   }, {}))
 
 }
+
+exports.cardGameType = {
+  teen20: "teen20",
+  card32: "card32",
+  lucky7: "lucky7",
+  abj: "abj",
+  dt20: "dt20",
+};

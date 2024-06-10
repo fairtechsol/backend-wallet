@@ -1,5 +1,5 @@
 const { Not } = require("typeorm");
-const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
@@ -123,6 +123,59 @@ exports.raceDetails = async (req, res) => {
         }
         apiResponse.data.profitLossDataMatch = redisData;
       }
+    }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: apiResponse.data
+      },
+      req,
+      res
+    );
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
+
+exports.cardDetails = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let domain = expertDomain;
+    let apiResponse = {};
+    try {
+      apiResponse = await apiCall(
+        apiMethod.get,
+        domain + allApiRoutes.MATCHES.cardDetails + req.params.type
+      );
+    } catch (error) {
+      throw error?.response?.data;
+    }
+
+    if (apiResponse?.data) {
+      let roundData = null;
+    try {
+      const url = casinoMicroServiceDomain + allApiRoutes.MICROSERVICE.casinoData + type
+
+      let data = await apiCall(apiMethod.get, url);
+      roundData = data?.data?.data?.data;
+    }
+    catch (error) {
+      throw {
+        message: {
+          msg: "bet.notLive"
+        }
+      };
+    }
+
+      let cardRedisKeys = Object.keys(roundData?.t2)?.map((item) => `${roundData?.t1?.mid}_${item?.sid}${redisKeys.card}`);
+
+      let redisData = await getUserRedisKeys(userId, cardRedisKeys);
+      apiResponse.data.profitLoss = {};
+      redisData?.forEach((item, index) => {
+        if (item) {
+          apiResponse.data.profitLoss[cardRedisKeys[index]] = item;
+        }
+      });
     }
     return SuccessResponse(
       {

@@ -85,6 +85,7 @@ exports.allApiRoutes = {
   MATCHES: {
     matchDetails: "/superAdmin/match/",
     raceDetails: "/superAdmin/match/racing/",
+    cardDetails: "/superAdmin/match/card/",
     otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
     MatchBettingDetail: "/superAdmin/matchBetting/",
@@ -95,5 +96,8 @@ exports.allApiRoutes = {
   bets: {
     placedBet: "/fairgameWallet/getBet",
     betCount:"/fairgameWallet/betCounts"
+  },
+  MICROSERVICE : {
+    casinoData:"/casino/rates/"
   }
 };

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
-const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis} = require('../controllers/matchController');
+const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis, cardDetails} = require('../controllers/matchController');
 
 router.get('/list',isAuthenticate,listMatch);
 
@@ -10,6 +10,7 @@ router.get('/list',isAuthenticate,listMatch);
 router.get('/countryWiseList', isAuthenticate, listRacingCountryCode);
 router.get('/racing/list', isAuthenticate, listRacingMatch);
 router.get('/racing/:id', isAuthenticate, raceDetails);
+router.get('/card/:type', isAuthenticate, cardDetails);
 
 router.get('/:id',isAuthenticate,matchDetails);
 router.get('/other/:id', isAuthenticate, otherMatchDetails);

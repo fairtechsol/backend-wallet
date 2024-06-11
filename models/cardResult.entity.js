@@ -11,15 +11,6 @@ const cardResultSchema = new EntitySchema({
       type: "timestamp with time zone",
       createDate: true,
     },
-    updatedAt: {
-      type: "timestamp with time zone",
-      updateDate: true,
-    },
-    deletedAt: {
-      type: "timestamp with time zone",
-      deleteDate: true,
-    },
-    // use the createBy colum for the user id for which user is this data
     gameType: {
       type: "varchar",
       nullable: false,

@@ -130,6 +130,7 @@ module.exports.socketData = {
   sessionNoResult: "sessionNoResult",
   sessionResultUnDeclare: "sessionResultUnDeclare",
   matchResult: "matchResult",
+  cardResult: "cardResult",
   matchResultUnDeclare: "matchResultUnDeclare",
   sessionDeleteBet: "sessionDeleteBet",
   matchDeleteBet: "matchDeleteBet"

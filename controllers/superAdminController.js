@@ -47,6 +47,7 @@ const {
 const { logger } = require("../config/logger");
 const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
 const { getCasinoCardResult } = require("../services/cardService");
+const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -1299,8 +1300,13 @@ exports.lockUnlockUserByUserPanel = async (req, res, next) => {
 
 exports.getCardResult = async ( req, res ) => {
   try {
-    const query  = req.query
-    let result = await getCasinoCardResult(query);
+
+    const { type } = req.params;
+    const query  = req.query;
+    const currGameWinner = new CardResultTypeWin(type).getCardGameProfitLoss();
+    const select = ['cardResult.gameType as "gameType"', "cardResult.id as id", 'cardResult.createdAt as "createdAt"', currGameWinner, `"cardResult".result ->> 'mid' as mid`]
+
+    let result = await getCasinoCardResult(query, { gameType: type }, select);
     
     SuccessResponse(
       {

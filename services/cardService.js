@@ -3,19 +3,18 @@ const cardResultSchema = require("../models/cardResult.entity");
 const ApiFeature = require("../utils/apiFeatures");
 const CardResults = AppDataSource.getRepository(cardResultSchema);
 
-exports.getCasinoCardResult = async (query) => {
+exports.getCasinoCardResult = async (query, where, select) => {
   try {
     let casinoResultQuery = new ApiFeature(
-      CardResults.createQueryBuilder(),
+      CardResults.createQueryBuilder().where(where).select(select),
       query
     )
       .search()
       .filter()
       .sort()
-      .paginate()
-      .getResult();
+      .paginate();
 
-    const [results, count] = await casinoResultQuery;
+    const [results, count] = [await casinoResultQuery.query.getRawMany(), await casinoResultQuery.query.getCount()];
 
     return { results, count };
   } catch (error) {

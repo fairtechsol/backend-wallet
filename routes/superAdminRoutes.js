@@ -23,7 +23,8 @@ router.post("/update/balance/SA", updateUserBalanceBySA);
 router.post("/auto/lockUnlockUser", lockUnlockUserByUserPanel);
 router.get("/user/profitLossData/:matchId", isAuthenticate, getUserProfitLoss);
 router.get("/user/profitLossData/race/:matchId", isAuthenticate, getUserRacingProfitLoss);
-router.get("/cards/result", getCardResult);
+
+router.get("/cards/result/:type", getCardResult);
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

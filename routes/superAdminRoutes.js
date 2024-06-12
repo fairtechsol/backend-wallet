@@ -3,7 +3,7 @@ const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
 const {CreateSuperAdmin,updateSuperAdminValid,setExposureLimitValid,setCreditReferValid, SetSuperAdminBalance, ChangePassword,LockUnlockUser} = require('../validators/superAdminValidator');
-const {createSuperAdmin,updateSuperAdmin,setExposureLimit,setCreditReferrence, updateUserBalance, changePassword,lockUnlockSuperAdmin, getPartnershipId, getPlacedBets, updateUserBalanceBySA, getUserProfitLoss, lockUnlockUserByUserPanel, getUserRacingProfitLoss} = require('../controllers/superAdminController');
+const {createSuperAdmin,updateSuperAdmin,setExposureLimit,setCreditReferrence, updateUserBalance, changePassword,lockUnlockSuperAdmin, getPartnershipId, getPlacedBets, updateUserBalanceBySA, getUserProfitLoss, lockUnlockUserByUserPanel, getUserRacingProfitLoss, getCardResult} = require('../controllers/superAdminController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -23,6 +23,8 @@ router.post("/update/balance/SA", updateUserBalanceBySA);
 router.post("/auto/lockUnlockUser", lockUnlockUserByUserPanel);
 router.get("/user/profitLossData/:matchId", isAuthenticate, getUserProfitLoss);
 router.get("/user/profitLossData/race/:matchId", isAuthenticate, getUserRacingProfitLoss);
+
+router.get("/cards/result/:type", getCardResult);
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

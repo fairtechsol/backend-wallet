@@ -3,7 +3,7 @@ const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
 const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference, CheckOldPassword} = require('../validators/userValidator');
-const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced, getTotalUserListBalance, deleteUser, getUserWiseBetProfitLoss, checkOldPasswordData} = require('../controllers/userController');
+const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced, getTotalUserListBalance, deleteUser, getUserWiseBetProfitLoss, checkOldPasswordData, getCardTotalProfitLoss, getCardDomainProfitLoss, getCardResultBetProfitLoss} = require('../controllers/userController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -22,11 +22,17 @@ router.get("/balance",isAuthenticate,userBalanceDetails)
 router.post("/update/creditreferrence",isAuthenticate,checkTransactionPassword,validator(SetCreditReference),setCreditReferrence)
 router.post("/generateTransactionPassword",isAuthenticate,validator(generateTransactionPass),generateTransactionPassword);
 router.get("/profile",isAuthenticate,getProfile);
+
 router.get("/total/profitLoss", isAuthenticate, getTotalProfitLoss);
 router.get("/total/domain/profitLoss", isAuthenticate, getDomainProfitLoss);
 router.get("/total/bet/profitLoss", isAuthenticate, getResultBetProfitLoss);
 router.get("/total/session/profitLoss", isAuthenticate, getSessionBetProfitLoss);
 router.get("/userwise/profitLoss", isAuthenticate, getUserWiseBetProfitLoss);
+
+router.get("/card/total/profitLoss", isAuthenticate, getCardTotalProfitLoss);
+router.get("/card/total/domain/profitLoss", isAuthenticate, getCardDomainProfitLoss);
+router.get("/card/total/bet/profitLoss", isAuthenticate, getCardResultBetProfitLoss);
+
 router.get("/commissionMatch/:userId", isAuthenticate, getCommissionMatchReports);
 router.get("/commissionBetPlaced/:userId", isAuthenticate, getCommissionBetPlaced);
 router.delete("/delete/:id", isAuthenticate, deleteUser);

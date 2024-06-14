@@ -46,7 +46,7 @@ const {
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
-const { getCasinoCardResult } = require("../services/cardService");
+const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 
 exports.createSuperAdmin = async (req, res) => {
@@ -1319,6 +1319,36 @@ exports.getCardResult = async ( req, res ) => {
   } catch ( error ) {
     logger.error({
       error: `Error while getting card results.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}
+
+exports.getCardResultDetail = async ( req, res ) => {
+  try {
+    const { id } = req.params;
+    const result = await getCardResultData({ id: id });
+    
+    SuccessResponse(
+      {
+        statusCode: 200,
+        data: result?.result,
+      },
+      req,
+      res
+    );
+  } catch ( error ) {
+    logger.error({
+      error: `Error while getting card result detail.`,
       stack: error.stack,
       message: error.message,
     });

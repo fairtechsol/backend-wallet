@@ -1717,22 +1717,22 @@ exports.getCardDomainProfitLoss = async (req, res) => {
           throw err;
         });
       data?.data?.result?.forEach((item) => {
-        if (profitLoss[item?.matchId]) {
-          profitLoss[item?.matchId] = {
-            ...profitLoss[item?.matchId],
+        if (profitLoss[item?.runnerId]) {
+          profitLoss[item?.runnerId] = {
+            ...profitLoss[item?.runnerId],
             rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(profitLoss?.[item?.matchId]?.rateProfitLoss)).toFixed(2)),
             totalBet: parseFloat((parseFloat(item?.totalBet) + parseFloat(profitLoss?.[item?.matchId]?.totalBet)).toFixed(2)),
           }
         }
         else {
-          profitLoss[item?.matchId] = item;
+          profitLoss[item?.runnerId] = item;
         }
       });
     }
 
 
     return SuccessResponse(
-      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.startAt) - new Date(a.startAt)) },
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.runnerId) - new Date(a.runnerId)) },
       req,
       res
     );

@@ -1336,7 +1336,7 @@ exports.getCardResult = async ( req, res ) => {
 exports.getCardResultDetail = async ( req, res ) => {
   try {
     const { id } = req.params;
-    const result = await getCardResultData({ id: id });
+    const result = await getCardResultData(`result ->> 'mid' = '${id}' `);
     
     SuccessResponse(
       {

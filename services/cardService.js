@@ -23,11 +23,10 @@ exports.getCasinoCardResult = async (query, where, select) => {
 };
 
 
-exports.getCardResultData = (where, select) => {
-  try {
-    const casinoResult = CardResults.findOne({ where: where, select: select });
+exports.getCardResultData =async (where, select) => {
+    const casinoResult = await CardResults.createQueryBuilder()
+      .where(where).select(select)
+      .getOne();
     return casinoResult;
-  } catch (error) {
-    throw error;
-  }
+
 };

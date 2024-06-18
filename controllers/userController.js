@@ -1249,7 +1249,6 @@ exports.setCreditReferrence = async (req, res, next) => {
       await updateUserDataRedis(user.id, { profitLoss });
     }
 
-
     let transactionArray = [
       {
         actionBy: reqUser.id,
@@ -1343,8 +1342,6 @@ exports.lockUnlockUser = async (req, res, next) => {
         res
       );
     }
-
-
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {
@@ -1656,16 +1653,16 @@ exports.getCardTotalProfitLoss = async (req, res) => {
     }
 
     const resultArray = Object.values(profitLoss.reduce((accumulator, currentValue) => {
-      const eventType = currentValue.eventType;
+      const matchId = currentValue.matchId;
 
-      accumulator[eventType] = accumulator[eventType] || {
-        eventType,
+      accumulator[matchId] = accumulator[matchId] || {
+        ...currentValue,
         totalLoss: 0,
         totalBet: 0,
       };
 
-      accumulator[eventType].totalLoss += parseFloat(currentValue.totalLoss);
-      accumulator[eventType].totalBet += parseFloat(currentValue.totalBet);
+      accumulator[matchId].totalLoss += parseFloat(currentValue.totalLoss);
+      accumulator[matchId].totalBet += parseFloat(currentValue.totalBet);
 
       return accumulator;
     }, {}));
@@ -1720,22 +1717,22 @@ exports.getCardDomainProfitLoss = async (req, res) => {
           throw err;
         });
       data?.data?.result?.forEach((item) => {
-        if (profitLoss[item?.matchId]) {
-          profitLoss[item?.matchId] = {
-            ...profitLoss[item?.matchId],
+        if (profitLoss[item?.runnerId]) {
+          profitLoss[item?.runnerId] = {
+            ...profitLoss[item?.runnerId],
             rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(profitLoss?.[item?.matchId]?.rateProfitLoss)).toFixed(2)),
             totalBet: parseFloat((parseFloat(item?.totalBet) + parseFloat(profitLoss?.[item?.matchId]?.totalBet)).toFixed(2)),
           }
         }
         else {
-          profitLoss[item?.matchId] = item;
+          profitLoss[item?.runnerId] = item;
         }
       });
     }
 
 
     return SuccessResponse(
-      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.startAt) - new Date(a.startAt)) },
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.runnerId) - new Date(a.runnerId)) },
       req,
       res
     );
@@ -2296,9 +2293,6 @@ const updateNewUserTemp = async (newUserTemp, id) => {
   return id
 }
 
-
-
-
 const performBlockOperation = async (type, userId, loginId, blockStatus) => {
   let blockedItems;
 
@@ -2335,7 +2329,3 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
   }
 
 }
-
-
-
-

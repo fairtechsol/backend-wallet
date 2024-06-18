@@ -1341,7 +1341,7 @@ exports.getCardResultDetail = async ( req, res ) => {
     SuccessResponse(
       {
         statusCode: 200,
-        data: result?.result,
+        data: result,
       },
       req,
       res

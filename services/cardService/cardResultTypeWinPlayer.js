@@ -32,6 +32,7 @@ class CardResultTypeWin {
         return `CASE
         WHEN "cardResult".result ->> 'win' = '1' THEN 'Dragon'
         WHEN "cardResult".result ->> 'win' = '2' THEN 'Tiger'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
     END as result`
     }
 

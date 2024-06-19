@@ -64,6 +64,9 @@ class ApiFeature {
             case "ne":
               this.query.andWhere({ [key]: Not(filterValue) });
               break;
+            case "like":
+              this.query.andWhere({ [key]: ILike(filterValue) });
+              break;
             case "gt":
               this.query.andWhere({ [key]: MoreThan(filterValue) });
               break;
@@ -152,7 +155,7 @@ class ApiFeature {
 
   parseFilterValue(value) {
     // Parse the filter value to extract operator and actual value
-    const operators = ["eq", "gte", "lte", "gt", "lt", "between", "inArr", "isNull", "notNull","ne"]; // Add more operators as needed
+    const operators = ["eq", "gte", "lte", "gt", "lt", "between", "inArr", "isNull", "notNull", "ne", "like"]; // Add more operators as needed
     const [operator] = operators.filter((op) => value?.startsWith(`${op}`));
 
     if (operator) {

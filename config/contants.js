@@ -422,9 +422,53 @@ module.exports.redisKeysMarketWise = {
 }
 
 exports.cardGameType = {
-  teen20: "teen20",
-  card32: "card32",
-  lucky7: "lucky7",
-  abj: "abj",
   dt20: "dt20",
-};
+  teen20: "teen20",
+  lucky7: "lucky7",
+  card32: "card32",
+  abj: "abj",
+  dt202: "dt202",
+  dtl20: "dtl20",
+  dt6: "dt6",
+  lucky7eu: "lucky7eu",
+  teen: "teen",
+  teen9:"teen9",
+  teen8:"teen8",
+  poker: "poker",
+  poker20: "poker20",
+  poker6:"poker6",
+  baccarat:"baccarat",
+  baccarat2:"baccarat2",
+  card32eu: "card32eu",
+  ab20:"ab20",
+  "3cardj":"3cardj",
+  war:"war",
+  worli2:"worli2",
+  superover:"superover",
+  cmatch20:"cmatch20",
+  aaa: "aaa",
+  btable: "btable",
+  race20:"race20",
+  cricketv3:"cricketv3"
+}
+
+exports.cardGameShapeCode = {
+  "CC": "club",
+  "DD": "heart",
+  "SS": "diamond",
+  "HH": "spade"
+}
+
+exports.cardGameShapeColor = {
+  "CC": "black",
+  "DD": "red",
+  "SS": "red",
+  "HH": "black"
+}
+
+exports.cardsNo = {
+  K: 13,
+  Q: 12,
+  J: 11,
+  A: 1,
+}

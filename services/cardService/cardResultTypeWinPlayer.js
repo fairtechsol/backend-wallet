@@ -1,9 +1,9 @@
 const { cardGameType } = require("../../config/contants");
 
 class CardResultTypeWin {
-    constructor(type, cardResult) {
+    constructor(type) {
         this.type = type;
-        this.cardResult = cardResult;
+
     }
 
     getCardGameProfitLoss() {
@@ -35,73 +35,50 @@ class CardResultTypeWin {
     }
 
     dragonTiger() {
-        switch (this.cardResult.win) {
-            case '1':
-                return 'Dragon';
-            case '2':
-                return 'Tiger';
-            case '3':
-                return 'Tie';
-            default:
-                return null;
-        }
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Dragon'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Tiger'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
+    END as result`
     }
 
     dragonTigerLion() {
-        switch (this.cardResult.win) {
-            case '1':
-                return 'Dragon';
-            case '21':
-                return 'Tiger';
-            case '41':
-                return 'Lion';
-            default:
-                return null;
-        }
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Dragon'
+        WHEN "cardResult".result ->> 'win' = '21' THEN 'Tiger'
+        WHEN "cardResult".result ->> 'win' = '41' THEN 'Lion'
+    END as result`
     }
 
     lucky7() {
-        return this.cardResult.desc;
+        return `"cardResult".result ->> 'desc' as result`
     }
 
     card32() {
-        switch (this.cardResult.win) {
-            case '1':
-                return 'Player 8';
-            case '2':
-                return 'Player 9';
-            case '3':
-                return 'Player 10';
-            case '4':
-                return 'Player 11';
-            default:
-                return null;
-        }
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player 8'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player 9'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Player 10'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'Player 11'
+    END as result`
     }
 
     andarBahar() {
-        switch (this.cardResult.win) {
-            case '2':
-                return 'Andar';
-            case '1':
-                return 'Bahar';
-            default:
-                return null;
-        }
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Andar'
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Bahar'
+    END as result`
     }
 
     teen20() {
-        switch (this.cardResult.win) {
-            case '1':
-                return 'Player A';
-            case '2':
-                return 'Player B';
-            case '3':
-                return 'Tie';
-            default:
-                return null;
-        }
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player A'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player B'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
+    END as result`
     }
+
+
 }
 
 exports.CardResultTypeWin = CardResultTypeWin;

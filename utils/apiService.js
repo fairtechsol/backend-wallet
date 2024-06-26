@@ -102,6 +102,6 @@ exports.allApiRoutes = {
     betCount:"/fairgameWallet/betCounts"
   },
   MICROSERVICE : {
-    casinoData:"/casino/rates/"
+    casinoData:"/api/tunnel/casino/odds/"
   }
 };

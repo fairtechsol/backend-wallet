@@ -65,8 +65,8 @@ class CardResultTypeWin {
 
     andarBahar() {
         return `CASE
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Andar'
-        WHEN "cardResult".result ->> 'win' = '1' THEN 'Bahar'
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Andar'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Bahar'
     END as result`
     }
 

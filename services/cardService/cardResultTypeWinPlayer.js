@@ -73,8 +73,8 @@ class CardResultTypeWin {
     teen20() {
         return `CASE
         WHEN "cardResult".result ->> 'win' = '1' THEN 'Player A'
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player B'
-        WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Player B'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Tie'
     END as result`
     }
 

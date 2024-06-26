@@ -8,7 +8,11 @@ $ npm run migration:generate -- ./migrations/<migration name>
 
 # to run the migration
 $ typeorm migration:run -d ./orm.config.js
+or
+$ npm run migration:run
 
+# to revert the last migration
+$ npm run migration:revert
 ```
 
 old method to generate migration

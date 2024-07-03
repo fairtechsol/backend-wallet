@@ -35,6 +35,8 @@ class CardResultTypeWin {
                 return this.andarBahar();
             case cardGameType.war:
                 return this.casinoWar();
+            case cardGameType.race20:
+                return this.race20();
             default:
                 throw {
                     statusCode: 400,
@@ -117,6 +119,14 @@ class CardResultTypeWin {
     }
     casinoWar() {
         return `'Player abandoned' as result`
+    }
+    race20() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'K Spade'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'K Heart'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'K Club'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'K Diamond'
+    END as result`
     }
 }
 

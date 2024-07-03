@@ -9,7 +9,7 @@ class CardResultTypeWin {
     getCardGameProfitLoss() {
         switch (this.type) {
             case cardGameType.abj:
-                return this.andarBahar();
+                return this.andarBahar2();
             case cardGameType.dt20:
             case cardGameType.dt202:
             case cardGameType.dt6:
@@ -24,6 +24,17 @@ class CardResultTypeWin {
                 return this.card32();
             case cardGameType.dtl20:
                 return this.dragonTigerLion();
+            case cardGameType.teen8:
+                return this.teenOpen();
+            case cardGameType.poker20:
+            case cardGameType.poker:
+                return this.poker2020();
+            case cardGameType.poker6:
+                return this.poker6Player();
+            case cardGameType.ab20:
+                return this.andarBahar();
+            case cardGameType.war:
+                return this.casinoWar();
             default:
                 throw {
                     statusCode: 400,
@@ -63,7 +74,7 @@ class CardResultTypeWin {
     END as result`
     }
 
-    andarBahar() {
+    andarBahar2() {
         return `CASE
         WHEN "cardResult".result ->> 'win' = '1' THEN 'Andar'
         WHEN "cardResult".result ->> 'win' = '2' THEN 'Bahar'
@@ -79,6 +90,34 @@ class CardResultTypeWin {
     }
 
 
+    teenOpen() {
+        return `concat( 'Player',' ',(string_to_array("cardResult".result ->> 'sid','|'))[0]) as result`
+    }
+    poker2020() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '11' THEN 'Player A'
+        WHEN "cardResult".result ->> 'win' = '21' THEN 'Player B'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player Abandoned'
+    END as result`
+    }
+    poker6Player() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '11' THEN 'Player 1'
+        WHEN "cardResult".result ->> 'win' = '12' THEN 'Player 2'
+        WHEN "cardResult".result ->> 'win' = '13' THEN 'Player 3'
+        WHEN "cardResult".result ->> 'win' = '14' THEN 'Player 4'
+        WHEN "cardResult".result ->> 'win' = '15' THEN 'Player 5'
+        WHEN "cardResult".result ->> 'win' = '16' THEN 'Player 6'
+        WHEN "cardResult".result ->> 'win' = '17' THEN 'Player 7'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player Abandoned'
+    END as result`
+    }
+    andarBahar() {
+        return `'Player ab20' as result`
+    }
+    casinoWar() {
+        return `'Player abandoned' as result`
+    }
 }
 
 exports.CardResultTypeWin = CardResultTypeWin;

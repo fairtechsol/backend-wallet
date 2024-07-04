@@ -35,6 +35,12 @@ class CardResultTypeWin {
                 return this.andarBahar();
             case cardGameType.war:
                 return this.casinoWar();
+            case cardGameType.race20:
+                return this.race20();
+            case cardGameType.superover:
+                return this.superOver();
+            case cardGameType.cricketv3:
+                return this.cricket55();
             default:
                 throw {
                     statusCode: 400,
@@ -117,6 +123,29 @@ class CardResultTypeWin {
     }
     casinoWar() {
         return `'Player abandoned' as result`
+    }
+    race20() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'K Spade'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'K Heart'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'K Club'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'K Diamond'
+    END as result`
+    }
+    superOver() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player E'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player R'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
+    END as result`
+    }
+
+    cricket55() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player A'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player I'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
+    END as result`
     }
 }
 

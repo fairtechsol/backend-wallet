@@ -97,7 +97,7 @@ class CardResultTypeWin {
 
 
     teenOpen() {
-        return `concat( 'Player',' ',(string_to_array("cardResult".result ->> 'sid','|'))[0]) as result`
+        return `concat( 'Player',' ',(string_to_array("cardResult".result ->> 'sid','|'))[1]) as result`
     }
     poker2020() {
         return `CASE

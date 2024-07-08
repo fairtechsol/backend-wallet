@@ -151,9 +151,9 @@ class CardResultTypeWin {
     }
     teenTest() {
         return `CASE
-        WHEN "cardResult".result ->> 'win' = '1' THEN 'Dragon'
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Tiger'
-        WHEN "cardResult".result ->> 'win' = '3' THEN 'Lion'
+        WHEN "cardResult".result ->> 'win' = '11' THEN 'Dragon'
+        WHEN "cardResult".result ->> 'win' = '21' THEN 'Tiger'
+        WHEN "cardResult".result ->> 'win' = '31' THEN 'Lion'
     END as result`
     }
 }

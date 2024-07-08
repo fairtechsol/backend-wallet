@@ -17,6 +17,8 @@ class CardResultTypeWin {
             case cardGameType.teen20:
             case cardGameType.teen:
                 return this.teen20();
+            case cardGameType.teen9:
+                return this.teenTest();
             case cardGameType.lucky7:
             case cardGameType.lucky7eu:
                 return this.lucky7();
@@ -145,6 +147,13 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '1' THEN 'Player A'
         WHEN "cardResult".result ->> 'win' = '2' THEN 'Player I'
         WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
+    END as result`
+    }
+    teenTest() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Dragon'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Tiger'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Lion'
     END as result`
     }
 }

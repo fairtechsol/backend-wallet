@@ -15,8 +15,9 @@ class CardResultTypeWin {
             case cardGameType.dt6:
                 return this.dragonTiger();
             case cardGameType.teen20:
-            case cardGameType.teen:
                 return this.teen20();
+            case cardGameType.teen:
+                return this.teenOneDay();
             case cardGameType.teen9:
                 return this.teenTest();
             case cardGameType.lucky7:
@@ -97,6 +98,13 @@ class CardResultTypeWin {
     END as result`
     }
 
+    teenOneDay() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player A'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player B'
+        WHEN "cardResult".result ->> 'win' = '0' THEN 'Tie'
+    END as result`
+    }
 
     teenOpen() {
         return `concat( 'Player',' ',(string_to_array("cardResult".result ->> 'sid','|'))[1]) as result`

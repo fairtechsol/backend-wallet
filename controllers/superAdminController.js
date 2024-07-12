@@ -46,6 +46,8 @@ const {
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
+const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
+const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -949,7 +951,7 @@ exports.getPlacedBets = async (req, res, next) => {
     let promiseArray = []
 
     for (let url of domainData) {
-      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id });
+      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id, isTeamNameAllow: true });
       promiseArray.push(promise);
     }
     await Promise.allSettled(promiseArray)
@@ -1146,6 +1148,126 @@ exports.getUserProfitLoss = async (req, res, next) => {
   }
 }
 
+exports.getUserRacingProfitLoss = async (req, res, next) => {
+  try {
+    const { matchId } = req.params;
+    const { id, roleName } = req.user;
+
+    const users = await getFirstLevelChildUserWithPartnership(id, partnershipPrefixByRole[roleName] + "Partnership");
+
+    let oldBetFairUserIds = [];
+    let userProfitLossData = [];
+
+    for (let element of users) {
+      let currUserProfitLossData = {};
+      element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
+      if (element?.roleName == userRoleConstant.fairGameAdmin) {
+        const faDomains =await getFaAdminDomain(element);
+        let totalPLVal = 0;
+
+        for (let usersDomain of faDomains) {
+       
+          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
+            userIds: JSON.stringify(element),
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${usersDomain?.domain} getting user profit loss`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+          const mergeObjectsWithSum = (obj1, obj2) => Object.fromEntries(Object.entries(obj1).map(([k, v]) => [k, (v || 0) + (obj2[k] ?? 0)]).concat(Object.entries(obj2).filter(([k]) => !(k in obj1))));
+          currUserProfitLossData = mergeObjectsWithSum(response?.data?.reduce((prev, curr) => {
+            Object.keys(curr)?.forEach((item) => {
+              if (typeof curr[item] === 'number' && !isNaN(curr[item])) {
+                prev[item] = (prev[item] || 0) + curr[item];
+                totalPLVal += curr[item];
+                prev[item] = parseFloat(prev[item]?.toFixed(2));
+              }
+            });
+            return prev;
+          }, {}), currUserProfitLossData);
+        
+          };
+          currUserProfitLossData.userName = element?.userName;
+        if (totalPLVal != 0) {
+          userProfitLossData.push(currUserProfitLossData);
+        }
+      }
+      else {
+        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
+          oldBetFairUserIds.push(element);
+        }
+        else {
+          const doaminData =await getDomainByUserId(element.id);
+
+          const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
+            userIds: JSON.stringify(element),
+          })
+            .then((data) => data)
+            .catch((err) => {
+              logger.error({
+                context: `error in ${doaminData} getting user profit loss`,
+                process: `User ID : ${req.user.id} `,
+                error: err.message,
+                stake: err.stack,
+              });
+              throw err;
+            });
+
+            userProfitLossData.push(...response?.data);
+        }
+      }
+    };
+
+   
+    if (oldBetFairUserIds?.length > 0) {
+      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLossRacing + matchId, null,{}, {
+        userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${oldBetFairUserIds?.join(",")} getting user list`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+        userProfitLossData.push(...response?.data);
+    }
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data:userProfitLossData
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    logger.error({
+      error: `Error at get user profit loss match.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}
+
 // Controller function for locking/unlocking a super admin
 exports.lockUnlockUserByUserPanel = async (req, res, next) => {
   try {
@@ -1175,3 +1297,68 @@ exports.lockUnlockUserByUserPanel = async (req, res, next) => {
     );
   }
 };
+
+exports.getCardResult = async ( req, res ) => {
+  try {
+
+    const { type } = req.params;
+    const query  = req.query;
+    const currGameWinner = new CardResultTypeWin(type).getCardGameProfitLoss();
+    const select = ['cardResult.gameType as "gameType"', "cardResult.id as id", 'cardResult.createdAt as "createdAt"', currGameWinner, `"cardResult".result ->> 'mid' as mid`]
+
+    let result = await getCasinoCardResult(query, { gameType: type }, select);
+    
+    SuccessResponse(
+      {
+        statusCode: 200,
+        data: result,
+      },
+      req,
+      res
+    );
+  } catch ( error ) {
+    logger.error({
+      error: `Error while getting card results.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}
+
+exports.getCardResultDetail = async ( req, res ) => {
+  try {
+    const { id } = req.params;
+    const result = await getCardResultData(`result ->> 'mid' = '${id}' `);
+    
+    SuccessResponse(
+      {
+        statusCode: 200,
+        data: result,
+      },
+      req,
+      res
+    );
+  } catch ( error ) {
+    logger.error({
+      error: `Error while getting card result detail.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    return ErrorResponse(
+      {
+        statusCode: 500,
+        message: error.message,
+      },
+      req,
+      res
+    );
+  }
+}

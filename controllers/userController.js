@@ -55,6 +55,7 @@ const {
   getFaAdminDomain,
   forceLogoutIfLogin,
 } = require("../services/commonService");
+const crypto = require('crypto');
 const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
@@ -288,10 +289,9 @@ exports.isUserExist = async (req, res) => {
   }
 }
 
-const generateTransactionPass = () => {
-  const randomNumber = Math.floor(100000 + Math.random() * 900000);
-  return `${randomNumber}`;
-};
+const generateTransactionPass =() => {
+ return crypto.randomInt(0, 999999).toString().padStart(6, '0'); 
+}
 
 // Check old password against the stored password
 const checkOldPassword = async (userId, oldPassword) => {
@@ -335,7 +335,7 @@ exports.changePassword = async (req, res, next) => {
   try {
     // Destructure request body
     const { oldPassword, newPassword, transactionPassword } = req.body;
-
+    
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
 
@@ -800,8 +800,29 @@ exports.userList = async (req, res, next) => {
           : []),
       ];
 
+      const total = data?.reduce((prev, curr) => {
+        prev["creditRefrence"] = (prev["creditRefrence"] || 0) + (curr["creditRefrence"] || 0);
+        prev["balance"] = (prev["balance"] || 0) + (curr["balance"] || 0);
+        prev["availableBalance"] = (prev["availableBalance"] || 0) + (curr["availableBalance"] || 0);
+
+        if (prev["userBal"]) {
+          prev["userBal"] = {
+            profitLoss: (prev["userBal"]["profitLoss"] || 0) + (curr["userBal"]["profitLoss"] || 0),
+            exposure: (prev["userBal"]["exposure"] || 0) + (curr["userBal"]["exposure"] || 0)
+          }
+        }
+        else {
+          prev["userBal"] = {
+            profitLoss: (curr["userBal"]["profitLoss"] || 0),
+            exposure: (curr["userBal"]["exposure"] || 0),
+          }
+        }
+        return prev
+      }, {});
+      data?.unshift(total);
+
       const fileGenerate = new FileGenerate(type);
-      const file = await fileGenerate.generateReport(data, header);
+      const file = await fileGenerate.generateReport(data, header, "Client List Report");
       const fileName = `accountList_${new Date()}`;
 
       return SuccessResponse(
@@ -1228,7 +1249,6 @@ exports.setCreditReferrence = async (req, res, next) => {
       await updateUserDataRedis(user.id, { profitLoss });
     }
 
-
     let transactionArray = [
       {
         actionBy: reqUser.id,
@@ -1323,8 +1343,6 @@ exports.lockUnlockUser = async (req, res, next) => {
       );
     }
 
-
-
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {
       await performBlockOperation(lockType.user, userId, loginId, userBlock)
@@ -1395,7 +1413,6 @@ exports.getTotalProfitLoss = async (req, res) => {
     let domainData;
     let where = {};
 
-
     if (roleName == userRoleConstant.fairGameAdmin) {
       domainData = await getFaAdminDomain(req.user, null, where);
     }
@@ -1463,7 +1480,7 @@ exports.getTotalProfitLoss = async (req, res) => {
 
 exports.getDomainProfitLoss = async (req, res) => {
   try {
-    let { startDate, endDate, type, id } = req.query;
+    let { startDate, endDate, type, id, isRacing } = req.query;
 
     let domainData;
     let where = {};
@@ -1483,7 +1500,7 @@ exports.getDomainProfitLoss = async (req, res) => {
     }
 
     for (let url of domainData) {
-      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, type: type, searchId: id }, {})
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.matchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, type: type, searchId: id, isRacing: isRacing }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1597,6 +1614,209 @@ exports.getResultBetProfitLoss = async (req, res) => {
   }
 }
 
+exports.getCardTotalProfitLoss = async (req, res) => {
+  try {
+    const { roleName } = req.user;
+    let { startDate, endDate, id } = req.query;
+    let domainData;
+    let where = {};
+
+    if (roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(req.user, null, where);
+    }
+    else {
+      domainData = await getUserDomainWithFaId(where);
+    }
+
+    let profitLoss = [];
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (roleName === userRoleConstant.fairGameWallet && id) {
+      id=await updateNewUserTemp(newUserTemp, id)
+    }
+
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.cardProfitLoss, {
+        user: newUserTemp, startDate: startDate, endDate: endDate, searchId: id
+      }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} getting profitloss`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      profitLoss.push(...(data?.data || []));
+    }
+
+    const resultArray = Object.values(profitLoss.reduce((accumulator, currentValue) => {
+      const matchId = currentValue.matchId;
+
+      accumulator[matchId] = accumulator[matchId] || {
+        ...currentValue,
+        totalLoss: 0,
+        totalBet: 0,
+      };
+
+      accumulator[matchId].totalLoss += parseFloat(currentValue.totalLoss);
+      accumulator[matchId].totalBet += parseFloat(currentValue.totalBet);
+
+      return accumulator;
+    }, {}));
+
+    return SuccessResponse(
+      { statusCode: 200, data: resultArray },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get total profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+};
+
+exports.getCardDomainProfitLoss = async (req, res) => {
+  try {
+    let { startDate, endDate, id, matchId } = req.query;
+
+    let domainData;
+    let where = {};
+
+    if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+      domainData = await getFaAdminDomain(req.user, null, where);
+    }
+    else {
+      domainData = await getUserDomainWithFaId(where);
+    }
+
+    let profitLoss = {};
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+
+      id = await updateNewUserTemp(newUserTemp, id)
+    }
+
+    for (let url of domainData) {
+      let data = await apiCall(apiMethod.post, url?.domain + allApiRoutes.cardMatchWiseProfitLoss, { user: newUserTemp, startDate: startDate, endDate: endDate, searchId: id, matchId: matchId }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} getting profit loss for specific domain.`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+      data?.data?.result?.forEach((item) => {
+        if (profitLoss[item?.runnerId]) {
+          profitLoss[item?.runnerId] = {
+            ...profitLoss[item?.runnerId],
+            rateProfitLoss: parseFloat((parseFloat(item?.rateProfitLoss) + parseFloat(profitLoss?.[item?.matchId]?.rateProfitLoss)).toFixed(2)),
+            totalBet: parseFloat((parseFloat(item?.totalBet) + parseFloat(profitLoss?.[item?.matchId]?.totalBet)).toFixed(2)),
+          }
+        }
+        else {
+          profitLoss[item?.runnerId] = item;
+        }
+      });
+    }
+
+
+    return SuccessResponse(
+      { statusCode: 200, data: Object.values(profitLoss)?.sort((a, b) => new Date(b.runnerId) - new Date(a.runnerId)) },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get total domain wise profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getCardResultBetProfitLoss = async (req, res) => {
+  try {
+    let {  runnerId, url, id, userId, roleName } = req.query;
+    let data = [];
+
+    let newUserTemp = JSON.parse(JSON.stringify(req.user));
+    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+      id = await updateNewUserTemp(newUserTemp, id)
+    }
+    newUserTemp.roleName = roleName || newUserTemp.roleName;
+    newUserTemp.id = userId || newUserTemp.id;
+    if (url) {
+
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.cardBetWiseProfitLoss, { user: newUserTemp, runnerId: runnerId, searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url} getting profit loss for all bets.`,
+            process: `User ID : ${req.user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      data = response?.data;
+    }
+    else {
+      let domainData;
+      let where = {};
+
+      if (req.user.roleName == userRoleConstant.fairGameAdmin) {
+        domainData = await getFaAdminDomain(req.user, null, where);
+      }
+      else {
+        domainData = await getUserDomainWithFaId(where);
+      }
+
+      for (let domain of domainData) {
+        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.cardBetWiseProfitLoss, { user: newUserTemp, runnerId: runnerId, searchId: id, partnerShipRoleName: req.user.roleName }, {})
+          .then((data) => data)
+          .catch((err) => {
+            logger.error({
+              context: `error in ${domain?.domain} getting profit loss for all bets.`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
+            });
+            throw err;
+          });
+
+        data?.push(...response?.data);
+      }
+    }
+    return SuccessResponse(
+      { statusCode: 200, data: data },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get all bets profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
 exports.getSessionBetProfitLoss = async (req, res) => {
   try {
     let { matchId, url, id, roleName, userId } = req.query;
@@ -1668,7 +1888,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
 
 exports.getUserWiseBetProfitLoss = async (req, res) => {
   try {
-    let { matchId, url, id, userId, roleName } = req.query;
+    let { matchId, url, id, userId, roleName, runnerId } = req.query;
 
     roleName = roleName || req.user.roleName;
     userId = userId || req.user.id;
@@ -1681,7 +1901,8 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         },
         matchId: matchId,
         searchId: id,
-        partnerShipRoleName: req.user.roleName
+        partnerShipRoleName: req.user.roleName,
+        runnerId: runnerId
       })
         .then((data) => data)
         .catch((err) => {
@@ -1751,7 +1972,8 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             },
             matchId: matchId,
             // searchId: id,
-            partnerShipRoleName: req.user.roleName
+            partnerShipRoleName: req.user.roleName,
+            runnerId: runnerId
           })
             .then((data) => data)
             .catch((err) => {
@@ -1802,7 +2024,8 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             },
             matchId: matchId,
             searchId: id,
-            partnerShipRoleName: req.user.roleName
+            partnerShipRoleName: req.user.roleName,
+            runnerId: runnerId
           })
             .then((data) => data)
             .catch((err) => {
@@ -1850,7 +2073,8 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         matchId: matchId,
         searchId: id,
         userIds: oldBetFairUserIds?.join(","),
-        partnerShipRoleName: req.user.roleName
+        partnerShipRoleName: req.user.roleName,
+        runnerId: runnerId
       })
         .then((data) => data)
         .catch((err) => {
@@ -2069,9 +2293,6 @@ const updateNewUserTemp = async (newUserTemp, id) => {
   return id
 }
 
-
-
-
 const performBlockOperation = async (type, userId, loginId, blockStatus) => {
   let blockedItems;
 
@@ -2108,7 +2329,3 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
   }
 
 }
-
-
-
-

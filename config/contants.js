@@ -1,5 +1,6 @@
 module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
 module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
+module.exports.casinoMicroServiceDomain = process.env.CASINOMICROSERVICEURL || "http://localhost:3201";
 
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
@@ -22,7 +23,9 @@ module.exports.userRoleConstant = {
 module.exports.gameType = {
   cricket: "cricket",
   football: "football",
-  tennis:"tennis"
+  tennis:"tennis",
+  horseRacing: "horseRacing",
+  greyHound: "greyHound"
 };
 
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]
@@ -117,6 +120,7 @@ module.exports.walletDescription = {
 module.exports.passwordRegex = /^(?=.*[A-Z])(?=.*[a-zA-Z].*[a-zA-Z].*[a-zA-Z].*[a-zA-Z])(?=.*\d.*\d.*\d.*\d).{8,}$/;
 
 module.exports.socketData = {
+  CardBetPlaced: "userCardBetPlaced",
   userBalanceUpdateEvent: "userBalanceUpdate",
   logoutUserForceEvent: "logoutUserForce",
   SessionBetPlaced: "userSessionBetPlaced",
@@ -126,6 +130,7 @@ module.exports.socketData = {
   sessionNoResult: "sessionNoResult",
   sessionResultUnDeclare: "sessionResultUnDeclare",
   matchResult: "matchResult",
+  cardResult: "cardResult",
   matchResultUnDeclare: "matchResultUnDeclare",
   sessionDeleteBet: "sessionDeleteBet",
   matchDeleteBet: "matchDeleteBet"
@@ -150,6 +155,7 @@ module.exports.redisKeys = {
   noRateTie: "noRateTie_",
   yesRateComplete: "yesRateComplete_",
   noRateComplete: "noRateComplete_",
+  card: "_card",
 
   userExposureLimit : "exposureLimit",
   profitLoss:"_profitLoss",
@@ -210,6 +216,10 @@ module.exports.matchBettingType = {
   }, {}))
 };
 
+module.exports.racingBettingType = {
+  matchOdd: "matchOdd",
+};
+
 module.exports.redisKeysMatchWise = {
   [this.gameType.cricket]: [this.redisKeys.userTeamARate, this.redisKeys.userTeamBRate, this.redisKeys.userTeamCRate, this.redisKeys.noRateComplete, this.redisKeys.yesRateComplete, this.redisKeys.noRateTie, this.redisKeys.yesRateTie],
   [this.gameType.football]: [this.redisKeys.userTeamARate, this.redisKeys.userTeamBRate, this.redisKeys.userTeamCRate, this.redisKeys.userTeamARateHalfTime, this.redisKeys.userTeamBRateHalfTime, this.redisKeys.userTeamCRateHalfTime, ...Array.from({ length: 20 }, (_, index) => this.redisKeys[`yesRateUnderOver${index}.5`]),
@@ -235,10 +245,15 @@ module.exports.tiedManualTeamName = {
   no: "NO"
 }
 
+module.exports.matchWiseBlockType = {
+  match: "match",
+  session: "session",
+};
 
 module.exports.lockType = {
   user: "user",
   bet: "bet"
+}
 
 module.exports.matchBettingsTeamName = {
   over: "OVER",
@@ -404,4 +419,56 @@ module.exports.redisKeysMarketWise = {
     return prev;
   }, {}))
 
+}
+
+exports.cardGameType = {
+  dt20: "dt20",
+  teen20: "teen20",
+  lucky7: "lucky7",
+  card32: "card32",
+  abj: "abj",
+  dt202: "dt202",
+  dtl20: "dtl20",
+  dt6: "dt6",
+  lucky7eu: "lucky7eu",
+  teen: "teen",
+  teen9:"teen9",
+  teen8:"teen8",
+  poker: "poker",
+  poker20: "poker20",
+  poker6:"poker6",
+  baccarat:"baccarat",
+  baccarat2:"baccarat2",
+  card32eu: "card32eu",
+  ab20:"ab20",
+  "3cardj":"3cardj",
+  war:"war",
+  worli2:"worli2",
+  superover:"superover",
+  cmatch20:"cmatch20",
+  aaa: "aaa",
+  btable: "btable",
+  race20:"race20",
+  cricketv3:"cricketv3"
+}
+
+exports.cardGameShapeCode = {
+  "CC": "club",
+  "DD": "heart",
+  "SS": "diamond",
+  "HH": "spade"
+}
+
+exports.cardGameShapeColor = {
+  "CC": "black",
+  "DD": "red",
+  "SS": "red",
+  "HH": "black"
+}
+
+exports.cardsNo = {
+  K: 13,
+  Q: 12,
+  J: 11,
+  A: 1,
 }

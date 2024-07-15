@@ -133,7 +133,7 @@ class CardResultTypeWin {
         return `'Player ab20' as result`
     }
     casinoWar() {
-        return `'Player abandoned' as result`
+        return `Concat('Player ',"cardResult".result ->> 'sid') as result`
     }
     race20() {
         return `CASE

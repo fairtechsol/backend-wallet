@@ -14,3 +14,13 @@ module.exports.deleteMultipleBetValidator = Joi.object({
         )
     )
 });
+
+module.exports.changeBetsDeleteReasonValidator = Joi.object({
+    deleteReason: Joi.string().required(),
+    betData: Joi.object().pattern(
+        Joi.string().required(),
+        Joi.array().items(
+            Joi.string().guid({ version: 'uuidv4' })
+        ).min(1)
+    )
+});

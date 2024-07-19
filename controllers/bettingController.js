@@ -170,3 +170,39 @@ exports.deleteMultipleBetForRace = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
+
+exports.changeBetsDeleteReason = async (req, res) => {
+    try {
+        let { deleteReason, betData } = req.body;
+
+        const domains = Object.keys(betData);
+        let promiseArray = [];
+        for (let domain of domains) {
+            let promise = apiCall(
+                apiMethod.post,
+                domain + allApiRoutes.changeDeleteBetReason,
+                { betIds: betData[domain], deleteReason: deleteReason }
+            );
+            promiseArray.push(promise);
+        }
+        let failedUrl = new Set();
+        await Promise.allSettled(promiseArray)
+            .then(results => {
+                let urlDataArray = Object.keys(betData);
+                results.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        failedUrl.add(urlDataArray[index]);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error in handling settled promises:', error);
+            });
+        if (failedUrl.size) {
+            return ErrorResponse({ statusCode: 400, message: { msg: "deleteBetError", keys: { urlData: Array.from(failedUrl).join(', ') } } }, req, res);
+        }
+        return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
+    } catch (err) {
+        return ErrorResponse(err, req, res);
+    }
+};

@@ -45,6 +45,8 @@ class CardResultTypeWin {
                 return this.superOver();
             case cardGameType.cricketv3:
                 return this.cricket55();
+            case cardGameType.cmatch20:
+                return this.cricket20();
             default:
                 throw {
                     statusCode: 400,
@@ -164,6 +166,9 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '21' THEN 'Tiger'
         WHEN "cardResult".result ->> 'win' = '31' THEN 'Lion'
     END as result`
+    }
+    cricket20() {
+        return `"cardResult".result ->> 'win' as result`
     }
 }
 

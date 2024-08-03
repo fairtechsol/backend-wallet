@@ -45,6 +45,17 @@ class CardResultTypeWin {
                 return this.superOver();
             case cardGameType.cricketv3:
                 return this.cricket55();
+            case cardGameType.cmatch20:
+                return this.cricket20();
+            case cardGameType.aaa:
+                return this.amarAkbarAnthony();
+            case cardGameType.btable:
+                return this.bollywoodTable();
+            case cardGameType.worli2:
+                return this.instantWorli();
+            case cardGameType.baccarat:
+            case cardGameType.baccarat2:
+                return this.baccarat();
             default:
                 throw {
                     statusCode: 400,
@@ -163,6 +174,39 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '11' THEN 'Dragon'
         WHEN "cardResult".result ->> 'win' = '21' THEN 'Tiger'
         WHEN "cardResult".result ->> 'win' = '31' THEN 'Lion'
+    END as result`
+    }
+    cricket20() {
+        return `"cardResult".result ->> 'win' as result`
+    }
+    amarAkbarAnthony() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Amar'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Akbar'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Anthony'
+    END as result`
+    }
+
+    bollywoodTable() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Don'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Amar Akbar Anthony'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Sahib Bibi Aur Ghulam'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'Dharam Veer'
+        WHEN "cardResult".result ->> 'win' = '5' THEN 'Kis Kis Ko Pyaar Karoon'
+        WHEN "cardResult".result ->> 'win' = '6' THEN 'Ghulam'
+    END as result`
+    }
+
+    instantWorli() {
+        return `"cardResult".result ->> 'sid' as result`
+    }
+
+    baccarat() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Banker'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
     END as result`
     }
 }

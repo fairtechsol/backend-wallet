@@ -955,12 +955,12 @@ exports.getPlacedBets = async (req, res, next) => {
       promiseArray.push(promise);
     }
     await Promise.allSettled(promiseArray)
-      .then(results => {
-        results.forEach((item) => {
-          if (item?.status == "fulfilled") {
-            result = mergeBetsArray(result, item?.value?.data?.rows);
+      .then(async results => {
+          for (let item of results) {
+            if (item?.status == "fulfilled") {
+              result = await mergeBetsArray(result, item?.value?.data?.rows);
+            }
           }
-        });
       })
       .catch(error => {
         logger.error({

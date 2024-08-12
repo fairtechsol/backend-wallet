@@ -1067,13 +1067,13 @@ exports.isValidUUID = (uuid) => {
   return regex.test(uuid);
 }
 
-exports.mergeBetsArray = (betArr1, betArr2) => {
+exports.mergeBetsArray = async (betArr1, betArr2) => {
   let i = 0, j = 0;
   const result = [];
 
   // Merge arrays while both have elements
   while (i < betArr1.length && j < betArr2.length) {
-    if (new Date(betArr1[i].createdAt) < new Date(betArr2[j].createdAt)) {
+    if (new Date(betArr1[i].createdAt) > new Date(betArr2[j].createdAt)) {
       result.push(betArr1[i]);
       i++;
     } else {

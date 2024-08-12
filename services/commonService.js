@@ -1066,3 +1066,33 @@ exports.isValidUUID = (uuid) => {
   const regex = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
   return regex.test(uuid);
 }
+
+exports.mergeBetsArray = (betArr1, betArr2) => {
+  let i = 0, j = 0;
+  const result = [];
+
+  // Merge arrays while both have elements
+  while (i < betArr1.length && j < betArr2.length) {
+    if (betArr1[i].createdAt < betArr2[j].createdAt) {
+      result.push(betArr1[i]);
+      i++;
+    } else {
+      result.push(betArr2[j]);
+      j++;
+    }
+  }
+
+  // Add remaining elements from betArr1, if any
+  while (i < betArr1.length) {
+    result.push(betArr1[i]);
+    i++;
+  }
+
+  // Add remaining elements from betArr2, if any
+  while (j < betArr2.length) {
+    result.push(betArr2[j]);
+    j++;
+  }
+
+  return result;
+};

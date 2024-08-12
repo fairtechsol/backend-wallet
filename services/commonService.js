@@ -1073,7 +1073,7 @@ exports.mergeBetsArray = (betArr1, betArr2) => {
 
   // Merge arrays while both have elements
   while (i < betArr1.length && j < betArr2.length) {
-    if (betArr1[i].createdAt < betArr2[j].createdAt) {
+    if (new Date(betArr1[i].createdAt) < new Date(betArr2[j].createdAt)) {
       result.push(betArr1[i]);
       i++;
     } else {

@@ -212,6 +212,13 @@ exports.changeBetsDeleteReason = async (req, res) => {
         if (failedUrl.size) {
             return ErrorResponse({ statusCode: 400, message: { msg: "deleteBetError", keys: { urlData: Array.from(failedUrl).join(', ') } } }, req, res);
         }
+
+
+        await apiCall(
+            apiMethod.post,
+            expertDomain + allApiRoutes.EXPERTS.updateDeleteReason,
+            { betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId }
+        );
         return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
     } catch (err) {
         return ErrorResponse(err, req, res);

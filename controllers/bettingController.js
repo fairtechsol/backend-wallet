@@ -1,5 +1,6 @@
-const { expertDomain, redisKeys } = require('../config/contants.js');
+const { expertDomain, redisKeys, socketData } = require('../config/contants.js');
 const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
+const { sendMessageToUser } = require('../sockets/socketManager.js');
 const { allApiRoutes, apiCall, apiMethod } = require('../utils/apiService.js');
 const { ErrorResponse, SuccessResponse } = require('../utils/response.js');
 
@@ -173,7 +174,7 @@ exports.deleteMultipleBetForRace = async (req, res) => {
 
 exports.changeBetsDeleteReason = async (req, res) => {
     try {
-        let { deleteReason, betData } = req.body;
+        let { deleteReason, betData, matchId } = req.body;
 
         const domains = Object.keys(betData);
         let promiseArray = [];
@@ -181,7 +182,7 @@ exports.changeBetsDeleteReason = async (req, res) => {
             let promise = apiCall(
                 apiMethod.post,
                 domain + allApiRoutes.changeDeleteBetReason,
-                { betIds: betData[domain], deleteReason: deleteReason }
+                { betIds: betData[domain], deleteReason: deleteReason, matchId: matchId }
             );
             promiseArray.push(promise);
         }
@@ -193,6 +194,16 @@ exports.changeBetsDeleteReason = async (req, res) => {
                     if (result.status === 'rejected') {
                         failedUrl.add(urlDataArray[index]);
                     }
+                    else if (result.status == "fulfilled") {
+
+                        Object.keys(result?.value?.data)?.forEach((item) => {
+                            sendMessageToUser(item, socketData.updateDeleteReason, {
+                                betIds: result?.value?.data?.[item]?.bets,
+                                deleteReason: deleteReason,
+                                matchId: matchId
+                            });
+                        });
+                    }
                 });
             })
             .catch(error => {
@@ -201,6 +212,13 @@ exports.changeBetsDeleteReason = async (req, res) => {
         if (failedUrl.size) {
             return ErrorResponse({ statusCode: 400, message: { msg: "deleteBetError", keys: { urlData: Array.from(failedUrl).join(', ') } } }, req, res);
         }
+
+
+        await apiCall(
+            apiMethod.post,
+            expertDomain + allApiRoutes.EXPERTS.updateDeleteReason,
+            { betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId }
+        );
         return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
     } catch (err) {
         return ErrorResponse(err, req, res);

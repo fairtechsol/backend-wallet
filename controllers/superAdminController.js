@@ -24,7 +24,7 @@ const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const { forceLogoutIfLogin, getFaAdminDomain, settingBetsDataAtLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, getFaAdminDomain, settingBetsDataAtLogin, mergeBetsArray } = require("../services/commonService");
 const internalRedis = require("../config/internalRedisConnection");
 const {
   getUserBalanceDataByUserId,
@@ -955,12 +955,12 @@ exports.getPlacedBets = async (req, res, next) => {
       promiseArray.push(promise);
     }
     await Promise.allSettled(promiseArray)
-      .then(results => {
-        results.forEach((item) => {
-          if (item?.status == "fulfilled") {
-            result.push(...item?.value?.data?.rows);
+      .then(async results => {
+          for (let item of results) {
+            if (item?.status == "fulfilled") {
+              result = await mergeBetsArray(result, item?.value?.data?.rows);
+            }
           }
-        });
       })
       .catch(error => {
         logger.error({

@@ -133,7 +133,8 @@ module.exports.socketData = {
   cardResult: "cardResult",
   matchResultUnDeclare: "matchResultUnDeclare",
   sessionDeleteBet: "sessionDeleteBet",
-  matchDeleteBet: "matchDeleteBet"
+  matchDeleteBet: "matchDeleteBet",
+  updateDeleteReason: "updateDeleteReason"
 };
 
 

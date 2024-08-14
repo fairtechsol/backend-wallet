@@ -85,6 +85,7 @@ exports.allApiRoutes = {
     getMatchByCompetitionAndDate: "/match/competition/getMatch",
     lockUnlockUser: "/user/lockUnlockUser",
     isUserExist: "/user/exist",
+    updateDeleteReason: "/superAdmin/update/deleteReason",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",

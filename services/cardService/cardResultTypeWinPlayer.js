@@ -199,7 +199,7 @@ class CardResultTypeWin {
     }
 
     instantWorli() {
-        return `"cardResult".result ->> 'sid' as result`
+        return `Concat('Player ',"cardResult".result ->> 'win', ' Single') as result`
     }
 
     baccarat() {
@@ -207,6 +207,8 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '1' THEN 'Player'
         WHEN "cardResult".result ->> 'win' = '2' THEN 'Banker'
         WHEN "cardResult".result ->> 'win' = '3' THEN 'Tie'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'Banker'
+        WHEN "cardResult".result ->> 'win' = '5' THEN 'Player'
     END as result`
     }
 }

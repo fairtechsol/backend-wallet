@@ -2,8 +2,10 @@ const { AppDataSource } = require("../config/postGresConnection");
 const bcrypt = require("bcryptjs");
 const userSchema = require("../models/user.entity");
 const userBalanceSchema = require("../models/userBalance.entity");
+const userMatchLockSchema = require("../models/userMatchLock.entity");
 const user = AppDataSource.getRepository(userSchema);
 const UserBalance = AppDataSource.getRepository(userBalanceSchema);
+const userMatchLock = AppDataSource.getRepository(userMatchLockSchema);
 const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
 
@@ -51,6 +53,7 @@ exports.getUserByUserName = async (userName, select) => {
     select: select,
   });
 };
+
 /**
  * Block or unblock a user or bet based on the specified parameters.
  *
@@ -66,7 +69,7 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
             SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
-            WHERE id = '${userId}'
+            WHERE id = $1
             UNION
             SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
@@ -78,18 +81,18 @@ exports.userBlockUnblock = async (userId, blockBy, block) => {
     ? `
 ${getUserChild}
   UPDATE users
-  SET "userBlock" = true, "userBlockedBy" = '${blockBy}'
+  SET "userBlock" = true, "userBlockedBy" = $2
   WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "userBlock" = false, "userBlockedBy" = NULL, "autoBlock" = false
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "userBlockedBy" = $2 RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method
-  let query = await user.query(userBlockUnBlockQuery);
+  let query = await user.query(userBlockUnBlockQuery, [ userId, blockBy ]);
   // Return the result of the query
   return query;
 };
@@ -101,7 +104,7 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
   const getUserChild = `WITH RECURSIVE RoleHierarchy AS (
             SELECT id, "roleName", "createBy", "isUrl"
             FROM public.users
-            WHERE id = '${userId}'
+            WHERE id = $1
             UNION
             SELECT ur.id, ur."roleName", ur."createBy", ur."isUrl"
             FROM public.users ur
@@ -113,18 +116,18 @@ exports.betBlockUnblock = async (userId, blockBy, block) => {
     ? `
 ${getUserChild}
   UPDATE users
-  SET "betBlock" = true, "betBlockedBy" = '${blockBy}'
+  SET "betBlock" = true, "betBlockedBy" = $2
   WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" IS NULL RETURNING id,"roleName", "isUrl";
 `
     : `
 ${getUserChild}
     UPDATE users
     SET "betBlock" = false, "betBlockedBy" = NULL
-    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = '${blockBy}' RETURNING id,"roleName", "isUrl";
+    WHERE id IN (SELECT id FROM RoleHierarchy) AND "betBlockedBy" = $2 RETURNING id,"roleName", "isUrl";
     `;
 
   // Execute the constructed query using the 'user.query' method
-  let query = await user.query(userBlockUnBlockQuery);
+  let query = await user.query(userBlockUnBlockQuery, [ userId, blockBy ]);
   // Return the result of the query
   return query;
 };
@@ -162,7 +165,7 @@ exports.getUsersWithUserBalance = async (where, offset, limit) => {
     Query = Query.limit(parseInt(limit));
   }
 
-  var result = await Query.getManyAndCount();
+  let result = await Query.getManyAndCount();
   return result;
 
 }
@@ -198,24 +201,24 @@ exports.getUsersWithTotalUsersBalanceData = (where, query, select) => {
 
 exports.getChildUser = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
-SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`
+SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != $1;`
 
-  return await user.query(query)
+  return await user.query(query, [ id ])
 }
 
 exports.getParentUsers = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."id" = p."createBy"
   )
-SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != '${id}';`;
+SELECT "id" , "roleName" FROM p where "deletedAt" IS NULL AND id != $1;`;
 
-  return await user.query(query);
+  return await user.query(query, [ id ]);
 };
 
 
@@ -267,19 +270,19 @@ exports.getUserWithUserBalance = async (userName) => {
 
 exports.getChildUserBalanceAndData = async (id) => {
   let query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
 SELECT p.*,"userBalances".*  FROM p JOIN "userBalances" ON "userBalances"."userId" = "p"."id" where "deletedAt" IS NULL;
 `
 
-  return await user.query(query)
+  return await user.query(query, [ id ])
 }
 
 exports.softDeleteAllUsers = (id) => {
   const query = `WITH RECURSIVE p AS (
-    SELECT * FROM "users" WHERE "users"."id" = '${id}'
+    SELECT * FROM "users" WHERE "users"."id" = $1
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
@@ -291,5 +294,32 @@ exports.softDeleteAllUsers = (id) => {
   )
   AND "deletedAt" IS NULL -- Only soft delete if not already deleted;  
   `
-  return user.query(query);
+  return user.query(query, [id]);
+}
+
+exports.getUserMatchLock = (where, select) => {
+  return userMatchLock.findOne({ where: where, select: select });
+}
+
+exports.addUserMatchLock = async (body) => {
+  let inserted = await userMatchLock.save(body);
+  return inserted;
+};
+
+exports.deleteUserMatchLock = async (where) => {
+  let deleted = await userMatchLock.delete(where);
+  return deleted;
+};
+
+
+exports.isAllChildDeactive = (where, select, matchId) => {
+  try {
+    return user.createQueryBuilder('user')
+      .leftJoinAndMapMany('user.blockUser', 'userMatchLock', 'userMatchLock', `user.id = userMatchLock.userId AND userMatchLock.matchId = '${matchId}'`)
+      .select(select)
+      .where(where)
+      .getRawMany();
+  } catch (error) {
+    throw error;
+  }
 }

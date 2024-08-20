@@ -37,12 +37,23 @@ exports.allApiRoutes = {
   updateUserBalance: "/fairgameWallet/update/balance",
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
   deleteMultipleBet: "/bet/deleteMultipleBet",
+  deleteMultipleBetForOther:"/bet/deleteMultipleBetForOther",
+  deleteMultipleBetForRace:"/bet/deleteMultipleBetForRace",
   declareResultSession: "/fairgameWallet/declare/result/session",
   unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",
   declareResultMatch: "/fairgameWallet/declare/result/match",
+  declareResultOtherMatch: "/fairgameWallet/declare/result/other/match",
+  declareResultRaceMatch: "/fairgameWallet/declare/result/race/match",
+  declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
   unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
+  unDeclareResultOtherMatch: "/fairgameWallet/unDeclare/result/other/match",
+  unDeclareResultRaceMatch: "/fairgameWallet/unDeclare/result/race/match",
   addMatch:"/match/add",
+  addRace: "/match/raceAdd",
+  cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
+  cardMatchWiseProfitLoss:"/fairgameWallet/card/total/matchWise/profitLoss",
+  cardBetWiseProfitLoss:"/fairgameWallet/card/total/bet/profitLoss",
   profitLoss: "/fairgameWallet/total/profitLoss",
   matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
   userWiseProfitLoss:"/fairgameWallet/userwise/profitLoss",
@@ -57,11 +68,12 @@ exports.allApiRoutes = {
   commissionSettled:"/fairgameWallet/settle/commission",
   matchLock:"/fairgameWallet/userMatchLock",
   userProfitLoss:"/fairgameWallet/user/profitLossData/",
+  userProfitLossRacing:"/fairgameWallet/user/profitLossData/race/",
   checkExposureLimit: "/fairgameWallet/user/exposureLimitCheck",
   deleteUser: "/fairgameWallet/user/delete/",
   checkUserBalance: "/fairgameWallet/check/userBalance",
   getSearchList: "/fairgameWallet/user/searchList",
-
+  changeDeleteBetReason: "/fairgameWallet/bet/change/deleteReason",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
@@ -73,14 +85,24 @@ exports.allApiRoutes = {
     getMatchByCompetitionAndDate: "/match/competition/getMatch",
     lockUnlockUser: "/user/lockUnlockUser",
     isUserExist: "/user/exist",
+    updateDeleteReason: "/superAdmin/update/deleteReason",
   },
   MATCHES: {
     matchDetails: "/superAdmin/match/",
+    raceDetails: "/superAdmin/match/racing/",
+    cardDetails: "/superAdmin/match/card/",
+    otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
     MatchBettingDetail: "/superAdmin/matchBetting/",
+    raceBettingDetail : "/superAdmin/raceBetting/",
+    racingMatchList: "/superAdmin/match/racing/list",
+    racingMatchCountryCodeList: "/superAdmin/match/racing/countryCode",
   },
   bets: {
     placedBet: "/fairgameWallet/getBet",
     betCount:"/fairgameWallet/betCounts"
+  },
+  MICROSERVICE : {
+    casinoData:"/api/tunnel/casino/odds/"
   }
 };

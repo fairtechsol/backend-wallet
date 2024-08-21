@@ -157,7 +157,7 @@ exports.cardDetails = async (req, res) => {
       const url = casinoMicroServiceDomain + allApiRoutes.MICROSERVICE.casinoData + type
 
       let data = await apiCall(apiMethod.get, url);
-      roundData = data?.data?.data?.data;
+      roundData = data?.data;
     }
     catch (error) {
       throw {

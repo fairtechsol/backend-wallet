@@ -56,6 +56,8 @@ class CardResultTypeWin {
             case cardGameType.baccarat:
             case cardGameType.baccarat2:
                 return this.baccarat();
+            case cardGameType["3cardj"]:
+                return this.threeCardJ();
             default:
                 throw {
                     statusCode: 400,
@@ -210,6 +212,11 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '4' THEN 'Banker'
         WHEN "cardResult".result ->> 'win' = '5' THEN 'Player'
     END as result`
+    }
+
+    threeCardJ(){
+        return `"cardResult".result ->> 'win' as result`
+
     }
 }
 

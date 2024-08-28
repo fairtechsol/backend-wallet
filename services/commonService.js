@@ -492,6 +492,63 @@ exports.calculateProfitLossSession = async (redisProfitLoss, betData, partnershi
   };
 };
 
+/**
+* Calculates the profit or loss for a betting session.
+* @param {object} redisProfitLoss - Redis data for profit and loss.
+* @param {object} betData - Data for the current bet.
+* @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
+*/
+exports.calculateProfitLossSessionOddEven = async (redisProfitLoss, betData, partnership = 100) => {
+  let maxLoss = 0;
+
+  let betProfitloss = redisProfitLoss?.betPlaced ?? {};
+
+  if (betData?.betPlacedData?.teamName?.toLowerCase() == "odd") {
+    betProfitloss.odd = ((betProfitloss.odd || 0) + betData?.winAmount) * partnership / 100;
+    betProfitloss.even = ((betProfitloss.even || 0) - betData?.lossAmount) * partnership / 100;
+  }
+  else if (betData?.betPlacedData?.teamName?.toLowerCase() == "even") {
+    betProfitloss.odd = ((betProfitloss.odd || 0) - betData?.lossAmount) * partnership / 100;
+    betProfitloss.even = ((betProfitloss.even || 0) + betData?.winAmount) * partnership / 100;
+  }
+
+  maxLoss = Number(Math.min(...Object.values(betProfitloss)).toFixed(2));
+  // Return the result
+  return {
+    betPlaced: betProfitloss,
+    maxLoss: parseFloat(maxLoss),
+    totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
+  };
+};
+
+/**
+* Calculates the profit or loss for a betting session.
+* @param {object} redisProfitLoss - Redis data for profit and loss.
+* @param {object} betData - Data for the current bet.
+* @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
+*/
+exports.calculateProfitLossSessionCasinoCricket = async (redisProfitLoss, betData, partnership = 100) => {
+  let maxLoss = 0;
+
+  let betProfitloss = redisProfitLoss?.betPlaced ?? {};
+
+  Array.from({ length: 10 }, (_, index) => index)?.forEach((item)=>{
+    if(betData?.betPlacedData?.teamName?.split(" ")?.[1]==item){
+      betProfitloss[item] = ((betProfitloss[item] || 0) + betData?.winAmount) * partnership / 100;
+    }
+    else{
+      betProfitloss[item] = ((betProfitloss[item] || 0) - betData?.lossAmount) * partnership / 100;
+    }
+  });
+
+  maxLoss = Number(Math.min(...Object.values(betProfitloss)).toFixed(2));
+  // Return the result
+  return {
+    betPlaced: betProfitloss,
+    maxLoss: parseFloat(maxLoss),
+    totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
+  };
+};
 
 exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced) => {
   if (newbetPlaced?.[0].odds > oldbetPlaced?.[0]?.odds) {

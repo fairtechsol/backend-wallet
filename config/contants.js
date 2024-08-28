@@ -28,6 +28,15 @@ module.exports.gameType = {
   greyHound: "greyHound"
 };
 
+module.exports.sessionBettingType = {
+  session: "session",
+  fancy1: "fancy1",
+  overByOver: "overByover",
+  ballByBall: "ballByBall",
+  oddEven: "oddEven",
+  cricketCasino: "cricketCasino"
+};
+
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]
 module.exports.blockType={
     userBlock:"userBlock",

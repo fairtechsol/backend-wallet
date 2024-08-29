@@ -1,5 +1,5 @@
 const { __mf } = require("i18n");
-const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain, profitLossKeys, matchesTeamName, otherEventMatchBettingRedisKey, gameType, racingBettingType } = require("../config/contants");
+const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, tiedManualTeamName, oldBetFairDomain, profitLossKeys, matchesTeamName, otherEventMatchBettingRedisKey, gameType, racingBettingType, sessionBettingType } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { logger } = require("../config/logger");
 const { sendMessageToUser } = require("../sockets/socketManager");
@@ -550,100 +550,165 @@ exports.calculateProfitLossSessionCasinoCricket = async (redisProfitLoss, betDat
   };
 };
 
-exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced) => {
-  if (newbetPlaced?.[0].odds > oldbetPlaced?.[0]?.odds) {
-    while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
-      const newEntry = {
-        odds: newbetPlaced?.[0]?.odds - 1,
-        profitLoss: newbetPlaced?.[0]?.profitLoss,
-      };
-      newbetPlaced?.unshift(newEntry);
-    }
-  }
-  if (newbetPlaced?.[0]?.odds < oldbetPlaced?.[0]?.odds) {
-    while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
-      const newEntry = {
-        odds: oldbetPlaced?.[0]?.odds - 1,
-        profitLoss: oldbetPlaced?.[0]?.profitLoss,
-      };
-      oldbetPlaced?.unshift(newEntry);
-    }
-  }
+exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType.session) => {
+  switch (type) {
+    case sessionBettingType.ballByBall:
+    case sessionBettingType.overByOver:
+    case sessionBettingType.session:
+      if (newbetPlaced?.[0].odds > oldbetPlaced?.[0]?.odds) {
+        while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
+          const newEntry = {
+            odds: newbetPlaced?.[0]?.odds - 1,
+            profitLoss: newbetPlaced?.[0]?.profitLoss,
+          };
+          newbetPlaced?.unshift(newEntry);
+        }
+      }
+      if (newbetPlaced?.[0]?.odds < oldbetPlaced?.[0]?.odds) {
+        while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
+          const newEntry = {
+            odds: oldbetPlaced?.[0]?.odds - 1,
+            profitLoss: oldbetPlaced?.[0]?.profitLoss,
+          };
+          oldbetPlaced?.unshift(newEntry);
+        }
+      }
 
-  if (newbetPlaced?.[newbetPlaced?.length - 1]?.odds > oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
-    while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
-      const newEntry = {
-        odds: oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds + 1,
-        profitLoss: oldbetPlaced?.[oldbetPlaced?.length - 1]?.profitLoss,
-      };
-      oldbetPlaced?.push(newEntry);
-    }
-  }
-  if (newbetPlaced?.[newbetPlaced?.length - 1]?.odds < oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
-    while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
-      const newEntry = {
-        odds: newbetPlaced?.[newbetPlaced?.length - 1]?.odds + 1,
-        profitLoss: newbetPlaced?.[newbetPlaced?.length - 1]?.profitLoss,
-      };
-      newbetPlaced?.push(newEntry);
-    }
+      if (newbetPlaced?.[newbetPlaced?.length - 1]?.odds > oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
+        while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
+          const newEntry = {
+            odds: oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds + 1,
+            profitLoss: oldbetPlaced?.[oldbetPlaced?.length - 1]?.profitLoss,
+          };
+          oldbetPlaced?.push(newEntry);
+        }
+      }
+      if (newbetPlaced?.[newbetPlaced?.length - 1]?.odds < oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
+        while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
+          const newEntry = {
+            odds: newbetPlaced?.[newbetPlaced?.length - 1]?.odds + 1,
+            profitLoss: newbetPlaced?.[newbetPlaced?.length - 1]?.profitLoss,
+          };
+          newbetPlaced?.push(newEntry);
+        }
+      }
+    case sessionBettingType.oddEven:
+    case sessionBettingType.cricketCasino:
+      Object.keys(newbetPlaced)?.forEach((item) => {
+        newbetPlaced[item].profitLoss = oldbetPlaced[item]?.profitLoss - newbetPlaced[item]?.profitLoss;
+      });
+      return;
+    default:
+      return;
   }
 };
 
-exports.calculatePLAllBet = async (betPlace, userPartnerShip, oldLowerLimitOdds, oldUpperLimitOdds) => {
-  let betData = [];
-  let line = 1;
-  let maxLoss = 0.0;
-  let first = 0;
-  let last = 0;
-  if (betPlace && betPlace.length) {
-    // let latest_bet = betPlace[betPlace.length - 1].odds;
-    let oddsValues = betPlace.map(({ odds }) => odds)
-    if (oldLowerLimitOdds) {
-      first = oldLowerLimitOdds + 5;
-    } else {
-      first = Math.min(...oddsValues);
-    }
-    if (oldUpperLimitOdds) {
-      last = oldUpperLimitOdds - 5;
-    } else {
-      last = Math.max(...oddsValues);
-    }
+exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimitOdds, oldUpperLimitOdds) => {
+  let profitLoss = {};
 
-    let i = 0;
-    for (let j = first - 5 > 0 ? first - 5 : 0; j <= last + 5; j++) {
-      let profitLoss = 0.0;
-      for (let key in betPlace) {
-        let partnership = 100;
-        if (userPartnerShip) {
-          partnership = userPartnerShip;
+  switch (type) {
+    case sessionBettingType.ballByBall:
+    case sessionBettingType.overByOver:
+    case sessionBettingType.session:
+      let betData = [];
+      let line = 1;
+      let maxLoss = 0.0;
+      let first = 0;
+      let last = 0;
+      if (betPlace && betPlace.length) {
+        // let latest_bet = betPlace[betPlace.length - 1].odds;
+        let oddsValues = betPlace.map(({ odds }) => odds)
+        if (oldLowerLimitOdds) {
+          first = oldLowerLimitOdds + 5;
+        } else {
+          first = Math.min(...oddsValues);
         }
-        if (betPlace[key]['betType'] == betType.NO && j < betPlace[key]['odds']) {
-          profitLoss = profitLoss + (betPlace[key]['winAmount'] * partnership / 100);
-        } else if (betPlace[key]['betType'] == betType.NO && j >= betPlace[key]['odds']) {
-          profitLoss = profitLoss - (betPlace[key]['lossAmount'] * partnership / 100);
-        } else if (betPlace[key]['betType'] == betType.YES && j < betPlace[key]['odds']) {
-          profitLoss = profitLoss - (betPlace[key]['lossAmount'] * partnership / 100);
-        } else if (betPlace[key]['betType'] == betType.YES && j >= betPlace[key]['odds']) {
-          profitLoss = profitLoss + (betPlace[key]['winAmount'] * partnership / 100);
+        if (oldUpperLimitOdds) {
+          last = oldUpperLimitOdds - 5;
+        } else {
+          last = Math.max(...oddsValues);
+        }
+    
+        let i = 0;
+        for (let j = first - 5 > 0 ? first - 5 : 0; j <= last + 5; j++) {
+          let profitLoss = 0.0;
+          for (let key in betPlace) {
+            let partnership = 100;
+            if (userPartnerShip) {
+              partnership = userPartnerShip;
+            }
+            if (betPlace[key]['betType'] == betType.NO && j < betPlace[key]['odds']) {
+              profitLoss = profitLoss + (betPlace[key]['winAmount'] * partnership / 100);
+            } else if (betPlace[key]['betType'] == betType.NO && j >= betPlace[key]['odds']) {
+              profitLoss = profitLoss - (betPlace[key]['lossAmount'] * partnership / 100);
+            } else if (betPlace[key]['betType'] == betType.YES && j < betPlace[key]['odds']) {
+              profitLoss = profitLoss - (betPlace[key]['lossAmount'] * partnership / 100);
+            } else if (betPlace[key]['betType'] == betType.YES && j >= betPlace[key]['odds']) {
+              profitLoss = profitLoss + (betPlace[key]['winAmount'] * partnership / 100);
+            }
+          }
+          if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
+            maxLoss = Math.abs(profitLoss);
+          }
+          if (j == last) {
+            line = i;
+          }
+          profitLoss = Number(profitLoss.toFixed(2));
+          betData.push({
+            'odds': j,
+            'profitLoss': profitLoss
+          });
+          i++;
         }
       }
-      if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
-        maxLoss = Math.abs(profitLoss);
+      maxLoss = Number(maxLoss.toFixed(2));
+      return { betData: betData, line: line, maxLoss: maxLoss, total_bet: betPlace.length, lowerLimitOdds: betData[0]?.odds, upperLimitOdds: betData[betData.length - 1]?.odds }
+    case sessionBettingType.oddEven:
+      if (!Array.isArray(betPlace) || betPlace.length === 0) {
+        return {
+          betData: {},
+          maxLoss: 0.0,
+          total_bet: 0,
+        };
       }
-      if (j == last) {
-        line = i;
+
+      for (let item of betPlace) {
+        let data = {
+          winAmount: parseFloat(item?.winAmount),
+          loseAmount: parseFloat(item?.loseAmount),
+          betPlacedData: {
+            teamName: item?.teamName?.split("-")?.pop()?.trim()
+          },
+        }
+        profitLoss = await this.calculateProfitLossSessionOddEven(profitLoss, data);
       }
-      profitLoss = Number(profitLoss.toFixed(2));
-      betData.push({
-        'odds': j,
-        'profitLoss': profitLoss
-      });
-      i++;
-    }
+      return profitLoss;
+    case sessionBettingType.cricketCasino:
+      if (!Array.isArray(betPlace) || betPlace.length === 0) {
+        return {
+          betData: {},
+          maxLoss: 0.0,
+          total_bet: 0,
+        };
+      }
+
+      for (let item of betPlace) {
+        let data = {
+          winAmount: parseFloat(item?.winAmount),
+          loseAmount: parseFloat(item?.loseAmount),
+          betPlacedData: {
+            teamName: item?.teamName?.split("-")?.pop()?.trim()
+          },
+        }
+        profitLoss = await this.calculateProfitLossSessionCasinoCricket(profitLoss, data);
+      }
+      return profitLoss;
+    default:
+      return {};
   }
-  maxLoss = Number(maxLoss.toFixed(2));
-  return { betData: betData, line: line, maxLoss: maxLoss, total_bet: betPlace.length, lowerLimitOdds: betData[0]?.odds, upperLimitOdds: betData[betData.length - 1]?.odds }
+
+ 
+
 };
 
 exports.calculateRatesMatch = async (betPlace, partnerShip = 100, matchData) => {
@@ -848,7 +913,7 @@ exports.settingBetsDataAtLogin = async (user) => {
     };
 
     for (const placedBet of Object.keys(betResult.session)) {
-      const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], 100);
+      const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult.session[placedBet]?.[0]?.marketType, 100);
       sessionResult[`${placedBet}${redisKeys.profitLoss}`] = {
         upperLimitOdds: betPlaceProfitLoss?.betData?.[betPlaceProfitLoss?.betData?.length - 1]?.odds,
         lowerLimitOdds: betPlaceProfitLoss?.betData?.[0]?.odds,
@@ -976,7 +1041,7 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
     };
 
     for (const placedBet of Object.keys(betResult.session)) {
-      const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], 100);
+      const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult.session[placedBet]?.[0]?.marketType, 100);
       sessionResult[`${placedBet}${redisKeys.profitLoss}`] = {
         upperLimitOdds: betPlaceProfitLoss?.betData?.[betPlaceProfitLoss?.betData?.length - 1]?.odds,
         lowerLimitOdds: betPlaceProfitLoss?.betData?.[0]?.odds,

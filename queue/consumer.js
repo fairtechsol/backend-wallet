@@ -494,7 +494,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
     let betPlacedId = jobData.betPlacedId;
     let redisName = `${betId}_profitLoss`;
     let redisSesionExposureName = redisKeys.userSessionExposure + matchId;
-
+    let sessionType = jobData.sessionType;
     const partnerShipIds = [userId];
     Object.keys(partnershipObj)?.forEach((item) => {
       if (item.includes("PartnershipId")) {
@@ -542,7 +542,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;
 
-              await mergeProfitLoss(userDeleteProfitLoss.betData, parentPLbetPlaced);
+              await mergeProfitLoss(userDeleteProfitLoss.betData, parentPLbetPlaced, sessionType);
 
               userDeleteProfitLoss.betData.map((ob, index) => {
                 let partnershipData = (ob.profitLoss * partnership) / 100;

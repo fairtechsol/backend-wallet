@@ -909,7 +909,8 @@ exports.unDeclareSessionResult = async (req, res) => {
               if (newProfitLoss?.betPlaced && profitLossDataAdmin[parentUser.userId]?.betPlaced) {
                 mergeProfitLoss(
                   newProfitLoss?.betPlaced,
-                  profitLossDataAdmin[parentUser.userId]?.betPlaced
+                  profitLossDataAdmin[parentUser.userId]?.betPlaced,
+                  sessionDetails?.type
                 );
 
                 profitLossDataAdmin = {
@@ -966,7 +967,8 @@ exports.unDeclareSessionResult = async (req, res) => {
           if (newProfitLoss?.betPlaced && profitLossDataWallet?.betPlaced) {
             mergeProfitLoss(
               newProfitLoss?.betPlaced,
-              profitLossDataWallet?.betPlaced
+              profitLossDataWallet?.betPlaced,
+              sessionDetails?.type
             );
 
             profitLossDataWallet = {

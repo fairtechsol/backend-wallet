@@ -527,6 +527,35 @@ exports.calculateProfitLossSessionOddEven = async (redisProfitLoss, betData, par
 * @param {object} betData - Data for the current bet.
 * @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
 */
+exports.calculateProfitLossSessionFancy1 = async (redisProfitLoss, betData, partnership = 100) => {
+  let maxLoss = 0;
+
+  let betProfitloss = redisProfitLoss?.betPlaced ?? {};
+  
+  if (betData?.betPlacedData?.betType == betType.BACK) {
+    betProfitloss.yes = ((betProfitloss.yes || 0) + betData?.winAmount) * partnership / 100;
+    betProfitloss.no = ((betProfitloss.no || 0) - betData?.lossAmount) * partnership / 100;
+  }
+  else if (betData?.betPlacedData?.betType == betType.LAY) {
+    betProfitloss.yes = ((betProfitloss.yes || 0) - betData?.lossAmount) * partnership / 100;
+    betProfitloss.no = ((betProfitloss.no || 0) + betData?.winAmount) * partnership / 100;
+  }
+  maxLoss = Number(Math.min(...Object.values(betProfitloss)).toFixed(2));
+  // Return the result
+  return {
+    betPlaced: betProfitloss,
+    maxLoss: parseFloat(maxLoss),
+    totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
+  };
+};
+
+
+/**
+* Calculates the profit or loss for a betting session.
+* @param {object} redisProfitLoss - Redis data for profit and loss.
+* @param {object} betData - Data for the current bet.
+* @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
+*/
 exports.calculateProfitLossSessionCasinoCricket = async (redisProfitLoss, betData, partnership = 100) => {
   let maxLoss = 0;
 
@@ -593,6 +622,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
         }
       }
     case sessionBettingType.oddEven:
+      case sessionBettingType.fancy1:
     case sessionBettingType.cricketCasino:
       Object.keys(newbetPlaced)?.forEach((item) => {
         newbetPlaced[item].profitLoss = oldbetPlaced[item]?.profitLoss - newbetPlaced[item]?.profitLoss;
@@ -701,6 +731,26 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
           },
         }
         profitLoss = await this.calculateProfitLossSessionCasinoCricket(profitLoss, data);
+      }
+      return profitLoss;
+    case sessionBettingType.fancy1:
+      if (!Array.isArray(betPlace) || betPlace.length === 0) {
+        return {
+          betData: {},
+          maxLoss: 0.0,
+          total_bet: 0,
+        };
+      }
+
+      for (let item of betPlace) {
+        let data = {
+          winAmount: parseFloat(item?.winAmount),
+          loseAmount: parseFloat(item?.loseAmount),
+          betPlacedData: {
+            betType: item?.betType
+          },
+        }
+        profitLoss = await this.calculateProfitLossSessionFancy1(profitLoss, data);
       }
       return profitLoss;
     default:

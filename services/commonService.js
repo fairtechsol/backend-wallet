@@ -368,9 +368,9 @@ const calculateProfitLoss = (betData, odds, partnership) => {
   ) {
     return partnership != null || partnership != undefined
       ? +parseFloat(
-        (parseFloat(betData?.loseAmount) * partnership) / 100
+        (parseFloat(betData?.lossAmount) * partnership) / 100
       ).toFixed(2)
-      : -parseFloat(betData.loseAmount);
+      : -parseFloat(betData.lossAmount);
   }
   return 0;
 };
@@ -705,7 +705,7 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
       for (let item of betPlace) {
         let data = {
           winAmount: parseFloat(item?.winAmount),
-          loseAmount: parseFloat(item?.loseAmount),
+          lossAmount: parseFloat(item?.lossAmount),
           betPlacedData: {
             teamName: item?.teamName?.split("-")?.pop()?.trim()
           },
@@ -725,7 +725,7 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
       for (let item of betPlace) {
         let data = {
           winAmount: parseFloat(item?.winAmount),
-          loseAmount: parseFloat(item?.loseAmount),
+          lossAmount: parseFloat(item?.lossAmount),
           betPlacedData: {
             teamName: item?.teamName?.split("-")?.pop()?.trim()
           },
@@ -745,7 +745,7 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
       for (let item of betPlace) {
         let data = {
           winAmount: parseFloat(item?.winAmount),
-          loseAmount: parseFloat(item?.loseAmount),
+          lossAmount: parseFloat(item?.lossAmount),
           betPlacedData: {
             betType: item?.betType
           },

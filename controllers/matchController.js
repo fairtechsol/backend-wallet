@@ -40,8 +40,9 @@ exports.matchDetails = async (req, res) => {
                 sessionResult.push({
                   betId: redisIds?.[index]?.split("_")[0],
                   maxLoss: JSON.parse(item)?.maxLoss,
-                  totalBet: JSON.parse(item)?.totalBet
-                });
+                  totalBet: JSON.parse(item)?.totalBet,
+                  profitLoss: JSON.parse(item)?.betPlaced,
+              });
               }
             }
           });
@@ -64,7 +65,8 @@ exports.matchDetails = async (req, res) => {
               sessionResult.push({
                 betId: redisIds?.[index]?.split("_")[0],
                 maxLoss: JSON.parse(item)?.maxLoss,
-                totalBet: JSON.parse(item)?.totalBet
+                totalBet: JSON.parse(item)?.totalBet,
+                profitLoss: JSON.parse(item)?.betPlaced,
 
               });
             }

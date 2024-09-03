@@ -516,7 +516,7 @@ exports.calculateProfitLossSessionOddEven = async (redisProfitLoss, betData, par
   // Return the result
   return {
     betPlaced: betProfitloss,
-    maxLoss: parseFloat(maxLoss),
+    maxLoss: parseFloat(Math.abs(maxLoss)),
     totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
   };
 };
@@ -544,7 +544,7 @@ exports.calculateProfitLossSessionFancy1 = async (redisProfitLoss, betData, part
   // Return the result
   return {
     betPlaced: betProfitloss,
-    maxLoss: parseFloat(maxLoss),
+    maxLoss: parseFloat(Math.abs(maxLoss)),
     totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
   };
 };
@@ -574,7 +574,7 @@ exports.calculateProfitLossSessionCasinoCricket = async (redisProfitLoss, betDat
   // Return the result
   return {
     betPlaced: betProfitloss,
-    maxLoss: parseFloat(maxLoss),
+    maxLoss: parseFloat(Math.abs(maxLoss)),
     totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
   };
 };
@@ -633,8 +633,9 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
   }
 };
 
-exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimitOdds, oldUpperLimitOdds) => {
+exports.calculatePLAllBet = async (betPlace, type, userPartnerShip=100, oldLowerLimitOdds, oldUpperLimitOdds) => {
   let profitLoss = {};
+  let isPartnership = userPartnerShip != 100;
 
   switch (type) {
     case sessionBettingType.ballByBall:
@@ -704,15 +705,15 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
 
       for (let item of betPlace) {
         let data = {
-          winAmount: parseFloat(item?.winAmount),
-          lossAmount: parseFloat(item?.lossAmount),
+          winAmount: !isPartnership ? -item?.winAmount : item?.winAmount,
+          lossAmount: !isPartnership ? -item?.lossAmount : item?.lossAmount,
           betPlacedData: {
             teamName: item?.teamName?.split("-")?.pop()?.trim()
           },
         }
-        profitLoss = await this.calculateProfitLossSessionOddEven(profitLoss, data);
+        profitLoss = await this.calculateProfitLossSessionOddEven(profitLoss, data, userPartnerShip);
       }
-      return profitLoss;
+      return { betData: profitLoss.betPlaced, maxLoss: profitLoss.maxLoss, total_bet: profitLoss?.totalBet };
     case sessionBettingType.cricketCasino:
       if (!Array.isArray(betPlace) || betPlace.length === 0) {
         return {
@@ -724,15 +725,15 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
 
       for (let item of betPlace) {
         let data = {
-          winAmount: parseFloat(item?.winAmount),
-          lossAmount: parseFloat(item?.lossAmount),
+          winAmount: !isPartnership ? -item?.winAmount : item?.winAmount,
+          lossAmount: !isPartnership ? -item?.lossAmount : item?.lossAmount,
           betPlacedData: {
             teamName: item?.teamName?.split("-")?.pop()?.trim()
           },
         }
-        profitLoss = await this.calculateProfitLossSessionCasinoCricket(profitLoss, data);
+        profitLoss = await this.calculateProfitLossSessionCasinoCricket(profitLoss, data, userPartnerShip);
       }
-      return profitLoss;
+      return { betData: profitLoss.betPlaced, maxLoss: profitLoss.maxLoss, total_bet: profitLoss?.totalBet };
     case sessionBettingType.fancy1:
       if (!Array.isArray(betPlace) || betPlace.length === 0) {
         return {
@@ -744,15 +745,15 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip, oldLowerLimi
 
       for (let item of betPlace) {
         let data = {
-          winAmount: parseFloat(item?.winAmount),
-          lossAmount: parseFloat(item?.lossAmount),
+          winAmount: !isPartnership ? -item?.winAmount : item?.winAmount,
+          lossAmount: !isPartnership ? -item?.lossAmount : item?.lossAmount,
           betPlacedData: {
             betType: item?.betType
           },
         }
-        profitLoss = await this.calculateProfitLossSessionFancy1(profitLoss, data);
+        profitLoss = await this.calculateProfitLossSessionFancy1(profitLoss, data, userPartnerShip);
       }
-      return profitLoss;
+      return { betData: profitLoss.betPlaced, maxLoss: profitLoss.maxLoss, total_bet: profitLoss?.totalBet };
     default:
       return {};
   }

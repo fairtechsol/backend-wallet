@@ -41,6 +41,8 @@ class CardResultTypeWin {
                 return this.casinoWar();
             case cardGameType.race20:
                 return this.race20();
+            case cardGameType.queen:
+                return this.queen();
             case cardGameType.superover:
                 return this.superOver();
             case cardGameType.cricketv3:
@@ -58,6 +60,8 @@ class CardResultTypeWin {
                 return this.baccarat();
             case cardGameType["3cardj"]:
                 return this.threeCardJ();
+            case cardGameType.ballbyball:
+                return this.balByBall();
             default:
                 throw {
                     statusCode: 400,
@@ -213,10 +217,20 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '5' THEN 'Player'
     END as result`
     }
-
-    threeCardJ(){
+    queen() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Total 0'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Total 1'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Total 2'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'Total 3'
+    END as result`
+    }
+    threeCardJ() {
         return `"cardResult".result ->> 'win' as result`
+    }
 
+    balByBall() {
+        return `"cardResult".result ->> 'desc' as result`
     }
 }
 

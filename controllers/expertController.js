@@ -1,4 +1,4 @@
-const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, matchBettingType, redisKeysMarketWise, redisKeysMatchWise, otherEventMatchBettingRedisKey, marketBetType } = require("../config/contants");
+const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, matchBettingType, redisKeysMarketWise, redisKeysMatchWise, otherEventMatchBettingRedisKey, marketBetType, sessionBettingType } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { addResultFailed } = require("../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission, getCombinedCommissionOfWallet } = require("../services/commissionService");
@@ -912,20 +912,31 @@ exports.unDeclareSessionResult = async (req, res) => {
                   profitLossDataAdmin[parentUser.userId]?.betPlaced,
                   sessionDetails?.type
                 );
+                
 
-                profitLossDataAdmin = {
-                  upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
-                  lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
-                  maxLoss: profitLossDataAdmin[parentUser.userId]?.maxLoss + newProfitLoss?.maxLoss,
-                  totalBet: newProfitLoss?.totalBet + profitLossDataAdmin[parentUser.userId]?.totalBet,
-                  betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
-                    return {
-                      odds: item?.odds,
-                      profitLoss:
-                        item?.profitLoss + profitLossDataAdmin[parentUser.userId]?.betPlaced?.[index]?.profitLoss,
-                    };
-                  }),
-                };
+                if ([sessionBettingType.cricketCasino, sessionBettingType.fancy1, sessionBettingType.oddEven]?.(sessionDetails?.type)) {
+                  profitLossDataAdmin = {
+                    maxLoss: profitLossDataAdmin[parentUser.userId]?.maxLoss + newProfitLoss?.maxLoss,
+                    totalBet: newProfitLoss?.totalBet + profitLossDataAdmin[parentUser.userId]?.totalBet,
+                    betPlaced: newProfitLoss?.betPlaced
+                  };
+                }
+
+                else {
+                  profitLossDataAdmin = {
+                    upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
+                    lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
+                    maxLoss: profitLossDataAdmin[parentUser.userId]?.maxLoss + newProfitLoss?.maxLoss,
+                    totalBet: newProfitLoss?.totalBet + profitLossDataAdmin[parentUser.userId]?.totalBet,
+                    betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
+                      return {
+                        odds: item?.odds,
+                        profitLoss:
+                          item?.profitLoss + profitLossDataAdmin[parentUser.userId]?.betPlaced?.[index]?.profitLoss,
+                      };
+                    }),
+                  };
+                }
               }
 
             }
@@ -971,19 +982,28 @@ exports.unDeclareSessionResult = async (req, res) => {
               sessionDetails?.type
             );
 
-            profitLossDataWallet = {
-              upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
-              lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
-              maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
-              totalBet: (newProfitLoss?.totalBet || 0) + (profitLossDataWallet?.totalBet || 0),
-              betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
-                return {
-                  odds: item?.odds,
-                  profitLoss:
-                    item?.profitLoss + profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
-                };
-              }),
-            };
+            if ([sessionBettingType.cricketCasino, sessionBettingType.fancy1, sessionBettingType.oddEven]?.(sessionDetails?.type)) {
+              profitLossDataWallet = {
+                maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
+                totalBet: (newProfitLoss?.totalBet || 0) + (profitLossDataWallet?.totalBet || 0),
+                betPlaced: newProfitLoss?.betPlaced
+              };
+            }
+            else {
+              profitLossDataWallet = {
+                upperLimitOdds: newProfitLoss?.betPlaced?.[newProfitLoss?.betPlaced?.length - 1]?.odds,
+                lowerLimitOdds: newProfitLoss?.betPlaced?.[0]?.odds,
+                maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
+                totalBet: (newProfitLoss?.totalBet || 0) + (profitLossDataWallet?.totalBet || 0),
+                betPlaced: newProfitLoss?.betPlaced?.map((item, index) => {
+                  return {
+                    odds: item?.odds,
+                    profitLoss:
+                      item?.profitLoss + profitLossDataWallet?.betPlaced?.[index]?.profitLoss,
+                  };
+                }),
+              };
+            }
           }
 
         }

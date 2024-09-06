@@ -416,8 +416,8 @@ const calculateSessionRateAmount = async (jobData, userId) => {
                 case sessionBettingType.overByOver:
                 case sessionBettingType.ballByBall:
                   redisData = await calculateProfitLossSession(
-                    placedBetObject,
                     redisBetData,
+                    placedBetObject,
                     partnership
                   );
                   break;
@@ -546,17 +546,31 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;
 
-              await mergeProfitLoss(userDeleteProfitLoss.betData, parentPLbetPlaced, sessionType);
+              if (![sessionBettingType.oddEven, sessionBettingType.fancy1, sessionBettingType.cricketCasino].includes(sessionType)) {
+                await mergeProfitLoss(userDeleteProfitLoss.betData, parentPLbetPlaced);
+              }
 
-              userDeleteProfitLoss.betData.map((ob, index) => {
-                let partnershipData = (ob.profitLoss * partnership) / 100;
-                if (ob.odds == parentPLbetPlaced[index].odds) {
-                  parentPLbetPlaced[index].profitLoss = parseFloat(parentPLbetPlaced[index].profitLoss) + partnershipData;
-                  if (newMaxLossParent < Math.abs(parentPLbetPlaced[index].profitLoss) && parentPLbetPlaced[index].profitLoss < 0) {
-                    newMaxLossParent = Math.abs(parentPLbetPlaced[index].profitLoss);
+              if ([sessionBettingType.oddEven, sessionBettingType.fancy1, sessionBettingType.cricketCasino].includes(sessionType)) {
+                Object.keys(userDeleteProfitLoss.betData).forEach((ob) => {
+                  let partnershipData = (ob * partnership) / 100;
+                  parentPLbetPlaced[item] = parentPLbetPlaced[item] + partnershipData;
+                  if (newMaxLossParent < Math.abs(parentPLbetPlaced[item]) && parentPLbetPlaced[item] < 0) {
+                    newMaxLossParent = Math.abs(parentPLbetPlaced[item]);
                   }
-                }
-              });
+                });
+              }
+              else{
+                userDeleteProfitLoss.betData.map((ob, index) => {
+                  let partnershipData = (ob.profitLoss * partnership) / 100;
+                  if (ob.odds == parentPLbetPlaced[index].odds) {
+                    parentPLbetPlaced[index].profitLoss = parseFloat(parentPLbetPlaced[index].profitLoss) + partnershipData;
+                    if (newMaxLossParent < Math.abs(parentPLbetPlaced[index].profitLoss) && parentPLbetPlaced[index].profitLoss < 0) {
+                      newMaxLossParent = Math.abs(parentPLbetPlaced[index].profitLoss);
+                    }
+                  }
+                });
+              }
+
               oldProfitLossParent.betPlaced = parentPLbetPlaced;
               oldProfitLossParent.maxLoss = newMaxLossParent;
               oldProfitLossParent.totalBet = oldProfitLossParent.totalBet - userDeleteProfitLoss.total_bet;

@@ -625,7 +625,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
     case sessionBettingType.fancy1:
     case sessionBettingType.cricketCasino:
       Object.keys(newbetPlaced)?.forEach((item) => {
-        newbetPlaced[item].profitLoss = oldbetPlaced[item]?.profitLoss - newbetPlaced[item]?.profitLoss;
+        newbetPlaced[item] = oldbetPlaced[item] - newbetPlaced[item];
       });
       return;
     default:

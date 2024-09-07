@@ -210,6 +210,8 @@ module.exports.matchBettingType = {
   quickbookmaker3: "quickbookmaker3",
   tiedMatch1: "tiedMatch1",
   tiedMatch2: "tiedMatch2",
+  tiedMatch3: "tiedMatch3",
+  other: "other",
   completeMatch: "completeMatch",
   completeManual: "completeManual",
   ...(Array.from({ length: 20 }, (_, index) => index).reduce((prev, curr) => {
@@ -283,6 +285,7 @@ module.exports.profitLossKeys={
   [this.matchBettingType.quickbookmaker3]:  "matchPL",
   [this.matchBettingType.tiedMatch1]:  "tiePL",
   [this.matchBettingType.tiedMatch2]: "tiePL",
+  [this.matchBettingType.tiedMatch3]: "tiePL",
   [this.matchBettingType.completeMatch]: "completePL",
   [this.matchBettingType.completeManual]: "completePL",
   ...(Array.from({ length: 20 }, (_, index) => index).reduce((prev, curr) => {
@@ -308,6 +311,10 @@ module.exports.matchesTeamName={
     b:this.matchBettingsTeamName.no
   },
   [this.matchBettingType.tiedMatch2]: {
+    a:this.matchBettingsTeamName.yes,
+    b:this.matchBettingsTeamName.no
+  },
+  [this.matchBettingType.tiedMatch3]: {
     a:this.matchBettingsTeamName.yes,
     b:this.matchBettingsTeamName.no
   },
@@ -375,6 +382,10 @@ module.exports.otherEventMatchBettingRedisKey = {
     "a":this.redisKeys.yesRateTie,
     "b":this.redisKeys.noRateTie
   },
+  [this.matchBettingType.tiedMatch3]: {
+    "a":this.redisKeys.yesRateTie,
+    "b":this.redisKeys.noRateTie
+  },
   [this.matchBettingType.completeMatch]: {
     "a":this.redisKeys.yesRateComplete,
     "b":this.redisKeys.noRateComplete
@@ -421,6 +432,7 @@ module.exports.redisKeysMarketWise = {
   [this.matchBettingType.matchOdd]: [this.redisKeys.userTeamARate, this.redisKeys.userTeamBRate, this.redisKeys.userTeamCRate],
   [this.matchBettingType.tiedMatch1]: [this.redisKeys.noRateTie, this.redisKeys.yesRateTie],
   [this.matchBettingType.tiedMatch2]: [this.redisKeys.noRateTie, this.redisKeys.yesRateTie],
+  [this.matchBettingType.tiedMatch3]: [this.redisKeys.noRateTie, this.redisKeys.yesRateTie],
   [this.matchBettingType.completeMatch]: [this.redisKeys.noRateComplete, this.redisKeys.yesRateComplete],
   [this.matchBettingType.completeManual]: [this.redisKeys.noRateComplete, this.redisKeys.yesRateComplete],
   ...(Array.from({ length: 20 }, (_, index) => index).reduce((prev, curr) => {

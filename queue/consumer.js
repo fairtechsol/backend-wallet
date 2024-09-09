@@ -55,11 +55,11 @@ let calculateRateAmount = async (jobData, userId) => {
   }
 
   const partnerShipIds = [userId];
-   Object.keys(partnershipObj)?.forEach((item)=>{
-    if(item.includes("PartnershipId")){
+  Object.keys(partnershipObj)?.forEach((item) => {
+    if (item.includes("PartnershipId")) {
       partnerShipIds.push(partnershipObj[item]);
     }
-   });
+  });
 
   const usersData = await getUsersWithoutCount({
     id: In(partnerShipIds)
@@ -87,7 +87,7 @@ let calculateRateAmount = async (jobData, userId) => {
           // Get user data from Redis or balance data by userId
           let masterRedisData = await getUserRedisData(partnershipId);
           if (!lodash.isEmpty(masterRedisData)) {
-            
+
             let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
 
@@ -155,11 +155,11 @@ let calculateRacingRateAmount = async (jobData, userId) => {
   }
 
   const partnerShipIds = [userId];
-   Object.keys(partnershipObj)?.forEach((item)=>{
-    if(item.includes("PartnershipId")){
+  Object.keys(partnershipObj)?.forEach((item) => {
+    if (item.includes("PartnershipId")) {
       partnerShipIds.push(partnershipObj[item]);
     }
-   });
+  });
 
   const usersData = await getUsersWithoutCount({
     id: In(partnerShipIds)
@@ -187,7 +187,7 @@ let calculateRacingRateAmount = async (jobData, userId) => {
           // Get user data from Redis or balance data by userId
           let masterRedisData = await getUserRedisData(partnershipId);
           if (!lodash.isEmpty(masterRedisData)) {
-            
+
             let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
 
@@ -196,14 +196,14 @@ let calculateRacingRateAmount = async (jobData, userId) => {
             if (teamRates) {
               teamRates = JSON.parse(teamRates);
             }
-        
-            if(!teamRates){
+
+            if (!teamRates) {
               teamRates = jobData?.runners?.reduce((acc, key) => {
                 acc[key?.id] = 0;
                 return acc;
               }, {});
             }
-        
+
             teamRates = Object.keys(teamRates).reduce((acc, key) => {
               acc[key] = parseRedisData(key, teamRates);
               return acc;
@@ -259,11 +259,11 @@ let calculateCardMatchRateAmount = async (jobData, userId) => {
   let userOldExposure = jobData.userPreviousExposure
 
   const partnerShipIds = [userId];
-   Object.keys(partnershipObj)?.forEach((item)=>{
-    if(item.includes("PartnershipId")){
+  Object.keys(partnershipObj)?.forEach((item) => {
+    if (item.includes("PartnershipId")) {
       partnerShipIds.push(partnershipObj[item]);
     }
-   });
+  });
 
   const usersData = await getUsersWithoutCount({
     id: In(partnerShipIds)
@@ -291,7 +291,7 @@ let calculateCardMatchRateAmount = async (jobData, userId) => {
           // Get user data from Redis or balance data by userId
           let masterRedisData = await getUserRedisData(partnershipId);
           if (!lodash.isEmpty(masterRedisData)) {
-            
+
             let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
 
@@ -356,21 +356,21 @@ const calculateSessionRateAmount = async (jobData, userId) => {
 
 
   const partnerShipIds = [userId];
-  Object.keys(partnershipObj)?.forEach((item)=>{
-   if(item.includes("PartnershipId")){
-     partnerShipIds.push(partnershipObj[item]);
-   }
+  Object.keys(partnershipObj)?.forEach((item) => {
+    if (item.includes("PartnershipId")) {
+      partnerShipIds.push(partnershipObj[item]);
+    }
   });
 
- const usersData = await getUsersWithoutCount({
-   id: In(partnerShipIds)
- }, ["id"]);
+  const usersData = await getUsersWithoutCount({
+    id: In(partnerShipIds)
+  }, ["id"]);
 
- const userIds = usersData?.map((item) => item.id);
+  const userIds = usersData?.map((item) => item.id);
 
- updateUserBalanceExposure(userIds, {
-   exposure: partnerSessionExposure
- });
+  updateUserBalanceExposure(userIds, {
+    exposure: partnerSessionExposure
+  });
 
   // Iterate through partnerships based on role and update exposure
   Object.keys(partnershipPrefixByRole)
@@ -392,11 +392,11 @@ const calculateSessionRateAmount = async (jobData, userId) => {
           let masterRedisData = await getUserRedisData(partnershipId);
 
           if (!lodash.isEmpty(masterRedisData)) {
-            
+
             // If masterRedisData exists, update partner exposure and session data
             let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
             let partnerExposure = (parseFloat(masterExposure) || 0) + partnerSessionExposure;
-            
+
 
             // Calculate profit loss session and update Redis data
             const redisBetData = masterRedisData[
@@ -409,31 +409,31 @@ const calculateSessionRateAmount = async (jobData, userId) => {
               )
               : null;
 
-              let redisData;
+            let redisData;
 
-              switch (jobData?.placedBet?.marketType) {
-                case sessionBettingType.session:
-                case sessionBettingType.overByOver:
-                case sessionBettingType.ballByBall:
-                  redisData = await calculateProfitLossSession(
-                    redisBetData,
-                    placedBetObject,
-                    partnership
-                  );
-                  break;
-                case sessionBettingType.oddEven:
-                  redisData = await calculateProfitLossSessionOddEven(redisBetData,  { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
-                  break;
-                case sessionBettingType.cricketCasino:
-                  redisData = await calculateProfitLossSessionCasinoCricket(redisBetData,  { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
-                  break;
-                  break;
-                case sessionBettingType.fancy1:
-                  redisData = await calculateProfitLossSessionFancy1(redisBetData,  { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
-                  break;
-                default:
-                  break;
-              }
+            switch (jobData?.placedBet?.marketType) {
+              case sessionBettingType.session:
+              case sessionBettingType.overByOver:
+              case sessionBettingType.ballByBall:
+                redisData = await calculateProfitLossSession(
+                  redisBetData,
+                  placedBetObject,
+                  partnership
+                );
+                break;
+              case sessionBettingType.oddEven:
+                redisData = await calculateProfitLossSessionOddEven(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                break;
+              case sessionBettingType.cricketCasino:
+                redisData = await calculateProfitLossSessionCasinoCricket(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                break;
+                break;
+              case sessionBettingType.fancy1:
+                redisData = await calculateProfitLossSessionFancy1(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                break;
+              default:
+                break;
+            }
 
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(partnerSessionExposure).toFixed(2)), [`${redisKeys.userSessionExposure}${placedBetObject?.betPlacedData?.matchId}`]: parseFloat(redisData?.maxLoss || 0.0) - parseFloat(redisBetData?.maxLoss || 0.0) }, {
               [`${placedBetObject?.betPlacedData?.betId}_profitLoss`]:
@@ -481,12 +481,12 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
   let userId = jobData.userId;
   try {
     // Parse partnerships from userRedisData
-   let partnershipObj = {};
-   try{
-     partnershipObj = JSON.parse(jobData.partnership);
-   } catch {
-     partnershipObj = jobData.partnership;
-   }
+    let partnershipObj = {};
+    try {
+      partnershipObj = JSON.parse(jobData.partnership);
+    } catch {
+      partnershipObj = jobData.partnership;
+    }
 
     // Extract relevant data from jobData
     const userDeleteProfitLoss = jobData.userDeleteProfitLoss;
@@ -552,14 +552,14 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
 
               if ([sessionBettingType.oddEven, sessionBettingType.fancy1, sessionBettingType.cricketCasino].includes(sessionType)) {
                 Object.keys(userDeleteProfitLoss.betData).forEach((ob) => {
-                  let partnershipData = (ob * partnership) / 100;
-                  parentPLbetPlaced[item] = parentPLbetPlaced[item] + partnershipData;
-                  if (newMaxLossParent < Math.abs(parentPLbetPlaced[item]) && parentPLbetPlaced[item] < 0) {
-                    newMaxLossParent = Math.abs(parentPLbetPlaced[item]);
+                  let partnershipData = (userDeleteProfitLoss.betData[ob] * partnership) / 100;
+                  parentPLbetPlaced[ob] = parentPLbetPlaced[ob] + partnershipData;
+                  if (newMaxLossParent < Math.abs(parentPLbetPlaced[ob]) && parentPLbetPlaced[ob] < 0) {
+                    newMaxLossParent = Math.abs(parentPLbetPlaced[ob]);
                   }
                 });
               }
-              else{
+              else {
                 userDeleteProfitLoss.betData.map((ob, index) => {
                   let partnershipData = (ob.profitLoss * partnership) / 100;
                   if (ob.odds == parentPLbetPlaced[index].odds) {
@@ -637,7 +637,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
   try {
     // Parse partnerships from userRedisData
     let partnershipObj = {};
-    try{
+    try {
       partnershipObj = JSON.parse(jobData.partnership);
     } catch {
       partnershipObj = jobData.partnership;
@@ -669,7 +669,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
 
     const userIds = usersData?.map((item) => item.id);
 
-   await updateUserBalanceExposure(userIds, {
+    await updateUserBalanceExposure(userIds, {
       exposure: -exposureDiff
     });
 
@@ -694,11 +694,11 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
             let masterRedisData = await getUserRedisData(partnershipId);
 
             if (!lodash.isEmpty(masterRedisData)) {
-              
+
               // If masterRedisData exists, update partner exposure and session data
               let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
               let partnerExposure = (masterExposure || 0) - exposureDiff;
-              
+
 
               let masterTeamRates = {
                 teamA: Number(masterRedisData[teamArateRedisKey]) || 0,
@@ -712,7 +712,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
               masterTeamRates.teamA = parseFloat((masterTeamRates.teamA).toFixed(2));
               masterTeamRates.teamB = parseFloat((masterTeamRates.teamB).toFixed(2));
               masterTeamRates.teamC = parseFloat((masterTeamRates.teamC).toFixed(2));
-  
+
               let redisObj = {
                 [redisKeys.userAllExposure]: partnerExposure,
                 [teamArateRedisKey]: masterTeamRates.teamA,
@@ -781,7 +781,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
   try {
     // Parse partnerships from userRedisData
     let partnershipObj = {};
-    try{
+    try {
       partnershipObj = JSON.parse(jobData.partnership);
     } catch {
       partnershipObj = jobData.partnership;
@@ -809,7 +809,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
 
     const userIds = usersData?.map((item) => item.id);
 
-   await updateUserBalanceExposure(userIds, {
+    await updateUserBalanceExposure(userIds, {
       exposure: -exposureDiff
     });
 
@@ -834,14 +834,14 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
             let masterRedisData = await getUserRedisData(partnershipId);
 
             if (!lodash.isEmpty(masterRedisData)) {
-              
+
               let masterTeamRates = JSON.parse(masterRedisData[`${matchId}${redisKeys.profitLoss}`]);
 
               masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
                 acc[key] = parseFloat((parseRedisData(key, masterTeamRates) + ((newTeamRate[key] * partnership) / 100)).toFixed(2));
                 return acc;
               }, {});
-  
+
               let redisObj = {
                 [`${matchId}${redisKeys.profitLoss}`]: JSON.stringify(masterTeamRates)
               }

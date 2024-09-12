@@ -982,7 +982,7 @@ exports.unDeclareSessionResult = async (req, res) => {
               sessionDetails?.type
             );
 
-            if ([sessionBettingType.cricketCasino, sessionBettingType.fancy1, sessionBettingType.oddEven]?.(sessionDetails?.type)) {
+            if ([sessionBettingType.cricketCasino, sessionBettingType.fancy1, sessionBettingType.oddEven]?.includes(sessionDetails?.type)) {
               profitLossDataWallet = {
                 maxLoss: profitLossDataWallet?.maxLoss + newProfitLoss?.maxLoss,
                 totalBet: (newProfitLoss?.totalBet || 0) + (profitLossDataWallet?.totalBet || 0),

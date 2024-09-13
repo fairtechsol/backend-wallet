@@ -217,6 +217,7 @@ module.exports.matchBettingType = {
   tiedMatch2: "tiedMatch2",
   tiedMatch3: "tiedMatch3",
   other: "other",
+  tournament: "tournament",
   completeMatch: "completeMatch",
   completeMatch1: "completeMatch1",
   completeManual: "completeManual",
@@ -296,6 +297,7 @@ module.exports.profitLossKeys={
   [this.matchBettingType.completeMatch1]: "completePL",
   [this.matchBettingType.completeManual]: "completePL",
   [this.matchBettingType.other]: "otherPL",
+  [this.matchBettingType.tournament]: "tournamentPL",
   ...(Array.from({ length: 20 }, (_, index) => index).reduce((prev, curr) => {
     prev[`overUnder${curr}.5`] = `overUnderPL${curr}.5`
     return prev;

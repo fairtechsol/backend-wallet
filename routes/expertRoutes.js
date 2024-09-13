@@ -5,7 +5,7 @@ const validator = require('../middleware/joi.validator')
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
-const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, declareSessionResult, declareSessionNoResult, unDeclareSessionResult, declareMatchResult, unDeclareMatchResult, getWalletBetsData, lockUnlockExpert, declareOtherMatchResult, unDeclareOtherMatchResult, declareRacingMatchResult, unDeclareRaceMatchResult, declareCardMatchResult } = require('../controllers/expertController');
+const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, declareSessionResult, declareSessionNoResult, unDeclareSessionResult, declareMatchResult, unDeclareMatchResult, getWalletBetsData, lockUnlockExpert, declareOtherMatchResult, unDeclareOtherMatchResult, declareRacingMatchResult, unDeclareRaceMatchResult, declareCardMatchResult, declareMatchOtherMarketResult, unDeclareMatchOtherMarketResult } = require('../controllers/expertController');
 const { getPlacedBets } = require('../controllers/superAdminController');
 
 
@@ -26,6 +26,9 @@ router.post("/unDeclare/result/match", unDeclareMatchResult);
 
 router.post("/declare/result/other/match", declareOtherMatchResult);
 router.post("/unDeclare/result/other/match", unDeclareOtherMatchResult);
+
+router.post("/declare/result/other/market", declareMatchOtherMarketResult);
+router.post("/unDeclare/result/other/market", unDeclareMatchOtherMarketResult);
 
 router.post("/declare/result/race/match", declareRacingMatchResult);
 router.post("/unDeclare/result/race/match", unDeclareRaceMatchResult);

@@ -24,6 +24,7 @@ const WalletCardMatchBetQueue = new Queue('walletCardMatchBetQueue', walletRedis
 const walletSessionBetDeleteQueue = new Queue('walletSessionBetDeleteQueue', walletRedisOption);
 const walletMatchBetDeleteQueue = new Queue('walletMatchBetDeleteQueue', walletRedisOption);
 const walletRaceMatchBetDeleteQueue = new Queue('walletRaceMatchBetDeleteQueue', walletRedisOption);
+const WalletMatchTournamentBetQueue = new Queue('walletMatchTournamentBetQueue', walletRedisOption);
 
 WalletMatchBetQueue.process(async function (job, done) {
   let jobData = job.data;
@@ -143,6 +144,117 @@ WalletMatchRacingBetQueue.process(async function (job, done) {
 });
 
 let calculateRacingRateAmount = async (jobData, userId) => {
+  let partnershipObj = JSON.parse(jobData.partnerships);
+  let userCurrentExposure = jobData.newUserExposure;
+  let userOldExposure = jobData.userPreviousExposure
+  let obj = {
+    runners: jobData.runners,
+    winAmount: jobData.winAmount,
+    lossAmount: jobData.lossAmount,
+    bettingType: jobData.bettingType,
+    runnerId: jobData.runnerId
+  }
+
+  const partnerShipIds = [userId];
+  Object.keys(partnershipObj)?.forEach((item) => {
+    if (item.includes("PartnershipId")) {
+      partnerShipIds.push(partnershipObj[item]);
+    }
+  });
+
+  const usersData = await getUsersWithoutCount({
+    id: In(partnerShipIds)
+  }, ["id"]);
+
+  const userIds = usersData?.map((item) => item.id);
+
+  updateUserBalanceExposure(userIds, {
+    exposure: -userOldExposure + userCurrentExposure
+  });
+
+  Object.keys(partnershipPrefixByRole)
+    ?.filter(
+      (item) =>
+        item == userRoleConstant.fairGameAdmin ||
+        item == userRoleConstant.fairGameWallet
+    )
+    ?.map(async (item) => {
+      let partnerShipKey = `${partnershipPrefixByRole[item]}`;
+      // Check if partnershipId exists in partnershipObj
+      if (partnershipObj[`${partnerShipKey}PartnershipId`]) {
+        let partnershipId = partnershipObj[`${partnerShipKey}PartnershipId`];
+        let partnership = partnershipObj[`${partnerShipKey}Partnership`];
+        try {
+          // Get user data from Redis or balance data by userId
+          let masterRedisData = await getUserRedisData(partnershipId);
+          if (!lodash.isEmpty(masterRedisData)) {
+
+            let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
+            let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
+
+            let teamRates = masterRedisData?.[`${jobData?.matchId}${redisKeys.profitLoss}`];
+
+            if (teamRates) {
+              teamRates = JSON.parse(teamRates);
+            }
+
+            if (!teamRates) {
+              teamRates = jobData?.runners?.reduce((acc, key) => {
+                acc[key?.id] = 0;
+                return acc;
+              }, {});
+            }
+
+            teamRates = Object.keys(teamRates).reduce((acc, key) => {
+              acc[key] = parseRedisData(key, teamRates);
+              return acc;
+            }, {});
+
+            let teamData = await calculateRacingExpertRate(teamRates, obj, partnership);
+            let userRedisObj = {
+              [`${jobData?.matchId}${redisKeys.profitLoss}`]: JSON.stringify(teamData)
+            }
+            await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
+            jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj: teamData, jobData })
+            // Log information about exposure and stake update
+            logger.info({
+              context: "Update User Exposure and Stake at the match bet",
+              process: `User ID : ${userId} ${item} id ${partnershipId}`,
+              data: `My Stake : ${jobData.myStake} exposure: ${partnerExposure}`
+            });
+
+          }
+        } catch (error) {
+          logger.error({
+            context: `error in ${item} exposure update`,
+            process: `User ID : ${userId} and ${item} id ${partnershipId}`,
+            error: error.message,
+            stake: error.stack
+          })
+        }
+      }
+    }
+    );
+}
+
+WalletMatchTournamentBetQueue.process(async function (job, done) {
+  let jobData = job.data;
+  let userId = jobData.userId;
+  try {
+    await calculateTournamentRateAmount(jobData, userId);
+    return done(null, {});
+  } catch (error) {
+    logger.info({
+      file: `error in bet Queue for User id : ${userId}`,
+      error: error.message,
+      jobData
+    })
+    return done(null, {});
+  }
+});
+
+let calculateTournamentRateAmount = async (jobData, userId) => {
   let partnershipObj = JSON.parse(jobData.partnerships);
   let userCurrentExposure = jobData.newUserExposure;
   let userOldExposure = jobData.userPreviousExposure

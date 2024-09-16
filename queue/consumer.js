@@ -24,6 +24,7 @@ const WalletCardMatchBetQueue = new Queue('walletCardMatchBetQueue', walletRedis
 const walletSessionBetDeleteQueue = new Queue('walletSessionBetDeleteQueue', walletRedisOption);
 const walletMatchBetDeleteQueue = new Queue('walletMatchBetDeleteQueue', walletRedisOption);
 const walletRaceMatchBetDeleteQueue = new Queue('walletRaceMatchBetDeleteQueue', walletRedisOption);
+const walletTournamentMatchBetDeleteQueue = new Queue('walletTournamentMatchBetDeleteQueue', walletRedisOption);
 const WalletMatchTournamentBetQueue = new Queue('walletMatchTournamentBetQueue', walletRedisOption);
 
 WalletMatchBetQueue.process(async function (job, done) {
@@ -1005,4 +1006,121 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
   }
 });
 
+walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
+  let jobData = job.data;
+  let userId = jobData.userId;
+  try {
+    // Parse partnerships from userRedisData
+    let partnershipObj = {};
+    try {
+      partnershipObj = JSON.parse(jobData.partnership);
+    } catch {
+      partnershipObj = jobData.partnership;
+    }
+    // Extract relevant data from jobData
+    let exposureDiff = jobData.exposureDiff;
+    let betId = jobData.betId;
+    let matchId = jobData.matchId;
+    let deleteReason = jobData.deleteReason;
+    let domainUrl = jobData.domainUrl;
+    let betPlacedId = jobData.betPlacedId;
+    let matchBetType = jobData.matchBetType;
+    let newTeamRate = jobData.newTeamRate;
+
+    const partnerShipIds = [userId];
+    Object.keys(partnershipObj)?.forEach((item) => {
+      if (item.includes("PartnershipId")) {
+        partnerShipIds.push(partnershipObj[item]);
+      }
+    });
+
+    const usersData = await getUsersWithoutCount({
+      id: In(partnerShipIds)
+    }, ["id"]);
+
+    const userIds = usersData?.map((item) => item.id);
+
+    await updateUserBalanceExposure(userIds, {
+      exposure: -exposureDiff
+    });
+
+
+    // Iterate through partnerships based on role and update exposure
+    Object.keys(partnershipPrefixByRole)
+      ?.filter(
+        (item) =>
+          item == userRoleConstant.fairGameAdmin ||
+          item == userRoleConstant.fairGameWallet
+      )
+      ?.map(async (item) => {
+        let partnerShipKey = `${partnershipPrefixByRole[item]}`;
+
+        // Check if partnershipId exists in partnershipObj
+        if (partnershipObj[`${partnerShipKey}PartnershipId`]) {
+          let partnershipId = partnershipObj[`${partnerShipKey}PartnershipId`];
+          let partnership = partnershipObj[`${partnerShipKey}Partnership`];
+
+          try {
+            // Get user data from Redis or balance data by userId
+            let masterRedisData = await getUserRedisData(partnershipId);
+
+            if (!lodash.isEmpty(masterRedisData)) {
+
+              let masterTeamRates = JSON.parse(masterRedisData[`${betId}${redisKeys.profitLoss}_${matchId}`]);
+
+              masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
+                acc[key] = parseFloat((parseRedisData(key, masterTeamRates) + ((newTeamRate[key] * partnership) / 100)).toFixed(2));
+                return acc;
+              }, {});
+
+              let redisObj = {
+                [`${betId}${redisKeys.profitLoss}_${matchId}`]: JSON.stringify(masterTeamRates)
+              }
+
+              await incrementValuesRedis(partnershipId, {
+                exposure: -exposureDiff
+              }, redisObj);
+
+              // Log information about exposure and stake update
+              logger.info({
+                context: "Update User Exposure and Stake at the delete tournament match bet",
+                process: `User ID : ${userId} ${item} id ${partnershipId}`,
+                data: `My Stake : ${JSON.stringify(redisObj)}`,
+              });
+
+              // Send data to socket for session bet placement
+              sendMessageToUser(partnershipId, socketData.matchDeleteBet, {
+                exposure: redisObj?.exposure,
+                teamRate: masterTeamRates,
+                betId: betId,
+                matchId: matchId,
+                betPlacedId: betPlacedId,
+                deleteReason: deleteReason,
+                domainUrl: domainUrl,
+                matchBetType
+              });
+            }
+
+          } catch (error) {
+            // Log error if any during exposure update
+            logger.error({
+              context: `error in ${item} exposure update at match race delete bet`,
+              process: `User ID : ${userId} and ${item} id ${partnershipId}`,
+              error: error.message,
+              stake: error.stack,
+            });
+          }
+        }
+      });
+
+    return done(null, {});
+  } catch (error) {
+    logger.error({
+      file: "error in match bet delete Queue",
+      info: `process job for user id ${userId}`,
+      jobData,
+    });
+    return done(null, {});
+  }
+});
 module.exports.WalletMatchBetQueue = WalletMatchBetQueue

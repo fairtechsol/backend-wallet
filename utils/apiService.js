@@ -39,6 +39,7 @@ exports.allApiRoutes = {
   deleteMultipleBet: "/bet/deleteMultipleBet",
   deleteMultipleBetForOther:"/bet/deleteMultipleBetForOther",
   deleteMultipleBetForRace:"/bet/deleteMultipleBetForRace",
+  deleteMultipleBetForTournament:"/bet/deleteMultipleBetForTournament",
   declareResultSession: "/fairgameWallet/declare/result/session",
   unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",

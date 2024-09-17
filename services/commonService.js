@@ -927,7 +927,8 @@ exports.settingBetsDataAtLogin = async (user) => {
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType: `eqcricket`,
-      isTeamNameAllow: false
+      isTeamNameAllow: false,
+      marketType: `ne${matchBettingType.tournament}`
     }).then((data) => data).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
@@ -1047,7 +1048,8 @@ exports.settingOtherMatchBetsDataAtLogin = async (user) => {
       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
       eventType: `inArr${JSON.stringify([gameType.football, gameType.tennis])}`,
-      isTeamNameAllow: false
+      isTeamNameAllow: false,
+      marketType: `ne${matchBettingType.tournament}`
     }).then((data) => data).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,

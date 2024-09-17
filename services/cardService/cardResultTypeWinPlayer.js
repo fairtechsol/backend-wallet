@@ -161,11 +161,7 @@ class CardResultTypeWin {
     END as result`
     }
     superOver() {
-        return `CASE
-        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player E'
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player R'
-        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
-    END as result`
+        return `cardResult".result ->> 'desc' as result`
     }
 
     cricket55() {

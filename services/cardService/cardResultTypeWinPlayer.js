@@ -161,7 +161,7 @@ class CardResultTypeWin {
     END as result`
     }
     superOver() {
-        return `cardResult".result ->> 'desc' as result`
+        return `"cardResult".result ->> 'desc' as result`
     }
 
     cricket55() {

@@ -2785,7 +2785,7 @@ exports.unDeclareOtherMatchResult = async (req, res) => {
 exports.declareTournamentMatchResult = async (req, res) => {
   try {
 
-    const { result, matchBettingDetails, userId, matchId, matchOddId, match, matchBettingType } = req.body;
+    const { result, isMatchDeclare, matchBettingDetails, userId, matchId, matchOddId, match, matchBettingType } = req.body;
 
     const domainData = await getUserDomainWithFaId();
 
@@ -2802,7 +2802,7 @@ exports.declareTournamentMatchResult = async (req, res) => {
       let response;
       try {
         response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultTournametMatch, {
-          result, matchDetails: matchBettingDetails, userId, matchId, match, betType: matchBettingType, betId: matchOddId
+          result, matchDetails: matchBettingDetails, userId, matchId, match, betType: matchBettingType, betId: matchOddId, isMatchDeclare: isMatchDeclare
         });
         response = response?.data;
         resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2));
@@ -2916,7 +2916,8 @@ exports.declareTournamentMatchResult = async (req, res) => {
             matchId,
             gameType: match?.matchType,
             betId: matchOddId,
-            betType: matchBettingType
+            betType: matchBettingType,
+            isMatchDeclare: isMatchDeclare
           });
           exposure += parseFloat(adminBalanceData?.exposure);
          
@@ -2991,7 +2992,8 @@ exports.declareTournamentMatchResult = async (req, res) => {
       matchId,
       betId: matchOddId,
       gameType: match?.matchType,
-      betType: matchBettingType
+      betType: matchBettingType,
+      isMatchDeclare: isMatchDeclare
     });
 
 

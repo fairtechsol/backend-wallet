@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const http = require("http");
 const http2 = require("http2");
+const fs = require("fs");
 const { socketManager } = require("./sockets/socketManager.js");
 const route = require("./routes/index.js");
 const swaggerUi = require("swagger-ui-express");

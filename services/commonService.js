@@ -621,6 +621,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
           newbetPlaced?.push(newEntry);
         }
       }
+      return;
     case sessionBettingType.oddEven:
     case sessionBettingType.fancy1:
     case sessionBettingType.cricketCasino:

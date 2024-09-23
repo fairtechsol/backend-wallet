@@ -209,40 +209,14 @@ exports.otherMatchDetails = async (req, res) => {
       if (Array.isArray(apiResponse?.data)) {
         for (let i = 0; i < apiResponse?.data?.length; i++) {
           const matchId = apiResponse?.data?.[i]?.id;
-          const redisIds = [];
-          redisIds.push(
-            ...redisKeysMatchWise[matchType].map(
-              (key) => key + matchId
-            )
-          );
+          let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
 
-
-          let redisData = await getUserRedisKeys(userId, redisIds);
-
-          let matchResult = {};
-          redisData?.forEach((item, index) => {
-            if (item) {
-              matchResult[redisIds?.[index]?.split("_")[0]] = item;
-            }
-          });
           apiResponse.data[i].profitLossDataMatch = matchResult;
         }
       }
       else {
-        const redisIds = [];
-        redisIds.push(
-          ...redisKeysMatchWise[matchType].map(
-            (key) => key + matchId
-          )
-        );
-        let redisData = await getUserRedisKeys(userId, redisIds);
-
-        let matchResult = {};
-        redisData?.forEach((item, index) => {
-          if (item) {
-            matchResult[redisIds?.[index]?.split("_")[0]] = item;
-          }
-        });
+          const matchId = apiResponse?.data?.id;
+          let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
         apiResponse.data.profitLossDataMatch = matchResult;
       }
     }

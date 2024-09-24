@@ -224,7 +224,7 @@ class CardResultTypeWin {
     END as result`
     }
     threeCardJ() {
-        return `"cardResult".result ->> 'win' as result`
+        return `"cardResult".result ->> 'sid' as result`
     }
 
     balByBall() {

@@ -544,7 +544,7 @@ exports.userList = async (req, res, next) => {
       );
     }
 
-    let userRole = reqUser.roleName;
+    let userRole = roleName || reqUser.roleName;
     let where = {
       createBy: userId || reqUser.id,
     };

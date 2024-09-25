@@ -3,6 +3,8 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const http = require("http");
+const http2 = require("http2");
+const fs = require("fs");
 const { socketManager } = require("./sockets/socketManager.js");
 const route = require("./routes/index.js");
 const swaggerUi = require("swagger-ui-express");
@@ -60,8 +62,28 @@ if (process.env.NODE_ENV != 'production') {
 }
 app.use(error);
 
-//connect http
-const server = http.createServer(app);
+
+// Check environment to determine SSL setup
+let server;
+
+if (process.env.NODE_ENV == "production" || process.env.NODE_ENV == "dev") {
+  // Production SSL configuration with Let's Encrypt certificates
+  const sslOptions = {
+    key: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/privkey.pem`),
+    cert: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/fullchain.pem`),
+    allowHTTP1: true, // Allows HTTP/1.1 fallback
+  };
+
+  // Create an HTTP/2 server with SSL options
+  server = http2.createSecureServer(sslOptions, app);
+
+  console.log("Running with HTTPS in production mode");
+} else {
+  // Create an HTTP server for local development
+  server = http.createServer(app);
+
+  console.log("Running with HTTP in development mode");
+}
 
 //Connect socket
 socketManager(server);

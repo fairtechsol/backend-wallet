@@ -1881,7 +1881,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
     }
     return SuccessResponse(
-      { statusCode: 200, data: data },
+      { statusCode: 200, data: result },
       req,
       res
     );

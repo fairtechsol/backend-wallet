@@ -1876,7 +1876,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       if(!sameBetIds.has(item?.betId)){
         result.push(data?.filter((items)=>items?.betId==item?.betId)?.reduce((prev,curr)=>{
           return { ...prev, totalLoss: (parseFloat(curr?.totalLoss || 0) + parseFloat(prev?.totalLoss || 0))?.toFixed(2) }
-        }));
+        }, {}));
         sameBetIds.add(item?.betId);
       }
     }

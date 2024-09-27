@@ -41,6 +41,8 @@ class CardResultTypeWin {
                 return this.casinoWar();
             case cardGameType.race20:
                 return this.race20();
+            case cardGameType.queen:
+                return this.queen();
             case cardGameType.superover:
                 return this.superOver();
             case cardGameType.cricketv3:
@@ -56,6 +58,12 @@ class CardResultTypeWin {
             case cardGameType.baccarat:
             case cardGameType.baccarat2:
                 return this.baccarat();
+            case cardGameType["3cardj"]:
+                return this.threeCardJ();
+            case cardGameType.ballbyball:
+                return this.balByBall();
+            case cardGameType.cmeter:
+                return this.cmeter();
             default:
                 throw {
                     statusCode: 400,
@@ -155,11 +163,7 @@ class CardResultTypeWin {
     END as result`
     }
     superOver() {
-        return `CASE
-        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player E'
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player R'
-        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
-    END as result`
+        return `"cardResult".result ->> 'desc' as result`
     }
 
     cricket55() {
@@ -210,6 +214,24 @@ class CardResultTypeWin {
         WHEN "cardResult".result ->> 'win' = '4' THEN 'Banker'
         WHEN "cardResult".result ->> 'win' = '5' THEN 'Player'
     END as result`
+    }
+    queen() {
+        return `CASE
+        WHEN "cardResult".result ->> 'win' = '1' THEN 'Total 0'
+        WHEN "cardResult".result ->> 'win' = '2' THEN 'Total 1'
+        WHEN "cardResult".result ->> 'win' = '3' THEN 'Total 2'
+        WHEN "cardResult".result ->> 'win' = '4' THEN 'Total 3'
+    END as result`
+    }
+    threeCardJ() {
+        return `"cardResult".result ->> 'sid' as result`
+    }
+
+    balByBall() {
+        return `"cardResult".result ->> 'desc' as result`
+    }
+    cmeter() {
+        return `"cardResult".result ->> 'desc' as result`
     }
 }
 

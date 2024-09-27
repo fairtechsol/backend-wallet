@@ -1870,8 +1870,18 @@ exports.getSessionBetProfitLoss = async (req, res) => {
         data?.push(...(response?.data || []));
       }
     }
+    const result = [];
+    const sameBetIds=new Set();
+    for(let item of data){
+      if(!sameBetIds.has(item?.betId)){
+        result.push(data?.filter((items)=>items?.betId?.toString()==item?.betId?.toString())?.reduce((prev,curr)=>{
+          return { ...curr, totalLoss: (parseFloat(curr?.totalLoss || 0) + parseFloat(prev?.totalLoss || 0))?.toFixed(2) }
+        }, {}));
+        sameBetIds.add(item?.betId);
+      }
+    }
     return SuccessResponse(
-      { statusCode: 200, data: data },
+      { statusCode: 200, data: result },
       req,
       res
     );

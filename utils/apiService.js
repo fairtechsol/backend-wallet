@@ -39,16 +39,21 @@ exports.allApiRoutes = {
   deleteMultipleBet: "/bet/deleteMultipleBet",
   deleteMultipleBetForOther:"/bet/deleteMultipleBetForOther",
   deleteMultipleBetForRace:"/bet/deleteMultipleBetForRace",
+  deleteMultipleBetForTournament:"/bet/deleteMultipleBetForTournament",
   declareResultSession: "/fairgameWallet/declare/result/session",
   unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
   declareNoResultSession: "/fairgameWallet/declare/noResult/session",
   declareResultMatch: "/fairgameWallet/declare/result/match",
   declareResultOtherMatch: "/fairgameWallet/declare/result/other/match",
+  declareResultOtherMarket: "/fairgameWallet/declare/result/other/market",
+  declareResultTournametMatch: "/fairgameWallet/declare/result/tournament/match",
   declareResultRaceMatch: "/fairgameWallet/declare/result/race/match",
   declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
   unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
   unDeclareResultOtherMatch: "/fairgameWallet/unDeclare/result/other/match",
+  unDeclareResultOtherMarket: "/fairgameWallet/unDeclare/result/other/market",
   unDeclareResultRaceMatch: "/fairgameWallet/unDeclare/result/race/match",
+  unDeclareResultTournamentMatch: "/fairgameWallet/unDeclare/result/tournament/match",
   addMatch:"/match/add",
   addRace: "/match/raceAdd",
   cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
@@ -97,12 +102,13 @@ exports.allApiRoutes = {
     raceBettingDetail : "/superAdmin/raceBetting/",
     racingMatchList: "/superAdmin/match/racing/list",
     racingMatchCountryCodeList: "/superAdmin/match/racing/countryCode",
+    tournamentBettingDetail : "/superAdmin/tournamentBetting/",
   },
   bets: {
     placedBet: "/fairgameWallet/getBet",
     betCount:"/fairgameWallet/betCounts"
   },
   MICROSERVICE : {
-    casinoData:"/api/tunnel/casino/odds/"
+    casinoData:"/getdata/"
   }
 };

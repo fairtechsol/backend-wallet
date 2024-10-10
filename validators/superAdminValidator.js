@@ -47,7 +47,6 @@ module.exports.CreateSuperAdmin = Joi.object({
         then: Joi.required(),
     }),
     transactionPassword: Joi.string().required(),
-    sessionCommission: Joi.number(),
     matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
 })
@@ -83,7 +82,7 @@ module.exports.ChangePassword = Joi.object({
 
 
 module.exports.updateSuperAdminValid = Joi.object({
-    //sessionCommission,matchComissionType,matchCommission,id,createBy
+    //matchComissionType,matchCommission,id,createBy
     id: Joi.string().guid({ version: 'uuidv4' }).required(),
     fullName: Joi.string().allow("").min(3).max(255),
     phoneNumber: Joi.string().allow("").messages({
@@ -97,20 +96,19 @@ module.exports.updateSuperAdminValid = Joi.object({
     footerColor: Joi.string().allow(""),
     transactionPassword: Joi.string().required(),
     isOldFairGame: Joi.boolean(),
-    sessionCommission: Joi.number(),
     matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
 })
 
 module.exports.setExposureLimitValid = Joi.object({
-    //sessionCommission,matchComissionType,matchCommission,id,createBy
+    //matchComissionType,matchCommission,id,createBy
     amount: Joi.number().required(),
     transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.setCreditReferValid = Joi.object({
-    //sessionCommission,matchComissionType,matchCommission,id,createBy
+    //matchComissionType,matchCommission,id,createBy
     amount: Joi.number().required(),
     transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),

@@ -28,7 +28,6 @@ module.exports.CreateUser = Joi.object({
     'any.required': '"Transaction Password" is required',
     'string.empty': '"Transaction Password" can not be empty.'
   }),
-  sessionCommission: Joi.number(),
   matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
 
   matchCommission: Joi.number(),
@@ -70,12 +69,8 @@ module.exports.generateTransactionPass = Joi.object({
     }),
 });
 
-
-
-
 module.exports.updateUserValid = Joi.object({
-  //sessionCommission,matchComissionType,matchCommission,id,createBy
-  sessionCommission: Joi.number(),
+  //matchComissionType,matchCommission,id,createBy
   matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
   matchCommission: Joi.number(),
   remark:Joi.string().allow("").trim(),
@@ -91,14 +86,14 @@ module.exports.updateUserValid = Joi.object({
 })
 
 module.exports.SetExposureLimitValid = Joi.object({
-  //sessionCommission,matchComissionType,matchCommission,id,createBy
+  //matchComissionType,matchCommission,id,createBy
   amount: Joi.number().required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.SetCreditReference = Joi.object({
-  //sessionCommission,matchComissionType,matchCommission,id,createBy
+  //matchComissionType,matchCommission,id,createBy
   amount: Joi.number().required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),

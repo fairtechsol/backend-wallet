@@ -374,6 +374,52 @@ const calculateProfitLoss = (betData, odds, partnership) => {
   }
   return 0;
 };
+
+const calculateProfitLossKhado = (betData, odds, partnership) => {
+  if (
+    (betData?.betPlacedData?.betType === betType.BACK &&
+      ((odds < betData?.betPlacedData?.odds) || (odds > (betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) - 1))))
+  ) {
+    return partnership != null || partnership != undefined
+      ? parseFloat(
+        (parseFloat(betData?.lossAmount) * partnership) / 100
+      ).toFixed(2)
+      : -parseFloat(parseFloat(betData?.lossAmount).toFixed(2));
+  }
+  return partnership != null || partnership != undefined
+    ? -parseFloat(
+      (parseFloat(betData?.winAmount) * partnership) / 100
+    ).toFixed(2)
+    : parseFloat(betData.winAmount);
+
+};
+
+const calculateProfitLossMeter = (betData, odds, partnership) => {
+  if (
+    (betData?.betPlacedData?.betType === betType.NO &&
+      odds < betData?.betPlacedData?.odds) ||
+    (betData?.betPlacedData?.betType === betType.YES &&
+      odds >= betData?.betPlacedData?.odds)
+  ) {
+    return partnership != null || partnership != undefined
+      ? -parseFloat(
+        (parseFloat((betData?.betPlacedData?.stake * betData?.betPlacedData?.rate / 100) * Math.abs(odds - betData?.betPlacedData?.odds)) * partnership) / 100
+      ).toFixed(2)
+      : +parseFloat(parseFloat((betData?.betPlacedData?.stake * betData?.betPlacedData?.rate / 100) * Math.abs(odds - betData?.betPlacedData?.odds)).toFixed(2));
+  } else if (
+    (betData?.betPlacedData?.betType === betType.NO &&
+      odds >= betData?.betPlacedData?.odds) ||
+    (betData?.betPlacedData?.betType === betType.YES &&
+      odds < betData?.betPlacedData?.odds)
+  ) {
+    return partnership != null || partnership != undefined
+      ? +parseFloat(
+        (parseFloat((betData?.betPlacedData?.stake) * Math.abs(odds - betData?.betPlacedData?.odds)) * partnership) / 100
+      ).toFixed(2)
+      : -parseFloat((betData?.betPlacedData?.stake) * Math.abs(odds - betData?.betPlacedData?.odds));
+  }
+  return 0;
+};
 /**
 * Calculates the profit or loss for a betting session.
 * @param {object} redisProfitLoss - Redis data for profit and loss.
@@ -463,6 +509,203 @@ exports.calculateProfitLossSession = async (redisProfitLoss, betData, partnershi
   } else {
     betProfitloss = betProfitloss?.map((item) => {
       let profitLossVal = calculateProfitLoss(betData, item?.odds, partnership);
+      profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
+      if (
+        maxLoss <
+        Math.abs(
+          profitLossVal
+        ) &&
+        profitLossVal < 0
+      ) {
+        maxLoss = Math.abs(
+          profitLossVal
+        );
+      }
+      return {
+        odds: item?.odds,
+        profitLoss: profitLossVal,
+      };
+    });
+  }
+  maxLoss = Number(maxLoss.toFixed(2));
+  // Return the result
+  return {
+    upperLimitOdds: parseFloat(upperLimit),
+    lowerLimitOdds: parseFloat(lowerLimit),
+    betPlaced: betProfitloss,
+    maxLoss: parseFloat(maxLoss),
+    totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
+  };
+};
+
+/**
+* Calculates the profit or loss for a betting khado.
+* @param {object} redisProfitLoss - Redis data for profit and loss.
+* @param {object} betData - Data for the current bet.
+* @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
+*/
+exports.calculateProfitLossKhado = async (redisProfitLoss, betData, partnership) => {
+  /**
+   * Calculates the profit or loss for a specific bet at given odds.
+   * @param {object} betData - Data for the current bet.
+   * @param {number} odds - Odds for the current bet.
+   * @returns {number} - Profit or loss amount.
+   */
+  let maxLoss = 0;
+
+
+  // Calculate lower and upper limits
+  const lowerLimit = 1;
+
+  const upperLimit = parseFloat(
+    betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) + 9 >
+      (redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) + 9)
+      ? betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) + 9
+      : redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) + 9
+  );
+
+  let betProfitloss = redisProfitLoss?.betPlaced ?? [];
+
+  // Adjust betPlaced based on lower limit changes
+  if (redisProfitLoss?.lowerLimitOdds > lowerLimit) {
+    betProfitloss = [
+      ...Array(Math.abs((redisProfitLoss?.lowerLimitOdds ?? 0) - lowerLimit))
+        .fill(0)
+        ?.map((_, index) => {
+          return {
+            odds: lowerLimit + index,
+            profitLoss: parseFloat(betProfitloss[0]?.profitLoss),
+          };
+        }),
+      ...betProfitloss,
+    ];
+  }
+
+  // Adjust betPlaced based on upper limit changes
+  if (upperLimit > redisProfitLoss?.upperLimitOdds) {
+    betProfitloss = [
+      ...betProfitloss,
+      ...Array(Math.abs(upperLimit - (redisProfitLoss?.upperLimitOdds ?? 0)))
+        .fill(0)
+        ?.map((_, index) => {
+          return {
+            odds: (redisProfitLoss?.upperLimitOdds ?? 0) + index + 1,
+            profitLoss: parseFloat(
+              betProfitloss[betProfitloss?.length - 1]?.profitLoss
+            ),
+          };
+        }),
+    ];
+  }
+
+  // Initialize or update betPlaced if it's empty or not
+  if (!betProfitloss?.length) {
+    betProfitloss = Array(Math.abs(upperLimit - lowerLimit + 1))
+      .fill(0)
+      ?.map((_, index) => {
+        let profitLoss = calculateProfitLossKhado(betData, lowerLimit + index, partnership);
+        if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
+          maxLoss = Math.abs(profitLoss);
+        }
+        return {
+          odds: lowerLimit + index,
+          profitLoss: profitLoss,
+        };
+      });
+  } else {
+    betProfitloss = betProfitloss?.map((item) => {
+      let profitLossVal = calculateProfitLossKhado(betData, item?.odds, partnership);
+      profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
+      if (
+        maxLoss <
+        Math.abs(
+          profitLossVal
+        ) &&
+        profitLossVal < 0
+      ) {
+        maxLoss = Math.abs(
+          profitLossVal
+        );
+      }
+      return {
+        odds: item?.odds,
+        profitLoss: profitLossVal,
+      };
+    });
+  }
+  maxLoss = Number(maxLoss.toFixed(2));
+  // Return the result
+  return {
+    upperLimitOdds: parseFloat(upperLimit),
+    lowerLimitOdds: parseFloat(lowerLimit),
+    betPlaced: betProfitloss,
+    maxLoss: parseFloat(maxLoss),
+    totalBet: redisProfitLoss?.totalBet ? parseInt(redisProfitLoss?.totalBet) + 1 : 1
+  };
+};
+
+/**
+* Calculates the profit or loss for a betting meter.
+* @param {object} redisProfitLoss - Redis data for profit and loss.
+* @param {object} betData - Data for the current bet.
+* @returns {object} - Object containing upper and lower limit odds, and the updated bet placed data.
+*/
+exports.calculateProfitLossMeter = async (redisProfitLoss, betData, partnership) => {
+  /**
+   * Calculates the profit or loss for a specific bet at given odds.
+   * @param {object} betData - Data for the current bet.
+   * @param {number} odds - Odds for the current bet.
+   * @returns {number} - Profit or loss amount.
+   */
+  let maxLoss = 0;
+
+
+  // Calculate lower and upper limits
+  const lowerLimit = 0;
+
+  const upperLimit = parseFloat(
+    betData?.betPlacedData?.odds + 100 >
+      (redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + 100)
+      ? betData?.betPlacedData?.odds + 100
+      : redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + 100
+  );
+
+  let betProfitloss = redisProfitLoss?.betPlaced ?? [];
+
+  // Adjust betPlaced based on upper limit changes
+  if (upperLimit > redisProfitLoss?.upperLimitOdds) {
+    betProfitloss = [
+      ...betProfitloss,
+      ...Array(Math.abs(upperLimit - (redisProfitLoss?.upperLimitOdds ?? 0)))
+        .fill(0)
+        ?.map((_, index) => {
+          return {
+            odds: (redisProfitLoss?.upperLimitOdds ?? 0) + index + 1,
+            profitLoss: parseFloat(
+              betProfitloss[betProfitloss?.length - 1]?.profitLoss
+            ),
+          };
+        }),
+    ];
+  }
+
+  // Initialize or update betPlaced if it's empty or not
+  if (!betProfitloss?.length) {
+    betProfitloss = Array(Math.abs(upperLimit - lowerLimit + 1))
+      .fill(0)
+      ?.map((_, index) => {
+        let profitLoss = calculateProfitLossMeter(betData, lowerLimit + index, partnership);
+        if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
+          maxLoss = Math.abs(profitLoss);
+        }
+        return {
+          odds: lowerLimit + index,
+          profitLoss: profitLoss,
+        };
+      });
+  } else {
+    betProfitloss = betProfitloss?.map((item) => {
+      let profitLossVal = calculateProfitLossMeter(betData, item?.odds, partnership);
       profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
       if (
         maxLoss <
@@ -695,6 +938,68 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip = 100, oldLow
       }
       maxLoss = Number(maxLoss.toFixed(2));
       return { betData: betData, line: line, maxLoss: maxLoss, total_bet: betPlace.length, lowerLimitOdds: betData[0]?.odds, upperLimitOdds: betData[betData.length - 1]?.odds }
+    case sessionBettingType.khado:
+      let betDataKhado = [];
+      let lineKhado = 1;
+      let maxLossKhado = 0.0;
+      let firstKhado = 0;
+      let lastKhado = 0;
+      if (betPlace && betPlace.length) {
+        // let latest_bet = betPlace[betPlace.length - 1].odds;
+        let oddsValues = betPlace.map(({ odds, eventName }) => odds + parseInt(eventName?.split("-")?.pop()) + 9)
+        firstKhado = 1;
+        lastKhado = oldUpperLimitOdds ? oldUpperLimitOdds : Math.max(...oddsValues)
+
+        let i = 0;
+        for (let j = firstKhado; j <= lastKhado; j++) {
+          let profitLoss = 0.0;
+          for (let key in betPlace) {
+            let partnership = userPartnerShip || 100;
+            let bet = betPlace[key];
+            let isWinningBet = (bet.betType === betType.BACK && (j >= bet.odds && j < bet.odds + parseInt(bet.eventName.split("-").pop())));
+            profitLoss += isWinningBet ? (bet.winAmount * partnership / 100) : (-bet.lossAmount * partnership / 100);
+          }
+          maxLossKhado = Math.min(maxLossKhado, profitLoss);
+          betDataKhado.push({ odds: j, profitLoss: Number(profitLoss.toFixed(2)) });
+          if (j == lastKhado) {
+            lineKhado = i;
+          }
+          i++;
+        }
+      }
+      maxLossKhado = Number(Math.abs(maxLossKhado).toFixed(2));
+      return { betData: betDataKhado, line: lineKhado, maxLoss: maxLossKhado, total_bet: betPlace.length, lowerLimitOdds: betDataKhado[0]?.odds, upperLimitOdds: betDataKhado[betDataKhado.length - 1]?.odds }
+    case sessionBettingType.meter:
+      let betDataMeter = [];
+      let lineMeter = 1;
+      let maxLossMeter = 0.0;
+      let firstMeter = 0;
+      let lastMeter = 0;
+      if (betPlace && betPlace.length) {
+        // let latest_bet = betPlace[betPlace.length - 1].odds;
+        let oddsValues = betPlace.map(({ odds }) => odds + 100)
+        firstMeter = 1;
+        lastMeter = oldUpperLimitOdds ? oldUpperLimitOdds : Math.max(...oddsValues)
+
+        let i = 0;
+        for (let j =firstMeter; j <= lastMeter; j++) {
+          let profitLoss = 0.0;
+          for (let key in betPlace) {
+            let partnership = userPartnerShip || 100;
+            let bet = betPlace[key];
+            let isWinningBet = (bet.betType === betType.NO && j < bet.odds) || (bet.betType === betType.YES && j >= bet.odds);
+            profitLoss += isWinningBet ? (((parseFloat(bet.amount)*parseFloat(bet.rate)/100) * Math.abs(j - parseInt(bet.odds))) * partnership / 100) : (-((parseFloat(bet.amount)*parseFloat(bet.rate)/100) * Math.abs(j - parseInt(bet.odds))) * partnership / 100);
+          }
+          maxLossMeter = Math.min(maxLossMeter, profitLoss);
+          betDataMeter.push({ odds: j, profitLoss: Number(profitLoss.toFixed(2)) });
+          if (j == lastMeter) {
+            lineMeter = i;
+          }
+          i++;
+        }
+      }
+      maxLossMeter = Number(Math.abs(maxLossMeter).toFixed(2));
+      return { betData: betDataMeter, line: lineMeter, maxLoss: maxLossMeter, total_bet: betPlace.length, lowerLimitOdds: betDataMeter[0]?.odds, upperLimitOdds: betDataMeter[betDataMeter.length - 1]?.odds }
     case sessionBettingType.oddEven:
       if (!Array.isArray(betPlace) || betPlace.length === 0) {
         return {

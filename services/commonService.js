@@ -375,7 +375,7 @@ const calculateProfitLoss = (betData, odds, partnership) => {
   return 0;
 };
 
-const calculateProfitLossKhado = (betData, odds, partnership) => {
+const calculateProfitLossDataKhado = (betData, odds, partnership) => {
   if (
     (betData?.betPlacedData?.betType === betType.BACK &&
       ((odds < betData?.betPlacedData?.odds) || (odds > (betData?.betPlacedData?.odds + parseInt(betData?.betPlacedData?.eventName?.split("-").pop()) - 1))))
@@ -394,7 +394,7 @@ const calculateProfitLossKhado = (betData, odds, partnership) => {
 
 };
 
-const calculateProfitLossMeter = (betData, odds, partnership) => {
+const calculateProfitLossDataMeter = (betData, odds, partnership) => {
   if (
     (betData?.betPlacedData?.betType === betType.NO &&
       odds < betData?.betPlacedData?.odds) ||
@@ -603,7 +603,7 @@ exports.calculateProfitLossKhado = async (redisProfitLoss, betData, partnership)
     betProfitloss = Array(Math.abs(upperLimit - lowerLimit + 1))
       .fill(0)
       ?.map((_, index) => {
-        let profitLoss = calculateProfitLossKhado(betData, lowerLimit + index, partnership);
+        let profitLoss = calculateProfitLossDataKhado(betData, lowerLimit + index, partnership);
         if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
           maxLoss = Math.abs(profitLoss);
         }
@@ -614,7 +614,7 @@ exports.calculateProfitLossKhado = async (redisProfitLoss, betData, partnership)
       });
   } else {
     betProfitloss = betProfitloss?.map((item) => {
-      let profitLossVal = calculateProfitLossKhado(betData, item?.odds, partnership);
+      let profitLossVal = calculateProfitLossDataKhado(betData, item?.odds, partnership);
       profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
       if (
         maxLoss <
@@ -664,10 +664,10 @@ exports.calculateProfitLossMeter = async (redisProfitLoss, betData, partnership)
   const lowerLimit = 0;
 
   const upperLimit = parseFloat(
-    betData?.betPlacedData?.odds + 100 >
-      (redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + 100)
-      ? betData?.betPlacedData?.odds + 100
-      : redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + 100
+    betData?.betPlacedData?.odds + (betData?.betPlacedData?.isTeamC ? 200 : 100) >
+      (redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + (betData?.betPlacedData?.isTeamC ? 200 : 100))
+      ? betData?.betPlacedData?.odds + (betData?.betPlacedData?.isTeamC ? 200 : 100)
+      : redisProfitLoss?.upperLimitOdds ?? betData?.betPlacedData?.odds + (betData?.betPlacedData?.isTeamC ? 200 : 100)
   );
 
   let betProfitloss = redisProfitLoss?.betPlaced ?? [];
@@ -694,7 +694,7 @@ exports.calculateProfitLossMeter = async (redisProfitLoss, betData, partnership)
     betProfitloss = Array(Math.abs(upperLimit - lowerLimit + 1))
       .fill(0)
       ?.map((_, index) => {
-        let profitLoss = calculateProfitLossMeter(betData, lowerLimit + index, partnership);
+        let profitLoss = calculateProfitLossDataMeter(betData, lowerLimit + index, partnership);
         if (maxLoss < Math.abs(profitLoss) && profitLoss < 0) {
           maxLoss = Math.abs(profitLoss);
         }
@@ -705,7 +705,7 @@ exports.calculateProfitLossMeter = async (redisProfitLoss, betData, partnership)
       });
   } else {
     betProfitloss = betProfitloss?.map((item) => {
-      let profitLossVal = calculateProfitLossMeter(betData, item?.odds, partnership);
+      let profitLossVal = calculateProfitLossDataMeter(betData, item?.odds, partnership);
       profitLossVal = +(parseFloat(item?.profitLoss) + parseFloat(profitLossVal)).toFixed(2)
       if (
         maxLoss <
@@ -827,6 +827,8 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
     case sessionBettingType.ballByBall:
     case sessionBettingType.overByOver:
     case sessionBettingType.session:
+    case sessionBettingType.khado:
+    case sessionBettingType.meter:
       if (newbetPlaced?.[0].odds > oldbetPlaced?.[0]?.odds) {
         while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
           const newEntry = {
@@ -977,7 +979,7 @@ exports.calculatePLAllBet = async (betPlace, type, userPartnerShip = 100, oldLow
       let lastMeter = 0;
       if (betPlace && betPlace.length) {
         // let latest_bet = betPlace[betPlace.length - 1].odds;
-        let oddsValues = betPlace.map(({ odds }) => odds + 100)
+        let oddsValues = betPlace.map(({ odds }) => odds + (betPlace?.match?.teamC ? 200 : 100))
         firstMeter = 1;
         lastMeter = oldUpperLimitOdds ? oldUpperLimitOdds : Math.max(...oddsValues)
 

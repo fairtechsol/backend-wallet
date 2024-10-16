@@ -159,7 +159,10 @@ exports.getNotification = async (req, res) => {
   try {
     let response = await apiCall(
       apiMethod.get,
-      expertDomain + allApiRoutes.EXPERTS.notification
+      expertDomain + allApiRoutes.EXPERTS.notification,
+      null,
+      null,
+      req.query
     );
     return SuccessResponse(
       {

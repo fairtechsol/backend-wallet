@@ -231,7 +231,7 @@ class CardResultTypeWin {
         return `"cardResult".result ->> 'desc' as result`
     }
     cmeter() {
-        return `"cardResult".result ->> 'desc' as result`
+        return `"cardResult".result ->> 'cards' as result`
     }
 }
 

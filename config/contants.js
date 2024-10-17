@@ -34,7 +34,9 @@ module.exports.sessionBettingType = {
   overByOver: "overByover",
   ballByBall: "ballByBall",
   oddEven: "oddEven",
-  cricketCasino: "cricketCasino"
+  cricketCasino: "cricketCasino",
+  khado:"khado",
+  meter:"meter"
 };
 
 module.exports.acceptUserRole = [this.userRoleConstant.fairGameAdmin,this.userRoleConstant.superAdmin]

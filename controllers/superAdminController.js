@@ -24,8 +24,7 @@ const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const { forceLogoutIfLogin, getFaAdminDomain, settingBetsDataAtLogin, mergeBetsArray } = require("../services/commonService");
-const internalRedis = require("../config/internalRedisConnection");
+const {  getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
 const {
   getUserBalanceDataByUserId,
   updateUserBalanceByUserId,

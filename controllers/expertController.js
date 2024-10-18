@@ -4087,6 +4087,7 @@ exports.declareCardMatchResult = async (req, res) => {
           }
 
           await deleteHashKeysByPattern(parentUser.userId, result?.mid + "*");
+          await deleteKeyFromUserRedis(parentUser.userId, `${redisKeys.userMatchExposure}${result?.mid}`);
 
           sendMessageToUser(parentUser.userId, socketData.cardResult, {
             ...parentUser,
@@ -4158,6 +4159,7 @@ exports.declareCardMatchResult = async (req, res) => {
     }
 
     await deleteHashKeysByPattern(parentUser.userId, result?.mid + "*");
+    await deleteKeyFromUserRedis(parentUser.userId, `${redisKeys.userMatchExposure}${result?.mid}`);
 
     sendMessageToUser(parentUser.userId, socketData.cardResult, {
       ...parentUser,

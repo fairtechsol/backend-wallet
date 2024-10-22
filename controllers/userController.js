@@ -2326,7 +2326,8 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
           body
         );
       } catch (err) {
-        return ErrorResponse(err?.response?.data);
+        logger.error({ message: "Error in performing block operation of user or bet.", stack: err?.stack, context: err?.message })
+        continue;
       }
     }
   }

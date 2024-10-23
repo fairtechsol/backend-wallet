@@ -691,6 +691,9 @@ exports.userList = async (req, res, next) => {
         else {
           element.domain = element?.domainData?.domain;
         }
+        if (element?.roleName != userRoleConstant.user) {
+          element.userBal['exposure'] = 0;
+        }
 
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         let partner_ships = 100;
@@ -882,7 +885,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       createBy: userId || reqUser.id,
     };
 
-    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(UB.exposure) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
+    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(CASE WHEN user.roleName = 'user' THEN UB.exposure ELSE 0 END) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
 
     switch (userRole) {
       case (userRoleConstant.fairGameWallet):

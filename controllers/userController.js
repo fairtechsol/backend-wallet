@@ -75,7 +75,6 @@ exports.createUser = async (req, res) => {
       exposureLimit,
       maxBetLimit,
       minBetLimit,
-      sessionCommission,
       matchComissionType,
       matchCommission,
       remark
@@ -143,7 +142,6 @@ exports.createUser = async (req, res) => {
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,
       minBetLimit: minBetLimit,
-      sessionCommission,
       matchComissionType,
       matchCommission,
       remark
@@ -209,13 +207,12 @@ exports.createUser = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
   try {
-    let { sessionCommission, matchComissionType, matchCommission, id, remark } =
+    let { matchComissionType, matchCommission, id, remark } =
       req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
       "id",
       "createBy",
-      "sessionCommission",
       "matchComissionType",
       "matchCommission",
     ]);
@@ -225,8 +222,6 @@ exports.updateUser = async (req, res) => {
         req,
         res
       );
-    updateUser.sessionCommission =
-      sessionCommission ?? updateUser.sessionCommission;
     updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
     updateUser.matchComissionType =
       matchComissionType || updateUser.matchComissionType;
@@ -234,7 +229,6 @@ exports.updateUser = async (req, res) => {
     updateUser = await addUser(updateUser);
     let response = lodash.pick(updateUser, [
       "id",
-      "sessionCommission",
       "matchCommission",
       "matchComissionType",
     ]);
@@ -697,6 +691,9 @@ exports.userList = async (req, res, next) => {
         else {
           element.domain = element?.domainData?.domain;
         }
+        if (element?.roleName != userRoleConstant.user) {
+          element.userBal['exposure'] = 0;
+        }
 
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         let partner_ships = 100;
@@ -771,7 +768,6 @@ exports.userList = async (req, res, next) => {
         { excelHeader: "Available Balance", dbKey: "availableBalance" },
         { excelHeader: "UL", dbKey: "userBlock" },
         { excelHeader: "BL", dbKey: "betBlock" },
-        { excelHeader: "S Com %", dbKey: "sessionCommission" },
         { excelHeader: "Match Com Type", dbKey: "matchComissionType" },
         { excelHeader: "M Com %", dbKey: "matchCommission" },
         { excelHeader: "Exposure Limit", dbKey: "exposureLimit" },
@@ -889,7 +885,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       createBy: userId || reqUser.id,
     };
 
-    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(UB.exposure) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
+    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(CASE WHEN user.roleName = 'user' THEN UB.exposure ELSE 0 END) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
 
     switch (userRole) {
       case (userRoleConstant.fairGameWallet):
@@ -2333,7 +2329,8 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
           body
         );
       } catch (err) {
-        return ErrorResponse(err?.response?.data);
+        logger.error({ message: "Error in performing block operation of user or bet.", stack: err?.stack, context: err?.message })
+        continue;
       }
     }
   }

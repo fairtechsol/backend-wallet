@@ -3304,6 +3304,7 @@ const updateSuperAdminData = async (response, type) => {
     });
   }
 }
+exports.updateSuperAdminData=updateSuperAdminData;
 const updateBulkCommission = async (response, bulkCommission) => {
   bulkCommission.push(...response?.faAdminCal?.commission?.map((item) => {
     return {

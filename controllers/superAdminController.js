@@ -29,6 +29,7 @@ const {
   getUserBalanceDataByUserId,
   updateUserBalanceByUserId,
   addInitialUserBalance,
+  updateUserBalanceData,
 } = require("../services/userBalanceService");
 const {
   addDomainData,
@@ -44,9 +45,10 @@ const {
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
+const { hasUserInCache, updateUserDataRedis, getUserRedisKeys, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
+const { updateSuperAdminData } = require("./expertController");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -1355,5 +1357,61 @@ exports.getCardResultDetail = async ( req, res ) => {
       req,
       res
     );
+  }
+}
+
+exports.declareVirtualCasinoResult = async (req, res) => {
+  try {
+
+    const { profitLoss, fairgameAdminPL, fairgameWalletPL, superAdminData } = req.body;
+
+    const fgWallet = await getUser({
+      roleName: userRoleConstant?.fairGameWallet
+    }, ["id"]);
+
+    await updateSuperAdminData({ superAdminData }, "Virtual casino");
+    if (fairgameAdminPL) {
+      await updateUserBalanceData(fairgameAdminPL.id, {
+        profitLoss: profitLoss,
+        myProfitLoss: fairgameAdminPL?.myProfitLoss,
+        balance: 0
+      });
+      let parentUserRedisData = await getUserRedisData(fairgameAdminPL.id);
+      if (parentUserRedisData?.exposure) {
+        await incrementValuesRedis(fairgameAdminPL.id, {
+          profitLoss: profitLoss,
+          myProfitLoss: fairgameAdminPL?.myProfitLoss,
+        });
+      }
+    }
+    // updating Parent user balance
+    await updateUserBalanceData(fgWallet.id, {
+      profitLoss: profitLoss,
+      myProfitLoss: fairgameWalletPL,
+      balance: 0
+    });
+    let parentUserRedisData = await getUserRedisData(fgWallet.id);
+    if (parentUserRedisData?.exposure) {
+      await incrementValuesRedis(fgWallet.id, {
+        profitLoss: profitLoss,
+        myProfitLoss: fairgameWalletPL,
+      });
+    }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "bet.resultDeclared" }
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    logger.error({
+      error: `Error at declare virtual casino match result for the expert.`,
+      stack: error?.stack,
+      message: error?.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
   }
 }

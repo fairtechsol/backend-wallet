@@ -26,7 +26,7 @@ router.get("/user/profitLossData/race/:matchId", isAuthenticate, getUserRacingPr
 
 router.get("/cards/result/:type", getCardResult);
 router.get("/cards/result/detail/:id", getCardResultDetail);
-router.get("/virtual/casino/result", declareVirtualCasinoResult);
+router.post("/virtual/casino/result", declareVirtualCasinoResult);
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

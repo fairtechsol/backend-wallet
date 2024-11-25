@@ -15,7 +15,6 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
-  getChildUser,
   getParentUsers,
   getFirstLevelChildUser,
   getFirstLevelChildUserWithPartnership,
@@ -134,7 +133,7 @@ exports.createSuperAdmin = async (req, res) => {
 
     if (exposureLimit && exposureLimit > creator.exposureLimit) {
       return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
+        { statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: creator.exposureLimit } } },
         req,
         res
       );
@@ -419,6 +418,12 @@ exports.setExposureLimit = async (req, res, next) => {
     let { amount, userId, transactionPassword } = req.body;
 
     let reqUser = req.user || {};
+
+    let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
+    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Login user" } } }, req, res);
+
+    if ( parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" , keys: { amount: loginUser.exposureLimit }} }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
@@ -793,16 +798,16 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     }
 
     // Check if the user performing the block/unblock operation has the right access
-    if (blockingUserDetail?.createBy != loginId) {
-      return ErrorResponse(
-        {
-          statusCode: 403,
-          message: { msg: "user.blockCantAccess" },
-        },
-        req,
-        res
-      );
-    }
+    // if (blockingUserDetail?.createBy != loginId) {
+    //   return ErrorResponse(
+    //     {
+    //       statusCode: 403,
+    //       message: { msg: "user.blockCantAccess" },
+    //     },
+    //     req,
+    //     res
+    //   );
+    // }
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {

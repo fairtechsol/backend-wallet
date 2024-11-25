@@ -62,6 +62,8 @@ class CardResultTypeWin {
                 return this.threeCardJ();
             case cardGameType.ballbyball:
                 return this.balByBall();
+            case cardGameType.cmeter:
+                return this.cmeter();
             default:
                 throw {
                     statusCode: 400,
@@ -161,11 +163,7 @@ class CardResultTypeWin {
     END as result`
     }
     superOver() {
-        return `CASE
-        WHEN "cardResult".result ->> 'win' = '1' THEN 'Player E'
-        WHEN "cardResult".result ->> 'win' = '2' THEN 'Player R'
-        WHEN "cardResult".result ->> 'win' = '0' THEN 'Player abandoned'
-    END as result`
+        return `"cardResult".result ->> 'desc' as result`
     }
 
     cricket55() {
@@ -226,11 +224,14 @@ class CardResultTypeWin {
     END as result`
     }
     threeCardJ() {
-        return `"cardResult".result ->> 'win' as result`
+        return `"cardResult".result ->> 'sid' as result`
     }
 
     balByBall() {
         return `"cardResult".result ->> 'desc' as result`
+    }
+    cmeter() {
+        return `"cardResult".result ->> 'cards' as result`
     }
 }
 

@@ -24,8 +24,7 @@ const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const { forceLogoutIfLogin, getFaAdminDomain, settingBetsDataAtLogin, mergeBetsArray } = require("../services/commonService");
-const internalRedis = require("../config/internalRedisConnection");
+const {  getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
 const {
   getUserBalanceDataByUserId,
   updateUserBalanceByUserId,
@@ -70,7 +69,6 @@ exports.createSuperAdmin = async (req, res) => {
       headerColor,
       footerColor,
       isOldFairGame,
-      sessionCommission,
       matchComissionType,
       matchCommission,
       remark
@@ -164,7 +162,6 @@ exports.createSuperAdmin = async (req, res) => {
       isUrl: !Boolean(isOldFairGame),
       remark: remark,
       ...(isOldFairGame ? {
-        sessionCommission,
         matchComissionType,
         matchCommission
       } : {})
@@ -195,7 +192,7 @@ exports.createSuperAdmin = async (req, res) => {
       "agPartnership",
       "password",
       "remark",
-      ...(isOldFairGame ? ["sessionCommission",
+      ...(isOldFairGame ? [
         "matchComissionType",
         "matchCommission"] : [])
     ]);
@@ -312,7 +309,6 @@ exports.updateSuperAdmin = async (req, res) => {
       city,
       isOldFairGame,
       remark,
-      sessionCommission,
       matchComissionType,
       matchCommission
     } = req.body;
@@ -323,7 +319,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "phoneNumber",
       "city",
       "remark",
-      ...(isOldFairGame ? ["sessionCommission",
+      ...(isOldFairGame ? [
         "matchComissionType",
         "matchCommission"] : [])
     ]);
@@ -341,7 +337,6 @@ exports.updateSuperAdmin = async (req, res) => {
 
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
-        sessionCommission: sessionCommission || updateUser.sessionCommission,
         matchComissionType: matchComissionType || updateUser.matchComissionType,
         matchCommission: matchCommission || updateUser.matchCommission
       } : {})
@@ -383,7 +378,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "phoneNumber",
       "city",
       "remark",
-      ...(isOldFairGame ? ["sessionCommission",
+      ...(isOldFairGame ? [
         "matchComissionType",
         "matchCommission"] : [])
     ]);

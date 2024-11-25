@@ -1000,7 +1000,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
 
 exports.userSearchList = async (req, res, next) => {
   try {
-    let { userName, createdBy } = req.query;
+    let { userName, createdBy, isUser } = req.query;
     if (!userName || userName.length < 0) {
       return SuccessResponse(
         {
@@ -1020,15 +1020,24 @@ exports.userSearchList = async (req, res, next) => {
       where.id = In(childIds?.map((item) => item.id));
       where.roleName = In([userRoleConstant.fairGameAdmin, userRoleConstant.fairGameWallet])
     }
-    let users = await getUsers(where, ["id", "userName"]);
-    let response = {
-      users: (users[0] || []),
-      count: (users[1] || 0),
-    };
+    let response;
+    if (!isUser) {
+      let users = await getUsers(where, ["id", "userName"]);
+      response = {
+        users: (users[0] || []),
+        count: (users[1] || 0),
+      };
+    }
+    else {
+      response = {
+        users: [],
+        count: 0,
+      };
+    }
 
     const faDomains = req.user.roleName == userRoleConstant.fairGameAdmin ? await getFaAdminDomain(req.user) : await getUserDomainWithFaId();
     for (let usersDomain of faDomains) {
-      let data = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.getSearchList, null, {}, { id: req.user.id, roleName: req.user.roleName, userName: userName })
+      let data = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.getSearchList, null, {}, { id: req.user.id, roleName: req.user.roleName, userName: userName, isUser: isUser })
         .then((data) => data)
         .catch((err) => {
           logger.error({

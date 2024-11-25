@@ -15,7 +15,6 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
-  getChildUser,
   getParentUsers,
   getFirstLevelChildUser,
   getFirstLevelChildUserWithPartnership,
@@ -797,16 +796,16 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     }
 
     // Check if the user performing the block/unblock operation has the right access
-    if (blockingUserDetail?.createBy != loginId) {
-      return ErrorResponse(
-        {
-          statusCode: 403,
-          message: { msg: "user.blockCantAccess" },
-        },
-        req,
-        res
-      );
-    }
+    // if (blockingUserDetail?.createBy != loginId) {
+    //   return ErrorResponse(
+    //     {
+    //       statusCode: 403,
+    //       message: { msg: "user.blockCantAccess" },
+    //     },
+    //     req,
+    //     res
+    //   );
+    // }
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {

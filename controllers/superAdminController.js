@@ -134,7 +134,7 @@ exports.createSuperAdmin = async (req, res) => {
 
     if (exposureLimit && exposureLimit > creator.exposureLimit) {
       return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
+        { statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: creator.exposureLimit } } },
         req,
         res
       );
@@ -422,6 +422,12 @@ exports.setExposureLimit = async (req, res, next) => {
     let { amount, userId, transactionPassword } = req.body;
 
     let reqUser = req.user || {};
+
+    let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
+    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Login user" } } }, req, res);
+
+    if ( parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" , keys: { amount: loginUser.exposureLimit }} }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",

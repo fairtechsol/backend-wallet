@@ -117,7 +117,7 @@ exports.createUser = async (req, res) => {
     // if (creator.roleName != userRoleConstant.fairGameWallet) {
     if (exposureLimit && exposureLimit > creator.exposureLimit)
       return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
+        { statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: creator.exposureLimit } } },
         req,
         res
       );
@@ -454,6 +454,10 @@ exports.setExposureLimit = async (req, res, next) => {
         req,
         res
       );
+
+
+    if (parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: loginUser.exposureLimit } } }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",

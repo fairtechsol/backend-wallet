@@ -770,7 +770,7 @@ exports.updateUserBalance = async (req, res) => {
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
-    const { userId, betBlock, userBlock } = req.body;
+    /* ------ const { userId, betBlock, userBlock, userDomain } = req.body; ----- */
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information
@@ -785,7 +785,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     ]);
 
     //fetch domain details of user
-    const domain = userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
+    const domain = userDomain || (userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
 
     // Check if the current user is already blocked
     if (userDetails?.userBlock) {

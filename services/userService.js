@@ -205,7 +205,7 @@ exports.getChildUser = async (id) => {
     UNION
     SELECT "lowerU".* FROM "users" AS "lowerU" JOIN p ON "lowerU"."createBy" = p."id"
   )
-SELECT "id", "userName","roleName" FROM p where "deletedAt" IS NULL AND id != $1;`
+SELECT "id", "userName","roleName","betBlock","userBlock" FROM p where "deletedAt" IS NULL AND id != $1;`
 
   return await user.query(query, [ id ])
 }

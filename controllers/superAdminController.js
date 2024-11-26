@@ -15,7 +15,6 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
-  getChildUser,
   getParentUsers,
   getFirstLevelChildUser,
   getFirstLevelChildUserWithPartnership,
@@ -29,6 +28,7 @@ const {
   getUserBalanceDataByUserId,
   updateUserBalanceByUserId,
   addInitialUserBalance,
+  updateUserBalanceData,
 } = require("../services/userBalanceService");
 const {
   addDomainData,
@@ -44,9 +44,10 @@ const {
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { hasUserInCache, updateUserDataRedis, getUserRedisKeys } = require("../services/redis/commonFunctions");
+const { hasUserInCache, updateUserDataRedis, getUserRedisKeys, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
+const { updateSuperAdminData } = require("./expertController");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -132,7 +133,7 @@ exports.createSuperAdmin = async (req, res) => {
 
     if (exposureLimit && exposureLimit > creator.exposureLimit) {
       return ErrorResponse(
-        { statusCode: 400, message: { msg: "user.InvalidExposureLimit" } },
+        { statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: creator.exposureLimit } } },
         req,
         res
       );
@@ -417,6 +418,12 @@ exports.setExposureLimit = async (req, res, next) => {
     let { amount, userId, transactionPassword } = req.body;
 
     let reqUser = req.user || {};
+
+    let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
+    if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Login user" } } }, req, res);
+
+    if ( parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" , keys: { amount: loginUser.exposureLimit }} }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
@@ -763,7 +770,7 @@ exports.updateUserBalance = async (req, res) => {
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
-    const { userId, betBlock, userBlock } = req.body;
+   const { userId, betBlock, userBlock, userDomain } = req.body;
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information
@@ -778,7 +785,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     ]);
 
     //fetch domain details of user
-    const domain = userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain;
+    const domain = userDomain || (userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
 
     // Check if the current user is already blocked
     if (userDetails?.userBlock) {
@@ -791,16 +798,16 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     }
 
     // Check if the user performing the block/unblock operation has the right access
-    if (blockingUserDetail?.createBy != loginId) {
-      return ErrorResponse(
-        {
-          statusCode: 403,
-          message: { msg: "user.blockCantAccess" },
-        },
-        req,
-        res
-      );
-    }
+    // if (blockingUserDetail?.createBy != loginId) {
+    //   return ErrorResponse(
+    //     {
+    //       statusCode: 403,
+    //       message: { msg: "user.blockCantAccess" },
+    //     },
+    //     req,
+    //     res
+    //   );
+    // }
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {

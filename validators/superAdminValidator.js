@@ -130,5 +130,6 @@ module.exports.LockUnlockUser = Joi.object({
     'string.empty': '"Transaction Password" can not be empty.'
   }),
   userBlock: Joi.boolean().required(),
-  betBlock: Joi.boolean().required()
+  betBlock: Joi.boolean().required(),
+  userDomain: Joi.string().optional()
 })

@@ -770,7 +770,7 @@ exports.updateUserBalance = async (req, res) => {
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
-    /* ------ const { userId, betBlock, userBlock, userDomain } = req.body; ----- */
+   const { userId, betBlock, userBlock, userDomain } = req.body;
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information

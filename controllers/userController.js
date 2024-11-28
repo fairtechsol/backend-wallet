@@ -1029,10 +1029,9 @@ exports.userSearchList = async (req, res, next) => {
       };
     }
     else {
-      let users = await getUsers({ userName: ILike(`%${userName}%`), createdBy: createdBy, roleName: userRoleConstant.user }, ["id", "userName", "userBlock", "betBlock"]);
       response = {
-        users: (users[0] || []),
-        count: (users[1] || 0),
+        users: [],
+        count: 0,
       };
     }
 

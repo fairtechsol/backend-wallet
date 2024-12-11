@@ -70,6 +70,7 @@ exports.createSuperAdmin = async (req, res) => {
       headerColor,
       footerColor,
       isOldFairGame,
+      sessionCommission,
       matchComissionType,
       matchCommission,
       remark
@@ -163,6 +164,7 @@ exports.createSuperAdmin = async (req, res) => {
       isUrl: !Boolean(isOldFairGame),
       remark: remark,
       ...(isOldFairGame ? {
+        sessionCommission,
         matchComissionType,
         matchCommission
       } : {})
@@ -194,6 +196,7 @@ exports.createSuperAdmin = async (req, res) => {
       "password",
       "remark",
       ...(isOldFairGame ? [
+        "sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
     ]);
@@ -311,6 +314,7 @@ exports.updateSuperAdmin = async (req, res) => {
       isOldFairGame,
       remark,
       matchComissionType,
+      sessionCommission,
       matchCommission
     } = req.body;
     let reqUser = req.user || {};
@@ -321,6 +325,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "city",
       "remark",
       ...(isOldFairGame ? [
+        "sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
     ]);
@@ -338,6 +343,7 @@ exports.updateSuperAdmin = async (req, res) => {
 
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
+        sessionCommission: sessionCommission || updateUser.sessionCommission,
         matchComissionType: matchComissionType || updateUser.matchComissionType,
         matchCommission: matchCommission || updateUser.matchCommission
       } : {})
@@ -380,6 +386,7 @@ exports.updateSuperAdmin = async (req, res) => {
       "city",
       "remark",
       ...(isOldFairGame ? [
+        "sessionCommission",
         "matchComissionType",
         "matchCommission"] : [])
     ]);

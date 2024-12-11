@@ -48,7 +48,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(i18n.init);
 app.use(setI18Language);
 
-app.use(encryptDecryptData);
+// app.use(encryptDecryptData);
 
 app.use((req, res, next) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;

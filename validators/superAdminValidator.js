@@ -13,8 +13,8 @@ module.exports.CreateSuperAdmin = Joi.object({
         'any.required': 'Phone number is required',
     }),
     city: Joi.string().allow("").max(255),
-  remark:Joi.string().allow("").trim(),
-  roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
+    remark: Joi.string().allow("").trim(),
+    roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
     myPartnership: Joi.number().required(),
     creditRefrence: Joi.number().allow(""),
     exposureLimit: Joi.number().allow(""),
@@ -47,6 +47,7 @@ module.exports.CreateSuperAdmin = Joi.object({
         then: Joi.required(),
     }),
     transactionPassword: Joi.string().required(),
+    sessionCommission: Joi.number(),
     matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
 })

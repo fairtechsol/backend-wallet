@@ -143,7 +143,12 @@ const userSchema = new EntitySchema({
       nullable: false,
       default: 0
     },
-    
+    sessionCommission: {
+      type: 'float',
+      nullable: false,
+      default: 0,
+      transformer: new ColumnNumericTransformer()
+    },
     isUrl: {
       type: 'boolean',
       nullable: false,

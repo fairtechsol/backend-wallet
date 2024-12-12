@@ -781,11 +781,11 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     const blockingUserDetail = await getUserById(userId, [
       "createBy",
       "userBlock",
-      "betBlock",
+      "betBlock", "isUrl"
     ]);
 
     //fetch domain details of user
-    const domain = userDomain || (userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
+    const domain = userDomain || (blockingUserDetail?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
 
     // Check if the current user is already blocked
     if (userDetails?.userBlock) {

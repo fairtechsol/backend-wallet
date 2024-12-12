@@ -3364,13 +3364,13 @@ const updateSuperAdminData = async (response, type) => {
 }
 exports.updateSuperAdminData=updateSuperAdminData;
 const updateBulkCommission = async (response, bulkCommission) => {
-  bulkCommission.push(...response?.faAdminCal?.commission?.map((item) => {
+  bulkCommission.push(...(response?.faAdminCal?.commission?.map((item) => {
     return {
       ...item,
       betPlaceDate: new Date(item?.betPlaceDate),
       matchStartDate: new Date(item?.matchStartDate)
     }
-  }));
+  }) || []));
 }
 
 exports.declareRacingMatchResult = async (req, res) => {

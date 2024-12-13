@@ -99,6 +99,7 @@ module.exports.updateSuperAdminValid = Joi.object({
     isOldFairGame: Joi.boolean(),
     matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
     matchCommission: Joi.number(),
+    sessionCommission: Joi.number(),
 })
 
 module.exports.setExposureLimitValid = Joi.object({

@@ -367,7 +367,7 @@ exports.declareSessionResult = async (req, res) => {
                   matchName: match?.title,
                   matchStartDate: new Date(match?.startAt),
                   userName: items.userName,
-                  commissionType: marketBetType.SESSION
+                  matchType: marketBetType.SESSION
 
                 });
               });
@@ -1205,7 +1205,7 @@ exports.declareMatchResult = async (req, res) => {
                     matchName: match?.title,
                     matchStartDate: new Date(match?.startAt),
                     userName: items.userName,
-                    commissionType: marketBetType.MATCHBETTING
+                    matchType: marketBetType.MATCHBETTING
 
                   });
                 });
@@ -1227,7 +1227,7 @@ exports.declareMatchResult = async (req, res) => {
                   matchStartDate: new Date(match?.startAt),
                   userName: null,
                   stake: adminBalanceData?.["userOriginalProfitLoss"],
-                  commissionType: marketBetType.MATCHBETTING
+                  matchType: marketBetType.MATCHBETTING
                 });
               }
             });

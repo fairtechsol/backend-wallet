@@ -29,7 +29,7 @@ module.exports.CreateUser = Joi.object({
     'string.empty': '"Transaction Password" can not be empty.'
   }),
   matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
-
+  sessionCommission: Joi.number(),
   matchCommission: Joi.number(),
 });
 

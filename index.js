@@ -13,7 +13,8 @@ const i18n = require("./config/i18n");
 const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
-const { WalletMatchBetQueue } = require("./queue/consumer.js")
+const { WalletMatchBetQueue } = require("./queue/consumer.js");
+const encryptDecryptData = require("./middleware/encryptDecryptData.js");
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
   // Check if the request comes from the specified domain or localhost
@@ -46,6 +47,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // configureing i18 for message control
 app.use(i18n.init);
 app.use(setI18Language);
+
+// app.use(encryptDecryptData);
+
 app.use((req, res, next) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const body = JSON.stringify(req.body);

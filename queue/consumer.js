@@ -109,7 +109,7 @@ let calculateRateAmount = async (jobData, userId) => {
             logger.info({
               context: "User team rates",
               process: `User ID : ${userId} ${item} id ${partnershipId} ${jobData?.newBet?.matchId}`,
-              data: teamData
+              data: { teamData, jobData }
             });
             sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData });
             // Log information about exposure and stake update

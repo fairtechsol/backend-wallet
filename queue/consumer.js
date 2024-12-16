@@ -106,7 +106,12 @@ let calculateRateAmount = async (jobData, userId) => {
             }
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
-            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData })
+            logger.info({
+              context: "User team rates",
+              process: `User ID : ${userId} ${item} id ${partnershipId} ${jobData?.newBet?.matchId}`,
+              data: { teamData, jobData, oldTeamRates: teamRates }
+            });
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData });
             // Log information about exposure and stake update
             logger.info({
               context: "Update User Exposure and Stake at the match bet",

@@ -209,7 +209,7 @@ exports.createUser = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
   try {
-    let { matchComissionType,sessionCommission, matchCommission, id, remark } =
+    let { matchComissionType, sessionCommission, matchCommission, id, remark } =
       req.body;
     let reqUser = req.user || {};
     let updateUser = await getUser({ id, createBy: reqUser.id }, [
@@ -289,8 +289,8 @@ exports.isUserExist = async (req, res) => {
   }
 }
 
-const generateTransactionPass =() => {
- return crypto.randomInt(0, 999999).toString().padStart(6, '0'); 
+const generateTransactionPass = () => {
+  return crypto.randomInt(0, 999999).toString().padStart(6, '0');
 }
 
 // Check old password against the stored password
@@ -335,7 +335,7 @@ exports.changePassword = async (req, res, next) => {
   try {
     // Destructure request body
     const { oldPassword, newPassword, transactionPassword } = req.body;
-    
+
     // Hash the new password
     const password = bcrypt.hashSync(newPassword, 10);
 
@@ -701,29 +701,16 @@ exports.userList = async (req, res, next) => {
         else {
           element.domain = element?.domainData?.domain;
         }
-        if (element?.roleName != userRoleConstant.user) {
-          element.userBal['exposure'] = 0;
-        }
 
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         let partner_ships = 100;
         if (partnershipCol && partnershipCol.length) {
-          partner_ships = partnershipCol.reduce(
-            (partialSum, a) => partialSum + element[a],
-            0
-          );
-          element["percentProfitLoss"] = (
-            (element.userBal["profitLoss"] / 100) *
-            partner_ships
-          ).toFixed(2);
+          partner_ships = partnershipCol.reduce((partialSum, a) => partialSum + element[a], 0);
+          element["percentProfitLoss"] = ((element.userBal["profitLoss"] / 100) * partner_ships).toFixed(2);
         }
         if (element.roleName != userRoleConstant.user) {
-          element["availableBalance"] = Number(
-            parseFloat(element.userBal["currentBalance"]).toFixed(2)
-          ) - Number(
-            parseFloat(element.userBal["exposure"]).toFixed(2)
-          );
-
+          element["availableBalance"] = Number(parseFloat(element.userBal["currentBalance"]).toFixed(2));
+          //  - Number(parseFloat(element.userBal["exposure"]).toFixed(2));
 
           if (element.roleName == userRoleConstant.fairGameAdmin) {
             element["balance"] = Number((parseFloat(element.userBal["currentBalance"] || 0) + parseFloat(usersBalance[element.id] || 0)).toFixed(2));
@@ -732,33 +719,16 @@ exports.userList = async (req, res, next) => {
             element["balance"] = Number((parseFloat(usersBalance[element.id] || 0)).toFixed(2));
           }
         } else {
-          element["availableBalance"] = Number(
-            (
-              parseFloat(element.userBal["currentBalance"]) -
-              element.userBal["exposure"]
-            ).toFixed(2)
-          );
+          element["availableBalance"] = Number((parseFloat(element.userBal["currentBalance"]) - element.userBal["exposure"]).toFixed(2));
           element["balance"] = Number((parseFloat(element.userBal["currentBalance"])));
         }
         element["percentProfitLoss"] = element.userBal["myProfitLoss"];
         element["commission"] = element?.userBal?.["totalCommission"];
         if (partnershipCol && partnershipCol.length) {
-          let partnerShips = partnershipCol.reduce(
-            (partialSum, a) => partialSum + element[a],
-            0
-          );
-          element["percentProfitLoss"] = (
-            (element.userBal["profitLoss"] / 100) *
-            partnerShips
-          ).toFixed(2);
-          element["commission"] =
-            (element?.userBal?.["totalCommission"]).toFixed(2) +
-            "(" +
-            partnerShips +
-            "%)";
-
+          let partnerShips = partnershipCol.reduce((partialSum, a) => partialSum + element[a], 0);
+          element["percentProfitLoss"] = ((element.userBal["profitLoss"] / 100) * partnerShips).toFixed(2);
+          element["commission"] = (element?.userBal?.["totalCommission"]).toFixed(2) + "(" + partnerShips + "%)";
           element['upLinePartnership'] = partnerShips;
-
         }
 
         return element;
@@ -896,7 +866,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       createBy: userId || reqUser.id,
     };
 
-    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(CASE WHEN user.roleName = 'user' THEN UB.exposure ELSE 0 END) as "totalExposure", SUM(UB.totalCommission) as totalCommission`;
+    let queryColumns = `SUM(user.creditRefrence) as "totalCreditReference", SUM(UB.profitLoss) as profitSum, SUM(UB.currentBalance) as "availableBalance",SUM(UB.downLevelBalance) as "downLevelBalance", SUM(UB.exposure) as "totalExposure",SUM(CASE WHEN user.roleName = 'user' THEN UB.exposure ELSE 0 END) as "totalExposureOnlyUser", SUM(UB.totalCommission) as totalCommission`;
 
     switch (userRole) {
       case (userRoleConstant.fairGameWallet):
@@ -980,11 +950,11 @@ exports.getTotalUserListBalance = async (req, res, next) => {
 
     }
 
-    const userTotalBalance = await getUserBalanceDataByUserId(where.createBy, ["currentBalance"]);
+    // const userTotalBalance = await getUserBalanceDataByUserId(where.createBy, ["currentBalance"]);
 
     const totalBalance = await getUsersWithTotalUsersBalanceData(where, apiQuery, queryColumns);
     totalBalance.currBalance = totalCurrentBalance;
-    totalBalance.availableBalance = parseFloat(totalBalance.availableBalance || 0) - parseFloat(totalBalance.totalExposure || 0);
+    totalBalance.availableBalance = parseFloat(totalBalance.availableBalance || 0) - parseFloat(totalBalance.totalExposureOnlyUser || 0);
 
     return SuccessResponse(
       {
@@ -1439,7 +1409,7 @@ exports.getTotalProfitLoss = async (req, res) => {
     let profitLoss = [];
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
-      id=await updateNewUserTemp(newUserTemp, id)
+      id = await updateNewUserTemp(newUserTemp, id)
     }
 
     for (let url of domainData) {
@@ -1647,7 +1617,7 @@ exports.getCardTotalProfitLoss = async (req, res) => {
     let profitLoss = [];
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
     if (roleName === userRoleConstant.fairGameWallet && id) {
-      id=await updateNewUserTemp(newUserTemp, id)
+      id = await updateNewUserTemp(newUserTemp, id)
     }
 
     for (let url of domainData) {
@@ -1765,7 +1735,7 @@ exports.getCardDomainProfitLoss = async (req, res) => {
 
 exports.getCardResultBetProfitLoss = async (req, res) => {
   try {
-    let {  runnerId, url, id, userId, roleName } = req.query;
+    let { runnerId, url, id, userId, roleName } = req.query;
     let data = [];
 
     let newUserTemp = JSON.parse(JSON.stringify(req.user));
@@ -1887,10 +1857,10 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
     }
     const result = [];
-    const sameBetIds=new Set();
-    for(let item of data){
-      if(!sameBetIds.has(item?.betId)){
-        result.push(data?.filter((items)=>items?.betId?.toString()==item?.betId?.toString())?.reduce((prev,curr)=>{
+    const sameBetIds = new Set();
+    for (let item of data) {
+      if (!sameBetIds.has(item?.betId)) {
+        result.push(data?.filter((items) => items?.betId?.toString() == item?.betId?.toString())?.reduce((prev, curr) => {
           return { ...curr, totalLoss: (parseFloat(curr?.totalLoss || 0) + parseFloat(prev?.totalLoss || 0))?.toFixed(2) }
         }, {}));
         sameBetIds.add(item?.betId);

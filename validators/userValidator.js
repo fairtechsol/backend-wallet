@@ -73,6 +73,7 @@ module.exports.updateUserValid = Joi.object({
   //matchComissionType,matchCommission,id,createBy
   matchComissionType: Joi.string().valid(...Object.values(matchComissionTypeConstant)).allow(null),
   matchCommission: Joi.number(),
+  sessionCommission: Joi.number(),
   remark:Joi.string().allow("").trim(),
   id: Joi.string().guid({ version: 'uuidv4' }).required(),
   transactionPassword: Joi.string().required().messages({

@@ -156,6 +156,8 @@ exports.createSuperAdmin = async (req, res) => {
       roleName,
       userBlock: creator.userBlock,
       betBlock: creator.betBlock,
+      betBlockedBy: creator.betBlockedBy,
+      userBlockedBy: creator.userBlockedBy,
       createBy: creator.id,
       creditRefrence: creditRefrence,
       exposureLimit: exposureLimit,
@@ -195,6 +197,8 @@ exports.createSuperAdmin = async (req, res) => {
       "agPartnership",
       "password",
       "remark",
+      "betBlockedBy",
+      "userBlockedBy",
       ...(isOldFairGame ? [
         "sessionCommission",
         "matchComissionType",

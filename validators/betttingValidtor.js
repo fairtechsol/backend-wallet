@@ -15,6 +15,20 @@ module.exports.deleteMultipleBetValidator = Joi.object({
     )
 });
 
+module.exports.deleteMultipleBetPermanentValidator = Joi.object({
+    matchId: Joi.string().guid({ version: "uuidv4" }).required(),
+    urlData: Joi.object().pattern(
+        Joi.string().required(),
+        Joi.array().items(
+            Joi.object({
+                userId: Joi.string().guid({ version: 'uuidv4' }).required(),
+                betId: Joi.string().guid({ version: 'uuidv4' }).required(),
+                placeBetId: Joi.string().guid({ version: 'uuidv4' }).required()
+            })
+        )
+    )
+});
+
 module.exports.changeBetsDeleteReasonValidator = Joi.object({
     deleteReason: Joi.string().required(),
     betData: Joi.object().pattern(

@@ -613,7 +613,7 @@ exports.updateUserBalance = async (req, res) => {
     let reqUser = req.user;
     amount = parseFloat(amount);
 
-    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id","isUrl"]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "isUrl", "roleName"]);
     if (!user)
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -681,7 +681,7 @@ exports.updateUserBalance = async (req, res) => {
 
     } else if (transactionType == transType.withDraw) {
       insertUserBalanceData = usersBalanceData[1];
-      if (amount > insertUserBalanceData.currentBalance)
+      if (amount > insertUserBalanceData.currentBalance - (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
         return ErrorResponse(
           {
             statusCode: 400,
@@ -792,11 +792,11 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     const blockingUserDetail = await getUserById(userId, [
       "createBy",
       "userBlock",
-      "betBlock",
+      "betBlock", "isUrl"
     ]);
 
     //fetch domain details of user
-    const domain = userDomain || (userDetails?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
+    const domain = userDomain || (blockingUserDetail?.isUrl ? await getDomainByUserId(userId) : oldBetFairDomain);
 
     // Check if the current user is already blocked
     if (userDetails?.userBlock) {

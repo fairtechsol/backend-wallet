@@ -1,4 +1,4 @@
-const { transType, socketData, matchComissionTypeConstant } = require('../config/contants');
+const { transType, socketData, matchComissionTypeConstant, userRoleConstant } = require('../config/contants');
 const { getUser, getUsersWithUserBalance, getUserDataWithUserBalance, } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
@@ -20,7 +20,7 @@ exports.updateUserBalance = async (req, res) => {
 
         amount = parseFloat(amount);
        
-        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id"])
+        let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "roleName"])
         if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "User" } } }, req, res);
 
         let loginUserBalanceData = getUserBalanceDataByUserId(reqUser.id);
@@ -53,7 +53,7 @@ exports.updateUserBalance = async (req, res) => {
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
         } else if (transactionType == transType.withDraw) {
             insertUserBalanceData = usersBalanceData[1]
-            if (amount > insertUserBalanceData.currentBalance)
+            if (amount > insertUserBalanceData.currentBalance- (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);

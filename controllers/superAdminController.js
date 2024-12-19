@@ -609,7 +609,7 @@ exports.updateUserBalance = async (req, res) => {
     let reqUser = req.user;
     amount = parseFloat(amount);
 
-    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id","isUrl"]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "isUrl", "roleName"]);
     if (!user)
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -677,7 +677,7 @@ exports.updateUserBalance = async (req, res) => {
 
     } else if (transactionType == transType.withDraw) {
       insertUserBalanceData = usersBalanceData[1];
-      if (amount > insertUserBalanceData.currentBalance)
+      if (amount > insertUserBalanceData.currentBalance - (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
         return ErrorResponse(
           {
             statusCode: 400,

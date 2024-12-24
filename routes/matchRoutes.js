@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
-const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis, cardDetails} = require('../controllers/matchController');
+const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis, cardDetails, userEventWiseExposure} = require('../controllers/matchController');
 
 router.get('/list',isAuthenticate,listMatch);
 
@@ -21,5 +21,6 @@ router.get("/checkChildDeactivate", isAuthenticate, checkChildDeactivate);
 router.get("/race/marketAnalysis", isAuthenticate, raceMarketAnalysis);
 router.post('/add', addMatch);
 router.post('/raceAdd', raceAdd);
+router.get('/eventWise/exposure/:userId', isAuthenticate, userEventWiseExposure);
 
 module.exports = router;

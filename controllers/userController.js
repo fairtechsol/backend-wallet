@@ -139,6 +139,8 @@ exports.createUser = async (req, res) => {
       userBlock: creator.userBlock,
       betBlock: creator.betBlock,
       createBy: creator.id,
+      betBlockedBy: creator.betBlockedBy,
+      userBlockedBy: creator.userBlockedBy,
       creditRefrence: creditRefrence,
       exposureLimit: exposureLimit,
       maxBetLimit: maxBetLimit,

@@ -1,10 +1,10 @@
 const { Not } = require("typeorm");
 const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getFaAdminDomain } = require("../services/commonService");
+const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern } = require("../services/redis/commonFunctions");
-const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById } = require("../services/userService");
+const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 
@@ -658,6 +658,92 @@ exports.raceMarketAnalysis = async (req, res) => {
       req,
       res
     );
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
+
+exports.userEventWiseExposure = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { domain } = req.query;
+    let result = {};
+    if (domain) {
+      let apiResponse = {};
+      try {
+        apiResponse = await apiCall(
+          apiMethod.get,
+          domain + allApiRoutes.getEventWiseExposure + userId,
+          null,
+          null,
+          {
+            stopAt: "isNull"
+          }
+        );
+      } catch (error) {
+        throw error?.response?.data;
+      }
+      result = apiResponse?.data;
+    }
+    else {
+      const user = await getUser({ id: userId });
+      if (!user) {
+        return ErrorResponse(
+          {
+            statusCode: 404,
+            message: {
+              msg: "notFound",
+              keys: { name: "User" },
+            },
+          },
+          req,
+          res
+        );
+      }
+      const eventNameByMatchId = {};
+      let apiResponse = {};
+      try {
+        apiResponse = await apiCall(
+          apiMethod.get,
+          expertDomain + allApiRoutes.MATCHES.matchList,
+          null,
+          null,
+          {
+            stopAt: "isNull"
+          }
+        );
+      } catch (error) {
+        throw error?.response?.data;
+      }
+
+      const matchList = apiResponse?.data?.matches;
+
+      for (let item of matchList) {
+        eventNameByMatchId[item.id] = item.matchType;
+      }
+
+      let gamesExposure = await getUserExposuresGameWise(user);
+      let tournamentExposure = await getUserExposuresTournament(user);
+
+      const allMatchBetData = { ...(gamesExposure || {}), ...(tournamentExposure || {}) };
+
+      if (Object.keys(allMatchBetData || {}).length) {
+        for (let item of Object.keys(allMatchBetData)) {
+          result[eventNameByMatchId[item]] = (result[eventNameByMatchId[item]] || 0) + allMatchBetData[item];
+        }
+      }
+
+      result.card = await getCasinoMatchDetailsExposure(user);
+    }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: result
+      },
+      req,
+      res
+    );
+
   } catch (err) {
     return ErrorResponse(err, req, res);
   }

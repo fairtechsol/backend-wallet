@@ -735,7 +735,8 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
-                betId
+                betId,
+                isPermanentDelete: jobData.isPermanentDelete
               });
             }
 
@@ -879,6 +880,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
                 teamArateRedisKey: teamArateRedisKey,
                 teamBrateRedisKey: teamBrateRedisKey,
                 teamCrateRedisKey: teamCrateRedisKey,
+                isPermanentDelete: jobData.isPermanentDelete,
                 redisObject: redisObj
               });
             }
@@ -997,6 +999,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
+                isPermanentDelete: jobData.isPermanentDelete,
                 matchBetType
               });
             }
@@ -1115,6 +1118,7 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
+                isPermanentDelete: jobData.isPermanentDelete,
                 matchBetType
               });
             }

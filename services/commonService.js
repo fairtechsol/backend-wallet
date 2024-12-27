@@ -1750,7 +1750,7 @@ exports.getUserExposuresGameWise = async (user) => {
       matchResult[matchId] = matchResult[matchId] || {};
       matchResult[matchId][Object.keys(redisData)[0]] = matchResult[matchId][Object.keys(redisData)[0]] || { a: 0, b: 0, c: 0 };
       Object.keys(matchResult[matchId][Object.keys(redisData)[0]]).forEach((key) => {
-        matchResult[matchId][Object.keys(redisData)[0]][key] += redisData[Object.keys(redisData)[0]][key] || 0;
+        matchResult[matchId][Object.keys(redisData)[0]][key] += redisData[Object.keys(redisData)[0]].rates[key] || 0;
       });
     }
     for (let item of Object.keys(matchResult)) {

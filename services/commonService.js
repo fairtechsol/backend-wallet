@@ -1676,7 +1676,7 @@ exports.getUserExposuresGameWise = async (user) => {
       session: {},
       match: {}
     };
-
+  let matchResult = {};
     let domainData= await this.getFaAdminDomain(user);
     
     let bets = [];
@@ -1747,14 +1747,19 @@ exports.getUserExposuresGameWise = async (user) => {
         return;
       }
       let redisData = await this.calculateRatesOtherMatch(betResult.match[placedBet], 100, apiResponse?.data?.match, [gameType.cricket, gameType.politics].includes(betResult.match[placedBet]?.[0]?.eventType) ? apiResponse?.data?.matchBetting : null);
-      let maxLoss = Object.values(redisData).reduce((prev, curr) => {
-        prev += Math.abs(Math.min(...Object.values(curr?.rates), 0));
+      matchResult[matchId] = matchResult[matchId] || {};
+      matchResult[matchId][Object.keys(redisData)[0]] = matchResult[matchId][Object.keys(redisData)[0]] || { a: 0, b: 0, c: 0 };
+      Object.keys(matchResult[matchId][Object.keys(redisData)[0]]).forEach((key) => {
+        matchResult[matchId][Object.keys(redisData)[0]][key] += redisData[Object.keys(redisData)[0]][key] || 0;
+      });
+    }
+    for (let item of Object.keys(matchResult)) {
+      let maxLoss = Object.values(matchResult[item]).reduce((prev, curr) => {
+        prev += Math.abs(Math.min(...Object.values(curr), 0));
         return prev;
       }, 0);
-
-      exposures[matchId] = parseFloat((parseFloat(exposures[matchId] || 0) + maxLoss).toFixed(2));  
+      exposures[item] = parseFloat((parseFloat(exposures[item] || 0) + maxLoss).toFixed(2));
     }
-
     return exposures;
 }
 

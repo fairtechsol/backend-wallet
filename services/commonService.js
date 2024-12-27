@@ -1671,91 +1671,97 @@ exports.mergeBetsArray = async (betArr1, betArr2) => {
 };
 
 exports.getUserExposuresGameWise = async (user) => {
-    let exposures = {};
-    let betResult = {
-      session: {},
-      match: {}
-    };
+  let exposures = {};
+  let betResult = {
+    session: {},
+    match: {}
+  };
+  let matchResult = {};
+  let domainData = await this.getFaAdminDomain(user);
 
-    let domainData= await this.getFaAdminDomain(user);
-    
-    let bets = [];
-  
-    for (let url of domainData) {
-      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, {
-        deleteReason: "isNull",
-        result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-        ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-        eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics, gameType.football, gameType.tennis])}`,
-        isTeamNameAllow: false,
-        marketType: `ne${matchBettingType.tournament}`      
-      }).then((data) => data).catch((err) => {
-        logger.error({
-          context: `error in ${url?.domain} setting bet placed redis`,
-          process: `User ID : ${user.id} `,
-          error: err.message,
-          stake: err.stack,
-        });
+  let bets = [];
+
+  for (let url of domainData) {
+    let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, {
+      deleteReason: "isNull",
+      result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
+      ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
+      eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics, gameType.football, gameType.tennis])}`,
+      isTeamNameAllow: false,
+      marketType: `ne${matchBettingType.tournament}`
+    }).then((data) => data).catch((err) => {
+      logger.error({
+        context: `error in ${url?.domain} setting bet placed redis`,
+        process: `User ID : ${user.id} `,
+        error: err.message,
+        stake: err.stack,
       });
-      bets.push(...(data?.data?.rows ?? []));
-    }
-        for (let item of bets) {
-      let itemData = {
-        ...item,
-        winAmount: parseFloat((parseFloat(item.winAmount)).toFixed(2)),
-        lossAmount: parseFloat((parseFloat(item.lossAmount)).toFixed(2))
-      };
-      if (betResult.session[item.betId + '_' + item.user?.id] || betResult.match[item.betId + '_' + item.user?.id]) {
-        if (item.marketBetType == marketBetType.SESSION) {
+    });
+    bets.push(...(data?.data?.rows ?? []));
+  }
+  for (let item of bets) {
+    let itemData = {
+      ...item,
+      winAmount: parseFloat((parseFloat(item.winAmount)).toFixed(2)),
+      lossAmount: parseFloat((parseFloat(item.lossAmount)).toFixed(2))
+    };
+    if (betResult.session[item.betId + '_' + item.user?.id] || betResult.match[item.betId + '_' + item.user?.id]) {
+      if (item.marketBetType == marketBetType.SESSION) {
 
-          betResult.session[item.betId + '_' + item.user?.id].push(itemData);
-        }
-        else {
-          betResult.match[item.betId + '_' + item.user?.id].push(itemData);
-
-        }
+        betResult.session[item.betId + '_' + item.user?.id].push(itemData);
       }
       else {
+        betResult.match[item.betId + '_' + item.user?.id].push(itemData);
 
-        if (item.marketBetType == marketBetType.SESSION) {
-          betResult.session[item.betId + '_' + item.user?.id] = [itemData];
-        }
-        else {
-          betResult.match[item.betId + '_' + item.user?.id] = [itemData];
-
-        }
       }
     }
-    for (const placedBet of Object.keys(betResult.session)) {
+    else {
 
-      const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult?.session?.[placedBet]?.[0]?.marketType, 100, null, null);
-      exposures[betResult.session[placedBet]?.[0]?.matchId] = parseFloat((parseFloat(exposures[betResult.session[placedBet]?.[0]?.matchId] || 0) + betPlaceProfitLoss.maxLoss).toFixed(2));
-
-    }
-
-    for (const placedBet of Object.keys(betResult.match)) {
-      const matchId = betResult.match[placedBet]?.[0]?.matchId;
-
-      let apiResponse;
-      try {
-        let url = expertDomain + allApiRoutes.MATCHES.MatchBettingDetail + matchId + ([gameType.cricket, gameType.politics].includes(betResult.match[placedBet]?.[0]?.eventType) ? `?type=${betResult?.match[placedBet]?.[0]?.marketType}&id=${placedBet?.split("_")?.[0]}` : `?type=${matchBettingType.quickbookmaker1}`);
-        apiResponse = await apiCall(apiMethod.get, url);
-      } catch (error) {
-        logger.info({
-          info: `Error at get match details in login.`
-        });
-        return;
+      if (item.marketBetType == marketBetType.SESSION) {
+        betResult.session[item.betId + '_' + item.user?.id] = [itemData];
       }
-      let redisData = await this.calculateRatesOtherMatch(betResult.match[placedBet], 100, apiResponse?.data?.match, [gameType.cricket, gameType.politics].includes(betResult.match[placedBet]?.[0]?.eventType) ? apiResponse?.data?.matchBetting : null);
-      let maxLoss = Object.values(redisData).reduce((prev, curr) => {
-        prev += Math.abs(Math.min(...Object.values(curr?.rates), 0));
-        return prev;
-      }, 0);
+      else {
+        betResult.match[item.betId + '_' + item.user?.id] = [itemData];
 
-      exposures[matchId] = parseFloat((parseFloat(exposures[matchId] || 0) + maxLoss).toFixed(2));  
+      }
     }
+  }
+  for (const placedBet of Object.keys(betResult.session)) {
 
-    return exposures;
+    const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult?.session?.[placedBet]?.[0]?.marketType, 100, null, null);
+    exposures[betResult.session[placedBet]?.[0]?.matchId] = parseFloat((parseFloat(exposures[betResult.session[placedBet]?.[0]?.matchId] || 0) + betPlaceProfitLoss.maxLoss).toFixed(2));
+
+  }
+
+  for (const placedBet of Object.keys(betResult.match)) {
+    const matchId = betResult.match[placedBet]?.[0]?.matchId;
+
+    let apiResponse;
+    try {
+      let url = expertDomain + allApiRoutes.MATCHES.MatchBettingDetail + matchId + ([gameType.cricket, gameType.politics].includes(betResult.match[placedBet]?.[0]?.eventType) ? `?type=${betResult?.match[placedBet]?.[0]?.marketType}&id=${placedBet?.split("_")?.[0]}` : `?type=${matchBettingType.quickbookmaker1}`);
+      apiResponse = await apiCall(apiMethod.get, url);
+    } catch (error) {
+      logger.info({
+        info: `Error at get match details in login.`
+      });
+      return;
+    }
+    let redisData = await this.calculateRatesOtherMatch(betResult.match[placedBet], 100, apiResponse?.data?.match, [gameType.cricket, gameType.politics].includes(betResult.match[placedBet]?.[0]?.eventType) ? apiResponse?.data?.matchBetting : null);
+    matchResult[matchId] = matchResult[matchId] || {};
+    matchResult[matchId][Object.keys(redisData)[0]] = matchResult[matchId][Object.keys(redisData)[0]] || { a: 0, b: 0, c: 0 };
+    Object.keys(matchResult[matchId][Object.keys(redisData)[0]]).forEach((key) => {
+      matchResult[matchId][Object.keys(redisData)[0]][key] += redisData[Object.keys(redisData)[0]][key] || 0;
+    });
+  }
+  for (let item of Object.keys(matchResult)) {
+    let maxLoss = Object.values(matchResult[item]).reduce((prev, curr) => {
+      prev += Math.abs(Math.min(...Object.values(curr), 0));
+      return prev;
+    }, 0);
+    exposures[item] = parseFloat((parseFloat(exposures[item] || 0) + maxLoss).toFixed(2));
+  }
+
+  return exposures;
 }
 
 exports.getUserExposuresTournament = async (user) => {

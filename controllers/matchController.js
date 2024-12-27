@@ -719,7 +719,7 @@ exports.userEventWiseExposure = async (req, res) => {
       const matchList = apiResponse?.data?.matches;
 
       for (let item of matchList) {
-        eventNameByMatchId[item.id] = item.matchType;
+        eventNameByMatchId[item.id] = { type: item.matchType, name: item.title };
       }
 
       let gamesExposure = await getUserExposuresGameWise(user);

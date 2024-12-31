@@ -1849,6 +1849,7 @@ exports.getCasinoMatchDetailsExposure = async (user) => {
   for (let item of bets) {
     betsData[`${item.runnerId}_${item.createBy}_${item.eventType}`] = [...(betsData[`${item.runnerId}_${item.createBy}_${item.eventType}`] || []), item];
   }
+  let cardWiseExposure = {};
 
   if (bets.length) {
     for (let items of Object.keys(betsData)) {

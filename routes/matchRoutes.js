@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
-const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis, cardDetails, userEventWiseExposure} = require('../controllers/matchController');
+const { matchDetails, listMatch, addMatch, matchLock, otherMatchDetails, checkChildDeactivate , raceAdd,listRacingCountryCode, listRacingMatch, checkMatchLock, raceDetails, raceMarketAnalysis, cardDetails, userEventWiseExposure, marketAnalysis} = require('../controllers/matchController');
 
 router.get('/list',isAuthenticate,listMatch);
 
@@ -12,6 +12,7 @@ router.get('/racing/list', isAuthenticate, listRacingMatch);
 router.get('/racing/:id', isAuthenticate, raceDetails);
 router.get('/card/:type', isAuthenticate, cardDetails);
 
+router.get('/marketAnalysis', isAuthenticate, marketAnalysis);
 router.get('/:id',isAuthenticate,matchDetails);
 router.get('/other/:id', isAuthenticate, otherMatchDetails);
 router.post('/lock', isAuthenticate, checkTransactionPassword, matchLock);

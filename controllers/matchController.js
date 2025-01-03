@@ -7,7 +7,7 @@ const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getUserRedisDat
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
-const { cardGames } = require("../../betFairBackend/config/contants");
+const { cardGames } = require("../config/contants");
 
 exports.matchDetails = async (req, res) => {
   try {

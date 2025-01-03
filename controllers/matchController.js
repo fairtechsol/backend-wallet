@@ -730,15 +730,17 @@ exports.userEventWiseExposure = async (req, res) => {
 
       if (Object.keys(allMatchBetData || {}).length) {
         for (let item of Object.keys(allMatchBetData)) {
-          if (!result[eventNameByMatchId[item].type]) {
-            result[eventNameByMatchId[item].type] = { exposure: 0, match: {} };
-          }
-          result[eventNameByMatchId[item].type].exposure = (result[eventNameByMatchId[item].type].exposure || 0) + allMatchBetData[item];
-          if (!result[eventNameByMatchId[item].type].match[item]) {
-            result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: allMatchBetData[item] };
-          }
-          else {
-            result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: (result[eventNameByMatchId[item].type].match[item]?.exposure || 0) + allMatchBetData[item] };
+          if (eventNameByMatchId[item]) {
+            if (!result[eventNameByMatchId[item]?.type]) {
+              result[eventNameByMatchId[item].type] = { exposure: 0, match: {} };
+            }
+            result[eventNameByMatchId[item].type].exposure = (result[eventNameByMatchId[item].type].exposure || 0) + allMatchBetData[item];
+            if (!result[eventNameByMatchId[item].type].match[item]) {
+              result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: allMatchBetData[item] };
+            }
+            else {
+              result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: (result[eventNameByMatchId[item].type].match[item]?.exposure || 0) + allMatchBetData[item] };
+            }
           }
         }
       }
@@ -976,6 +978,7 @@ exports.marketAnalysis = async (req, res) => {
           [betDetails?.marketType]: [...result[0].betType?.[betDetails?.marketType], {
             betId: betDetails?.betId,
             eventName: betDetails?.eventName,
+            type:betDetails?.marketType,
             profitLoss: profitLoss
           }]
         }

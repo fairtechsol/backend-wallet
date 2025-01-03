@@ -971,11 +971,11 @@ exports.marketAnalysis = async (req, res) => {
       });
       for (let item of Object.values(matchData.session)) {
         let { betDetails, ...profitLoss } = item;
-        if (!result[0].betType[betDetails?.marketType]) {
-          result[0].betType[betDetails?.marketType] = [];
+        if (!result[0].betType["session"]) {
+          result[0].betType["session"] = [];
         }
         result[0].betType = {
-          [betDetails?.marketType]: [...result[0].betType?.[betDetails?.marketType], {
+          session: [...result[0].betType?.["session"], {
             betId: betDetails?.betId,
             eventName: betDetails?.eventName,
             type:betDetails?.marketType,

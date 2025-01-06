@@ -726,8 +726,15 @@ exports.userEventWiseExposure = async (req, res) => {
       let gamesExposure = await getUserExposuresGameWise(user);
       let tournamentExposure = await getUserExposuresTournament(user);
 
-      const allMatchBetData = { ...(gamesExposure || {}), ...(tournamentExposure || {}) };
-
+      const allMatchBetData = { ...(gamesExposure || {}) };
+      Object.keys(tournamentExposure).forEach((item) => {
+        if (allMatchBetData[item]) {
+          allMatchBetData[item] += tournamentExposure[item];
+        }
+        else {
+          allMatchBetData[item] = tournamentExposure[item];
+        }
+      });
       if (Object.keys(allMatchBetData || {}).length) {
         for (let item of Object.keys(allMatchBetData)) {
           if (eventNameByMatchId[item]) {

@@ -1712,6 +1712,7 @@ exports.getUserExposuresGameWise = async (user) => {
       }
       else {
         betResult.match[item.betId + '_' + item.user?.id].push(itemData);
+<<<<<<< HEAD
       }
     }
     else {
@@ -1728,6 +1729,29 @@ exports.getUserExposuresGameWise = async (user) => {
     exposures[betResult.session[placedBet]?.[0]?.matchId] = parseFloat((parseFloat(exposures[betResult.session[placedBet]?.[0]?.matchId] || 0) + betPlaceProfitLoss.maxLoss).toFixed(2));
   }
 
+=======
+
+      }
+    }
+    else {
+
+      if (item.marketBetType == marketBetType.SESSION) {
+        betResult.session[item.betId + '_' + item.user?.id] = [itemData];
+      }
+      else {
+        betResult.match[item.betId + '_' + item.user?.id] = [itemData];
+
+      }
+    }
+  }
+  for (const placedBet of Object.keys(betResult.session)) {
+
+    const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult?.session?.[placedBet]?.[0]?.marketType, 100, null, null);
+    exposures[betResult.session[placedBet]?.[0]?.matchId] = parseFloat((parseFloat(exposures[betResult.session[placedBet]?.[0]?.matchId] || 0) + betPlaceProfitLoss.maxLoss).toFixed(2));
+
+  }
+
+>>>>>>> 31d88c856c3d56a588639b333c8c6fdb3f18bf45
   for (const placedBet of Object.keys(betResult.match)) {
     const matchId = betResult.match[placedBet]?.[0]?.matchId;
 

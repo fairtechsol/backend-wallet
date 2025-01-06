@@ -30,7 +30,7 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "pdfmake": "^0.2.16",
+    "pdfmake": "^0.2.18",
     "pg": "^8.13.1",
     "socket.io": "^4.8.1",
     "socket.io-redis": "^6.1.1",

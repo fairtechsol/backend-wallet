@@ -2065,6 +2065,7 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
         return;
       }
       let redisData = await this.calculateRatesRacingMatch(betResult.match[placedBet], 100, apiResponse?.data);
+      let tempData = {};
       Object.keys(redisData)?.forEach((items) => {
         if (tempData[items]) {
           Object.keys(redisData[items])?.forEach((matchResultData) => {

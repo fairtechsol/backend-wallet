@@ -1,12 +1,13 @@
 const { Not } = require("typeorm");
-const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, redisKeysMarketWise, tieCompleteBetType, matchBettingType, betResultStatus, marketBetType } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure } = require("../services/commonService");
+const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament, getRedisKeys } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern } = require("../services/redis/commonFunctions");
+const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getUserRedisData } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
+const { cardGames } = require("../config/contants");
 
 exports.matchDetails = async (req, res) => {
   try {
@@ -719,22 +720,344 @@ exports.userEventWiseExposure = async (req, res) => {
       const matchList = apiResponse?.data?.matches;
 
       for (let item of matchList) {
-        eventNameByMatchId[item.id] = item.matchType;
+        eventNameByMatchId[item.id] = { type: item.matchType, name: item.title };
       }
 
       let gamesExposure = await getUserExposuresGameWise(user);
       let tournamentExposure = await getUserExposuresTournament(user);
 
-      const allMatchBetData = { ...(gamesExposure || {}), ...(tournamentExposure || {}) };
-
+      const allMatchBetData = { ...(gamesExposure || {}) };
+      Object.keys(tournamentExposure).forEach((item) => {
+        if (allMatchBetData[item]) {
+          allMatchBetData[item] += tournamentExposure[item];
+        }
+        else {
+          allMatchBetData[item] = tournamentExposure[item];
+        }
+      });
       if (Object.keys(allMatchBetData || {}).length) {
         for (let item of Object.keys(allMatchBetData)) {
-          result[eventNameByMatchId[item]] = (result[eventNameByMatchId[item]] || 0) + allMatchBetData[item];
+          if (eventNameByMatchId[item]) {
+            if (!result[eventNameByMatchId[item]?.type]) {
+              result[eventNameByMatchId[item].type] = { exposure: 0, match: {} };
+            }
+            result[eventNameByMatchId[item].type].exposure = (result[eventNameByMatchId[item].type].exposure || 0) + allMatchBetData[item];
+            if (!result[eventNameByMatchId[item].type].match[item]) {
+              result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: allMatchBetData[item] };
+            }
+            else {
+              result[eventNameByMatchId[item].type].match[item] = { name: eventNameByMatchId[item].name, exposure: (result[eventNameByMatchId[item].type].match[item]?.exposure || 0) + allMatchBetData[item] };
+            }
+          }
         }
       }
 
-      result.card = await getCasinoMatchDetailsExposure(user);
+      const cardData = await getCasinoMatchDetailsExposure(user);
+      result.card = {
+        exposure: cardData.totalExposure,
+        match: Object.keys(cardData.cardWiseExposure || {}).map((item) => {
+          return { name: cardGames.find((items) => items.type == item)?.name, type: item, exposure: cardData.cardWiseExposure[item] }
+        })
+      };
     }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: result
+      },
+      req,
+      res
+    );
+
+  } catch (err) {
+    return ErrorResponse(err, req, res);
+  }
+};
+
+
+exports.marketAnalysis = async (req, res) => {
+  try {
+    const { matchId, domain } = req.query;
+    const userId = req.query.userId || req.user.id;
+
+    if (domain) {
+      let data = await apiCall(apiMethod.get, domain + allApiRoutes.marketAnalysis, null, {}, {
+        matchId: matchId,
+        userId: userId
+      }).then((data) => data).catch((err) => {
+        logger.error({
+          context: `error in ${domain} getting market analysis`,
+          process: `User ID : ${userId} `,
+          error: err.message,
+          stake: err.stack,
+        });
+        throw err;
+      });
+      return SuccessResponse(
+        {
+          statusCode: 200,
+          data: data?.data
+        },
+        req,
+        res
+      );
+    }
+
+    // let redisData = await getUserRedisData(userId);
+    const result = [];
+
+    // if (redisData) {
+    //   // const user = await getUser({ id: userId });
+    //   // let domainData = await getFaAdminDomain({ id: userId });
+    //   //   let matchesBetsByUsers = [];
+    //   //   for (let url of domainData) {
+    //   //     let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, {
+    //   //       deleteReason: "isNull",
+    //   //       result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
+    //   //       ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
+    //   //       ...(matchId ? { matchId: `eq${matchId}` } : {}),
+    //   //       isTeamNameAllow: false,
+    //   //     }).then((data) => data).catch((err) => {
+    //   //       logger.error({
+    //   //         context: `error in ${url?.domain} setting bet placed redis`,
+    //   //         process: `User ID : ${user.id} `,
+    //   //         error: err.message,
+    //   //         stake: err.stack,
+    //   //       });
+    //   //     });
+    //   //     matchesBetsByUsers.push(...(data?.data?.rows ?? []));
+    //   //   }
+
+    //   // let matchIds = new Set();
+
+    //   // for (let item of matchesBetsByUsers) {
+    //   //   matchIds.add(item.matchId);
+    //   // }
+    //   // let matchDetails;
+
+    //   // if (matchesBetsByUsers?.length) {
+    //   //   try {
+    //   //     matchDetails = await apiCall(
+    //   //       apiMethod.get,
+    //   //       expertDomain + allApiRoutes.MATCHES.matchDetails + Array.from(matchIds).join(",")
+    //   //     );
+    //   //     if (!Array.isArray(matchDetails?.data)) {
+    //   //       matchDetails.data = [matchDetails?.data];
+    //   //     }
+    //   //   } catch (error) {
+    //   //     throw error?.response?.data;
+    //   //   }
+    //   //   for (let item of matchesBetsByUsers) {
+    //   //     const currMatchDetail = result.findIndex((items) => items?.matchId == item?.matchId);
+    //   //     const currMatchData = matchDetails?.data?.find((items) => items?.id == item?.matchId);
+
+    //   //     if (item?.marketBetType == marketBetType.SESSION) {
+    //   //       const currRedisData = JSON.parse(redisData?.[item?.betId + redisKeys.profitLoss]);
+    //   //       if (currMatchDetail == -1) {
+    //   //         result.push({
+    //   //           title: currMatchData?.title,
+    //   //           matchId: item?.matchId,
+    //   //           startAt: currMatchData?.startAt,
+    //   //           eventType: item?.eventType,
+    //   //           betType: {
+    //   //             [item?.marketType]: [{
+    //   //               betId: item?.betId,
+    //   //               eventName: item?.eventName,
+    //   //               profitLoss: currRedisData
+    //   //             }]
+    //   //           }
+    //   //         })
+    //   //       }
+    //   //       else {
+    //   //         if (!result[currMatchDetail].betType[item?.marketType]) {
+    //   //           result[currMatchDetail].betType[item?.marketType] = [];
+    //   //         }
+    //   //         result[currMatchDetail].betType[item?.marketType].push({
+    //   //           betId: item?.betId,
+    //   //           eventName: item?.eventName,
+    //   //           profitLoss: currRedisData
+    //   //         });
+    //   //       }
+    //   //     }
+    //   //     else {
+    //   //       const currMatchData = matchDetails?.data?.find((items) => items?.id == item?.matchId);
+    //   //       let teams, currRedisData;
+    //   //       if (Object.values(tieCompleteBetType).includes(item?.marketType)) {
+    //   //         teams = ["YES", "NO"];
+    //   //         let redisDataKey = getRedisKeys(item?.marketType, item?.matchId, redisKeys, item?.betId);
+    //   //         currRedisData = {
+    //   //           a: redisData[redisDataKey.teamArateRedisKey],
+    //   //           b: redisData[redisDataKey.teamBrateRedisKey],
+    //   //           c: isNaN(redisData[redisDataKey.teamCrateRedisKey]) ? 0 : redisData[redisDataKey.teamCrateRedisKey],
+    //   //         };
+    //   //       }
+    //   //       else if (item?.marketType == matchBettingType.tournament) {
+    //   //         currRedisData = {};
+    //   //         let currBetPL = JSON.parse(redisData[item?.betId + redisKeys.profitLoss + "_" + item?.matchId]);
+    //   //         teams = currMatchData?.tournament?.find((items) => items?.id == item?.betId)?.runners?.sort((a, b) => a.sortPriority - b.sortPriority)?.map((items, i) => {
+    //   //           currRedisData[String.fromCharCode(97 + i)] = currBetPL[items?.id];
+    //   //           return items?.runnerName
+    //   //         });
+    //   //       }
+    //   //       else if (item?.marketType == matchBettingType.other) {
+    //   //         const currBet = currMatchData?.other?.find((items) => items?.id == item?.betId)?.metaData;
+    //   //         teams = [currBet?.teamA, currBet?.teamB, ...(currBet?.teamC ? [currBet?.teamC] : [])]
+    //   //         let redisDataKey = getRedisKeys(item?.marketType, item?.matchId, redisKeys, item?.betId);
+    //   //         currRedisData = {
+    //   //           a: redisData[redisDataKey.teamArateRedisKey],
+    //   //           b: redisData[redisDataKey.teamBrateRedisKey],
+    //   //           c: isNaN(redisData[redisDataKey.teamCrateRedisKey]) ? 0 : redisData[redisDataKey.teamCrateRedisKey],
+    //   //         };
+    //   //       }
+    //   //       else {
+    //   //         teams = [currMatchData?.teamA, currMatchData?.teamB, ...(currMatchData?.teamC ? [currMatchData?.teamC] : [])]
+    //   //         currRedisData = redisKeysMarketWise[item?.marketType]?.map((items) => redisData[items + item?.betId]);
+    //   //         let redisDataKey = getRedisKeys(item?.marketType, item?.matchId, redisKeys, item?.betId);
+    //   //         currRedisData = {
+    //   //           a: redisData[redisDataKey.teamArateRedisKey],
+    //   //           b: redisData[redisDataKey.teamBrateRedisKey],
+    //   //           c: isNaN(redisData[redisDataKey.teamCrateRedisKey]) ? 0 : redisData[redisDataKey.teamCrateRedisKey],
+    //   //         };
+    //   //       }
+
+    //   //       if (currMatchDetail == -1) {
+    //   //         result.push({
+    //   //           title: currMatchData?.title,
+    //   //           matchId: item?.matchId,
+    //   //           startAt: currMatchData?.startAt,
+    //   //           eventType: item?.eventType,
+    //   //           betType: {
+    //   //             match: [{
+    //   //               marketName: item?.bettingName,
+    //   //               betId: item?.betId,
+    //   //               eventName: item?.eventName,
+    //   //               profitLoss: currRedisData,
+    //   //               marketType: item?.marketType,
+    //   //               teams: teams
+    //   //             }]
+    //   //           }
+    //   //         })
+    //   //       }
+    //   //       else {
+    //   //         if (!result[currMatchDetail].betType.match) {
+    //   //           result[currMatchDetail].betType.match = [];
+    //   //         }
+    //   //         result[currMatchDetail].betType.match.push({
+    //   //           marketName: item?.bettingName,
+    //   //           betId: item?.betId,
+    //   //           eventName: item?.eventName,
+    //   //           profitLoss: currRedisData,
+    //   //           marketType: item?.marketType,
+    //   //           teams: teams
+    //   //         });
+    //   //       }
+    //   //     }
+    //   //   }
+    //   // }
+    // }
+    // else {
+      const user = await getUser({ id: userId });
+      const [matchData, tournamentData] = await Promise.all([getUserProfitLossMatch(user, matchId), getUserProfitLossTournament(user, matchId)]);
+      let matchDetails;
+
+      try {
+        matchDetails = await apiCall(
+          apiMethod.get,
+          expertDomain + allApiRoutes.MATCHES.matchDetails + matchId
+        );
+      } catch (error) {
+        throw error?.response?.data;
+      }
+
+      result.push({
+        title: matchDetails?.data?.title,
+        matchId: matchDetails?.data?.id,
+        startAt: matchDetails?.data?.startAt,
+        eventType: matchDetails?.data?.matchType,
+        betType: {}
+      });
+      for (let item of Object.values(matchData.session)) {
+        let { betDetails, ...profitLoss } = item;
+        if (!result[0].betType["session"]) {
+          result[0].betType["session"] = [];
+        }
+        result[0].betType = {
+          session: [...result[0].betType?.["session"], {
+            betId: betDetails?.betId,
+            eventName: betDetails?.eventName,
+            type:betDetails?.marketType,
+            profitLoss: profitLoss
+          }]
+        }
+      }
+      for (let item of Object.values(matchData.match)) {
+        let { betDetails, ...profitLoss } = item;
+        let currRedisData, teams;
+        if (Object.values(tieCompleteBetType).includes(betDetails?.marketType)) {
+          teams = ["YES", "NO"];
+          let redisDataKey = getRedisKeys(betDetails?.marketType, betDetails?.matchId, redisKeys, betDetails?.betId);
+          currRedisData = {
+            a: profitLoss.data[redisDataKey.teamArateRedisKey],
+            b: profitLoss.data[redisDataKey.teamBrateRedisKey],
+            c: isNaN(profitLoss.data[redisDataKey.teamCrateRedisKey]) ? 0 : profitLoss.data[redisDataKey.teamCrateRedisKey],
+          };
+        }
+        else if (item?.marketType == matchBettingType.other) {
+          const currBet = matchDetails?.data?.other?.find((items) => items?.id == betDetails?.betId)?.metaData;
+          teams = [currBet?.teamA, currBet?.teamB, ...(currBet?.teamC ? [currBet?.teamC] : [])]
+          let redisDataKey = getRedisKeys(betDetails?.marketType, betDetails?.matchId, redisKeys, betDetails?.betId);
+          currRedisData = {
+            a: profitLoss.data[redisDataKey.teamArateRedisKey],
+            b: profitLoss.data[redisDataKey.teamBrateRedisKey],
+            c: isNaN(profitLoss.data[redisDataKey.teamCrateRedisKey]) ? 0 : profitLoss.data[redisDataKey.teamCrateRedisKey],
+          };
+        }
+        else {
+          teams = [matchDetails?.data?.teamA, matchDetails?.data?.teamB, ...(matchDetails?.data?.teamC ? [matchDetails?.data?.teamC] : [])]
+          currRedisData = redisKeysMarketWise[betDetails?.marketType]?.map((items) => profitLoss.data[items + betDetails?.betId]);
+          let redisDataKey = getRedisKeys(betDetails?.marketType, betDetails?.matchId, redisKeys, betDetails?.betId);
+          currRedisData = {
+            a: profitLoss.data[redisDataKey.teamArateRedisKey],
+            b: profitLoss.data[redisDataKey.teamBrateRedisKey],
+            c: isNaN(profitLoss.data[redisDataKey.teamCrateRedisKey]) ? 0 : profitLoss.data[redisDataKey.teamCrateRedisKey],
+          };
+        }
+
+        if (!result[0].betType.match) {
+          result[0].betType.match = [];
+        }
+        result[0].betType.match.push({
+          marketName: betDetails?.bettingName,
+          betId: betDetails?.betId,
+          eventName: betDetails?.eventName,
+          profitLoss: currRedisData,
+          marketType: betDetails?.marketType,
+          teams: teams
+        });
+      }
+      for (let item of Object.values(tournamentData)) {
+        let { betDetails, data } = item;
+        let currRedisData={}, teams;
+        let currBetPL = data[betDetails?.betId + redisKeys.profitLoss + "_" + betDetails?.matchId];
+        teams = matchDetails.data?.tournament?.find((items) => items?.id == betDetails?.betId)?.runners?.sort((a, b) => a.sortPriority - b.sortPriority)?.map((items, i) => {
+          currRedisData[String.fromCharCode(97 + i)] = currBetPL[items?.id];
+          return items?.runnerName
+        });
+
+        if (!result[0].betType.match) {
+          result[0].betType.match = [];
+        }
+        result[0].betType.match.push({
+          marketName: betDetails?.bettingName,
+          betId: betDetails?.betId,
+          eventName: betDetails?.eventName,
+          profitLoss: currRedisData,
+          marketType: betDetails?.marketType,
+          teams: teams
+        });
+      }
+    // }
+
     return SuccessResponse(
       {
         statusCode: 200,

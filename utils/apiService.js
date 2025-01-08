@@ -95,6 +95,7 @@ exports.allApiRoutes = {
   changeDeleteBetReason: "/fairgameWallet/bet/change/deleteReason",
   getEventWiseExposure: "/fairgameWallet/eventWise/exposure/",
   marketAnalysis: "/fairgameWallet/marketAnalysis",
+  virtualExposures:"/fairgameWallet/virtualBetExposure",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

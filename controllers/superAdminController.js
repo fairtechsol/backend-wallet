@@ -958,14 +958,20 @@ exports.getPartnershipId = async (req, res, next) => {
 
 exports.getPlacedBets = async (req, res, next) => {
   try {
+    const { userId, roleName, domain, ...query } = req.query;
     const domainData = await getUserDomainWithFaId();
     let result = [];
 
     let promiseArray = []
-
-    for (let url of domainData) {
-      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id, isTeamNameAllow: true });
+    if (domain) {
+      let promise = apiCall(apiMethod.get, domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
       promiseArray.push(promise);
+    }
+    else {
+      for (let url of domainData) {
+        let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+        promiseArray.push(promise);
+      }
     }
     await Promise.allSettled(promiseArray)
       .then(async results => {

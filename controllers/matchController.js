@@ -759,28 +759,30 @@ exports.userEventWiseExposure = async (req, res) => {
           return { name: cardGames.find((items) => items.type == item)?.name, type: item, exposure: cardData.cardWiseExposure[item] }
         })
       };
-      let virtualExposureData = {exposure: 0, match: {}};
+      let virtualExposureData = { exposure: 0, match: {} };
       let domainData = await getFaAdminDomain(user);
-      
-        for (let url of domainData) {
-          let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.virtualExposures, null, {}, {
-            roleName: user.roleName,
-            userId: user.id
-          }).then((data) => data).catch((err) => {
-            logger.error({
-              context: `error in ${url?.domain} user wise exposure`,
-              process: `User ID : ${user.id} `,
-              error: err.message,
-              stake: err.stack,
-            });
+
+      for (let url of domainData) {
+        let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.virtualExposures, null, {}, {
+          roleName: user.roleName,
+          userId: user.id
+        }).then((data) => data).catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} user wise exposure`,
+            process: `User ID : ${user.id} `,
+            error: err.message,
+            stake: err.stack,
           });
-        virtualExposureData = {
-          exposure: Math.abs(virtualExposureData.exposure || 0) + Math.abs(data?.data?.exposure),
-          match: virtualExposureData.match
+        });
+        if (data) {
+          virtualExposureData = {
+            exposure: Math.abs(virtualExposureData.exposure || 0) + Math.abs(data?.data?.exposure || 0),
+            match: virtualExposureData.match
+          }
+          Object.keys(data?.data?.match || {}).forEach((curr) => {
+            virtualExposureData.match[curr] = { name: data?.data?.match[curr]?.gameName, type: data?.data?.match[curr]?.providerName, exposure: Math.abs(virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.data?.match[curr]?.totalAmount) }
+          })
         }
-        Object.keys(data?.data?.match || {}).forEach((curr) => {
-          virtualExposureData.match[curr] = { name: data?.data?.match[curr]?.gameName, type: data?.data?.match[curr]?.providerName, exposure: Math.abs(virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.data?.match[curr]?.totalAmount) }
-        })
       }
       result.virtual = { exposure: virtualExposureData.exposure, match: Object.values(virtualExposureData.match || {}) };
     }

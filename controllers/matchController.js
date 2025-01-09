@@ -775,11 +775,11 @@ exports.userEventWiseExposure = async (req, res) => {
             });
           });
         virtualExposureData = {
-          exposure: (virtualExposureData.exposure || 0) + data?.data?.exposure,
+          exposure: Math.abs(virtualExposureData.exposure || 0) + Math.abs(data?.data?.exposure),
           match: virtualExposureData.match
         }
         Object.keys(data?.data?.match || {}).forEach((curr) => {
-          virtualExposureData.match[curr] = { name: data?.data?.match[curr]?.gameName, type: data?.data?.match[curr]?.providerName, exposure: (virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.data?.match[curr]?.totalAmount) }
+          virtualExposureData.match[curr] = { name: data?.data?.match[curr]?.gameName, type: data?.data?.match[curr]?.providerName, exposure: Math.abs(virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.data?.match[curr]?.totalAmount) }
         })
       }
       result.virtual = { exposure: virtualExposureData.exposure, match: Object.values(virtualExposureData.match || {}) };

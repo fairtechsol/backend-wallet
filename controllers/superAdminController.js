@@ -156,6 +156,8 @@ exports.createSuperAdmin = async (req, res) => {
       roleName,
       userBlock: creator.userBlock,
       betBlock: creator.betBlock,
+      betBlockedBy: creator.betBlockedBy,
+      userBlockedBy: creator.userBlockedBy,
       createBy: creator.id,
       creditRefrence: creditRefrence,
       exposureLimit: exposureLimit,
@@ -195,6 +197,8 @@ exports.createSuperAdmin = async (req, res) => {
       "agPartnership",
       "password",
       "remark",
+      "betBlockedBy",
+      "userBlockedBy",
       ...(isOldFairGame ? [
         "sessionCommission",
         "matchComissionType",
@@ -609,7 +613,7 @@ exports.updateUserBalance = async (req, res) => {
     let reqUser = req.user;
     amount = parseFloat(amount);
 
-    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id","isUrl"]);
+    let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "isUrl", "roleName"]);
     if (!user)
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -677,7 +681,7 @@ exports.updateUserBalance = async (req, res) => {
 
     } else if (transactionType == transType.withDraw) {
       insertUserBalanceData = usersBalanceData[1];
-      if (amount > insertUserBalanceData.currentBalance)
+      if (amount > insertUserBalanceData.currentBalance - (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
         return ErrorResponse(
           {
             statusCode: 400,
@@ -954,14 +958,20 @@ exports.getPartnershipId = async (req, res, next) => {
 
 exports.getPlacedBets = async (req, res, next) => {
   try {
+    const { userId, roleName, domain, ...query } = req.query;
     const domainData = await getUserDomainWithFaId();
     let result = [];
 
     let promiseArray = []
-
-    for (let url of domainData) {
-      let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...req.query, roleName: req?.user?.roleName, userId: req?.user?.id, isTeamNameAllow: true });
+    if (domain) {
+      let promise = apiCall(apiMethod.get, domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
       promiseArray.push(promise);
+    }
+    else {
+      for (let url of domainData) {
+        let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+        promiseArray.push(promise);
+      }
     }
     await Promise.allSettled(promiseArray)
       .then(async results => {

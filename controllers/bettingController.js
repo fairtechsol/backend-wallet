@@ -6,7 +6,7 @@ const { ErrorResponse, SuccessResponse } = require('../utils/response.js');
 
 exports.deleteMultipleBet = async (req, res) => {
     try {
-        let { matchId, deleteReason, urlData } = req.body;
+        let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
         let domain = expertDomain;
         let matchExist = {};
         try {
@@ -32,7 +32,7 @@ exports.deleteMultipleBet = async (req, res) => {
             let promise = apiCall(
                 apiMethod.post,
                 url + allApiRoutes.deleteMultipleBet,
-                { data: urlData[url], deleteReason, matchId }
+                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
             );
             promiseArray.push(promise);
         }
@@ -73,7 +73,7 @@ exports.getSessionProfitLoss = async (req, res) => {
     
 exports.deleteMultipleBetForOther = async (req, res) => {
     try {
-        let { matchId, deleteReason, urlData } = req.body;
+        let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
         let domain = expertDomain;
         let matchExist = {};
         try {
@@ -92,7 +92,7 @@ exports.deleteMultipleBetForOther = async (req, res) => {
             let promise = apiCall(
                 apiMethod.post,
                 url + allApiRoutes.deleteMultipleBetForOther,
-                { data: urlData[url], deleteReason, matchId }
+                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
             );
             promiseArray.push(promise);
         }
@@ -120,7 +120,7 @@ exports.deleteMultipleBetForOther = async (req, res) => {
 
 exports.deleteMultipleBetForRace = async (req, res) => {
     try {
-        let { matchId, deleteReason, urlData } = req.body;
+        let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
         let domain = expertDomain;
         let matchExist = {};
         try {
@@ -146,7 +146,7 @@ exports.deleteMultipleBetForRace = async (req, res) => {
             let promise = apiCall(
                 apiMethod.post,
                 url + allApiRoutes.deleteMultipleBetForRace,
-                { data: urlData[url], deleteReason, matchId }
+                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
             );
             promiseArray.push(promise);
         }

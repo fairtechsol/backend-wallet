@@ -106,7 +106,12 @@ let calculateRateAmount = async (jobData, userId) => {
             }
             await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
-            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData })
+            logger.info({
+              context: "User team rates",
+              process: `User ID : ${userId} ${item} id ${partnershipId} ${jobData?.newBet?.matchId}`,
+              data: { teamData, jobData, oldTeamRates: teamRates }
+            });
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj, jobData });
             // Log information about exposure and stake update
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
@@ -730,7 +735,8 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
-                betId
+                betId,
+                isPermanentDelete: jobData.isPermanentDelete
               });
             }
 
@@ -874,6 +880,7 @@ walletMatchBetDeleteQueue.process(async (job, done) => {
                 teamArateRedisKey: teamArateRedisKey,
                 teamBrateRedisKey: teamBrateRedisKey,
                 teamCrateRedisKey: teamCrateRedisKey,
+                isPermanentDelete: jobData.isPermanentDelete,
                 redisObject: redisObj
               });
             }
@@ -992,6 +999,7 @@ walletRaceMatchBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
+                isPermanentDelete: jobData.isPermanentDelete,
                 matchBetType
               });
             }
@@ -1110,6 +1118,7 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,
                 domainUrl: domainUrl,
+                isPermanentDelete: jobData.isPermanentDelete,
                 matchBetType
               });
             }

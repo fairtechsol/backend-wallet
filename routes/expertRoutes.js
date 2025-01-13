@@ -8,6 +8,7 @@ const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate
 const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, declareSessionResult, declareSessionNoResult, unDeclareSessionResult, declareMatchResult, unDeclareMatchResult, getWalletBetsData, lockUnlockExpert, declareOtherMatchResult, unDeclareOtherMatchResult, declareRacingMatchResult, unDeclareRaceMatchResult, declareCardMatchResult, declareMatchOtherMarketResult, unDeclareMatchOtherMarketResult, unDeclareTournamentMatchResult, declareTournamentMatchResult } = require('../controllers/expertController');
 const { getPlacedBets } = require('../controllers/superAdminController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
+const { expertToWalletAuth } = require('../middleware/expertAsWallet');
 
 
 
@@ -42,7 +43,7 @@ router.post("/declare/result/card/match", apiLimiter, declareCardMatchResult);
 router.get('/match/competitionList/:type',isAuthenticate,getMatchCompetitionsByType);
 router.get('/match/competition/dates/:competitionId',isAuthenticate,getMatchDatesByCompetitionId);
 router.get('/match/competition/getMatch/:competitionId/:date',isAuthenticate,getMatchDatesByCompetitionIdAndDate);
-router.get("/bets", getPlacedBets);
+router.get("/bets", expertToWalletAuth, getPlacedBets);
 router.get("/login/bet/data", getWalletBetsData);
 router.post("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
 

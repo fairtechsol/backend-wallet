@@ -3060,7 +3060,7 @@ exports.declareTournamentMatchResult = async (req, res) => {
 
 exports.unDeclareTournamentMatchResult = async (req, res) => {
   try {
-    const { matchOddId, userId, matchId, match, matchBetting, matchBettingType } = req.body;
+    const { matchOddId, userId, matchId, match, matchBetting, matchBettingType, isMatchOdd } = req.body;
     const domainData = await getUserDomainWithFaId();
 
     const fgWallet = await getUser({
@@ -3083,7 +3083,8 @@ exports.unDeclareTournamentMatchResult = async (req, res) => {
         matchId,
         match,
         matchBetting,
-        betType: matchBettingType
+        betType: matchBettingType,
+        isMatchOdd: isMatchOdd
       }).then((data) => data).catch(async (err) => {
         logger.error({
           error: `Error at un Declare match result for the domain ${item?.domain}.`,

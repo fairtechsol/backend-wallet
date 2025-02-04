@@ -6,35 +6,27 @@ const errorTransport = new DailyRotateFile({
   level: 'error',
   filename: 'logs/error-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  maxFiles: '20d'
-});
-
-const infoTransport = new DailyRotateFile({
-  level: 'info',
-  filename: 'logs/info-%DATE%.log',
-  datePattern: 'YYYY-MM-DD',
-  maxFiles: '20d'
+  maxFiles: '15d'
 });
 
 const debugTransport = new DailyRotateFile({
   level: 'debug',
   filename: 'logs/debug-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  maxFiles: '20d'
+  maxFiles: '15d'
 });
 
 const combineTransport = new DailyRotateFile({
   level: 'silly',
   filename: 'logs/combine-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  maxFiles: '20d'
+  maxFiles: '15d'
 });
 
 // Create a logger and add transports
 const infoLogger = winston.createLogger({
   format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
-    infoTransport,
     combineTransport
   ]
 });

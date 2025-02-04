@@ -5,6 +5,7 @@ module.exports.casinoMicroServiceDomain = process.env.CASINOMICROSERVICEURL || "
 module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
 module.exports.jwtSecret = process.env.JWT_SECRET || "secret";
+module.exports.parmanentDeletePassType = "parDelPassType";
 
 
 module.exports.userRoleConstant = {

@@ -43,7 +43,8 @@
     "invalidRole": "Invalid role",
     "domainExist": "Domain or username already exist.",
     "profile" : "Profile get successfully.",
-    "userList": "User List Get Success."
+    "userList": "User List Get Success.",
+    "invalidVerifyPassword": "Invalid verify password."
   },
   "button": {
     "InvalidUser": "User is invalid"

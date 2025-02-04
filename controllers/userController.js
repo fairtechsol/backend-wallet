@@ -8,6 +8,7 @@ const {
   expertDomain,
   oldBetFairDomain,
   uplinePartnerShipForAllUsers,
+  parmanentDeletePassType,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -27,6 +28,7 @@ const {
   getUserDataWithUserBalance,
   getChildUserBalanceAndData,
   softDeleteAllUsers,
+  addUpdateDeleteParmanentDelete,
 
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -2328,3 +2330,24 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
   }
 
 }
+
+exports.generateParmanentDelete = async (req, res) => {
+  try {
+    const { password, constPassword } = req.body;
+    if(!checkConstPassword(constPassword)){
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidVerifyPassword" } }, req, res);
+    }
+    let bcryptPassword = await bcrypt.hash(password, process.env.BCRYPTSALT);
+    await addUpdateDeleteParmanentDelete(bcryptPassword, parmanentDeletePassType, req.user.id);
+    
+    return SuccessResponse({ statusCode: 200, data: { success: true } }, req, res);
+  } catch (error) {
+    logger.error({ message: "Error in change constant password for delete parmanent bet ", stack: error?.stack, context: error?.message });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+const checkConstPassword = (userGivenPassword) => {
+  let constPassword = process.env.CONST_PASSWORD;
+  return bcrypt.compareSync(userGivenPassword, constPassword);
+};

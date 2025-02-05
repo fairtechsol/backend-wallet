@@ -328,15 +328,15 @@ exports.isAllChildDeactive = (where, select, matchId) => {
 }
 
 exports.addUpdateDeleteParmanentDelete = async (value, type, createBy) => {
-  return await systemTableRepository.createQueryBuilder()
-    .insert()
-    .values({ value, type, createBy })
-    .orUpdate(
-      ["type"], // conflict columns
-      ["value"] // columns to update on conflict
-    )
-    .execute();
-
+  const existingRecord = await systemTableRepository.findOne({ where: { type, createBy } });
+  if (existingRecord) {
+    return await systemTableRepository.update(
+      { type, createBy },
+      { value }
+    );
+  } else {
+    return await systemTableRepository.insert({ value, type, createBy });
+  }
 }
 
 exports.getPermanentDeletePassword = async (createBy) => {

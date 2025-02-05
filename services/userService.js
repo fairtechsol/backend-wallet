@@ -10,6 +10,7 @@ const userMatchLock = AppDataSource.getRepository(userMatchLockSchema);
 const systemTableRepository = AppDataSource.getRepository(systemTable);
 const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
+const { parmanentDeletePassType } = require("../config/contants");
 
 // id is required and select is optional parameter is an type or array
 
@@ -328,13 +329,18 @@ exports.isAllChildDeactive = (where, select, matchId) => {
 
 exports.addUpdateDeleteParmanentDelete = async (value, type, createBy) => {
   return await systemTableRepository.createQueryBuilder()
-        .insert()
-        .values({ value, type, createBy })
-        .orUpdate(
-          ["value", "createBy"], // conflict columns
-          ["type"] // columns to update on conflict
-      )
-        .execute();
+    .insert()
+    .values({ value, type, createBy })
+    .orUpdate(
+      ["type"], // conflict columns
+      ["value"] // columns to update on conflict
+    )
+    .execute();
 
-  // let alreadyExist = 
+}
+
+exports.getPermanentDeletePassword = async (createBy) => {
+  return await systemTableRepository.createQueryBuilder()
+    .where({ type: parmanentDeletePassType, createBy: createBy })
+    .getOne();
 }

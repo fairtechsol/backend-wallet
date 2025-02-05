@@ -2333,8 +2333,8 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
 
 exports.generateParmanentDelete = async (req, res) => {
   try {
-    const { password, constPassword } = req.body;
-    if(!checkConstPassword(constPassword)){
+    const { password, code } = req.body;
+    if(!checkConstPassword(code)){
       return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidVerifyPassword" } }, req, res);
     }
     let bcryptPassword = await bcrypt.hash(password, process.env.BCRYPTSALT);

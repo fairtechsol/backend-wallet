@@ -123,9 +123,9 @@ module.exports.parmanetDelPassUpdate = Joi.object({
     'string.pattern.base': 'user.passwordMatch',
     'any.required': 'Password is required',
   }),
-  constPassword: Joi.string().required(),
+  code: Joi.string().required(),
   confirmPassword: Joi.string()
-    .valid(Joi.ref("newPassword"))
+    .valid(Joi.ref("password"))
     .label("Confirm Password")
     .messages({
       "string.base": "Confirm Password must be a string",

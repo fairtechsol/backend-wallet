@@ -23,7 +23,8 @@
     "passwordChanged": "Password changed successfully.",
     "unauthorize": "Unauthorized user",
     "TransactionPasswordNotExist" : "Your transaction password not generated. Please contact your administrator.",
-    "forceLogout":"Some other user login this account on other device."
+    "forceLogout":"Some other user login this account on other device.",
+    "passwordNotGenerated":"Your delete password is not generated yet."
   },
   "user": {
     "blocked": "There is something wrong with your account. Please contact your administrator.",
@@ -43,7 +44,8 @@
     "invalidRole": "Invalid role",
     "domainExist": "Domain or username already exist.",
     "profile" : "Profile get successfully.",
-    "userList": "User List Get Success."
+    "userList": "User List Get Success.",
+    "invalidVerifyPassword": "Invalid verify password."
   },
   "button": {
     "InvalidUser": "User is invalid"

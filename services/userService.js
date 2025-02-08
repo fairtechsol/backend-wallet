@@ -3,11 +3,14 @@ const bcrypt = require("bcryptjs");
 const userSchema = require("../models/user.entity");
 const userBalanceSchema = require("../models/userBalance.entity");
 const userMatchLockSchema = require("../models/userMatchLock.entity");
+const systemTable = require("../models/systemTable.entity");
 const user = AppDataSource.getRepository(userSchema);
 const UserBalance = AppDataSource.getRepository(userBalanceSchema);
 const userMatchLock = AppDataSource.getRepository(userMatchLockSchema);
+const systemTableRepository = AppDataSource.getRepository(systemTable);
 const { ILike, In } = require("typeorm");
 const ApiFeature = require("../utils/apiFeatures");
+const { parmanentDeletePassType } = require("../config/contants");
 
 // id is required and select is optional parameter is an type or array
 
@@ -322,4 +325,22 @@ exports.isAllChildDeactive = (where, select, matchId) => {
   } catch (error) {
     throw error;
   }
+}
+
+exports.addUpdateDeleteParmanentDelete = async (value, type, createBy) => {
+  const existingRecord = await systemTableRepository.findOne({ where: { type, createBy } });
+  if (existingRecord) {
+    return await systemTableRepository.update(
+      { type, createBy },
+      { value }
+    );
+  } else {
+    return await systemTableRepository.insert({ value, type, createBy });
+  }
+}
+
+exports.getPermanentDeletePassword = async (createBy) => {
+  return await systemTableRepository.createQueryBuilder()
+    .where({ type: parmanentDeletePassType, createBy: createBy })
+    .getOne();
 }

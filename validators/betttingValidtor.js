@@ -26,7 +26,8 @@ module.exports.deleteMultipleBetPermanentValidator = Joi.object({
                 placeBetId: Joi.string().guid({ version: 'uuidv4' }).required()
             })
         )
-    )
+    ),
+    password: Joi.string().required()
 });
 
 module.exports.changeBetsDeleteReasonValidator = Joi.object({

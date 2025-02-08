@@ -1,7 +1,7 @@
-const { getUserById } = require("../services/userService");
+const { getUserById, getPermanentDeletePassword } = require("../services/userService");
 const { verifyToken, getUserTokenFromRedis } = require("../utils/authUtils");
 const { ErrorResponse } = require("../utils/response");
-const bcrypt=require("bcryptjs");
+const bcrypt = require("bcryptjs");
 exports.isAuthenticate = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
@@ -115,6 +115,49 @@ exports.checkTransactionPassword = async (req,res,next) => {
       {
         statusCode: 400,
         message:  { msg: "auth.invalidPass", keys: { type: "transaction" }},
+      },
+      req,
+      res
+    );
+  }
+  next()
+};
+
+exports.checkPermanentDeletePassword = async (req, res, next) => {
+  let { password } = req.body
+  let { id } = req.user
+  if (!password)
+    return ErrorResponse(
+      {
+        statusCode: 400,
+        message: {
+          msg: "required",
+          keys: { name: "Delete password" },
+        },
+      },
+      req,
+      res
+    );
+  const dbPass = await getPermanentDeletePassword(id);
+  if (!dbPass)
+    return ErrorResponse(
+      {
+        statusCode: 400,
+        message: {
+          msg: "auth.passwordNotGenerated",
+        },
+      },
+      req,
+      res
+    );
+
+  // Compare old transaction password with the stored transaction password
+  let check = bcrypt.compareSync(password, dbPass.value);
+  if (!check) {
+    return ErrorResponse(
+      {
+        statusCode: 400,
+        message: { msg: "auth.invalidPass", keys: { type: "delete" } },
       },
       req,
       res

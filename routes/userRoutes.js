@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
-const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference, CheckOldPassword} = require('../validators/userValidator');
-const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced, getTotalUserListBalance, deleteUser, getUserWiseBetProfitLoss, checkOldPasswordData, getCardTotalProfitLoss, getCardDomainProfitLoss, getCardResultBetProfitLoss} = require('../controllers/userController');
+const {CreateUser, ChangePassword, generateTransactionPass, LockUnlockUser,updateUserValid, SetExposureLimitValid, SetCreditReference, CheckOldPassword, parmanetDelPassUpdate} = require('../validators/userValidator');
+const {createUser,lockUnlockUser,generateTransactionPassword, changePassword, updateUser,setExposureLimit, userList, userSearchList,userBalanceDetails, setCreditReferrence, getProfile, getTotalProfitLoss, getDomainProfitLoss, getResultBetProfitLoss, getSessionBetProfitLoss, isUserExist, getCommissionMatchReports, getCommissionBetPlaced, getTotalUserListBalance, deleteUser, getUserWiseBetProfitLoss, checkOldPasswordData, getCardTotalProfitLoss, getCardDomainProfitLoss, getCardResultBetProfitLoss, generateParmanentDelete} = require('../controllers/userController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -37,6 +37,7 @@ router.get("/commissionMatch/:userId", isAuthenticate, getCommissionMatchReports
 router.get("/commissionBetPlaced/:userId", isAuthenticate, getCommissionBetPlaced);
 router.delete("/delete/:id", isAuthenticate, deleteUser);
 router.post("/check/oldPassword", isAuthenticate, validator(CheckOldPassword), checkOldPasswordData);
+router.post("/generate/permanentDelete", isAuthenticate, validator(parmanetDelPassUpdate), generateParmanentDelete);
 
 module.exports = router;
 //https://3100dev.fairgame.club/fair-game-wallet/getUserBalanceDetails

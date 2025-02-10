@@ -7,7 +7,7 @@ const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis, getCasinoDomainBets, deleteHashKeysByPattern, delCardBetPlaceRedis } = require("../services/redis/commonFunctions");
 const { getUserBalanceDataByUserId, updateUserBalanceData, updateUserExposure } = require("../services/userBalanceService");
 const { getUser, getUserById, getUsersWithoutCount } = require("../services/userService");
-const { sendMessageToUser } = require("../sockets/socketManager");
+const { sendMessageToUser, broadcastEvent } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 exports.createUser = async (req, res) => {
@@ -3364,6 +3364,102 @@ exports.unDeclareTournamentMatchResult = async (req, res) => {
     return ErrorResponse(error, req, res);
   }
 }
+
+exports.declareFinalMatchResult = async (req, res) => {
+  try {
+    const { matchId, matchType } = req.body;
+    const domainData = await getUserDomainWithFaId();
+
+    for (let i = 0; i < domainData?.length; i++) {
+      const item = domainData[i];
+      try {
+        await apiCall(apiMethod.post, item?.domain + allApiRoutes.declareResultFinalMatch, {
+          matchId, matchType
+        });
+      }
+      catch (err) {
+        logger.error({
+          error: `Error at declare match result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        continue;
+      }
+
+    }
+    broadcastEvent(socketData.matchResult, {
+      matchId,
+      gameType: matchType,
+      isMatchDeclare: true
+    });
+
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "bet.resultDeclared" },
+      },
+      req,
+      res
+    );
+  } catch (error) {
+    logger.error({
+      error: `Error at declare tournament match result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.unDeclareFinalMatchResult = async (req, res) => {
+  try {
+    const { matchId, matchType } = req.body;
+    const domainData = await getUserDomainWithFaId();
+
+    for (let i = 0; i < domainData?.length; i++) {
+      let item = domainData[i];
+      await apiCall(apiMethod.post, item?.domain + allApiRoutes.unDeclareResultFinalMatch, {
+        matchId,
+        matchType
+      }).then((data) => data).catch(async (err) => {
+        logger.error({
+          error: `Error at un Declare match result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        return;
+      });
+    }
+
+    broadcastEvent(socketData.matchResultUnDeclare, {
+      matchId,
+      gameType: matchType,
+    });
+
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        message: { msg: "bet.resultUnDeclared" },
+      },
+      req,
+      res
+    );
+
+  } catch (error) {
+    logger.error({
+      error: `Error at un declare match result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    return ErrorResponse(error, req, res);
+  }
+}
+
 
 exports.lockUnlockExpert = async (req, res) => {
   try {

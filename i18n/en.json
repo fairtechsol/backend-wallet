@@ -64,6 +64,7 @@
     "maxAmountViolate": "Amount More then maximum amount.",
     "marketRateChanged": "{marketType} rate has been changed.",
     "resultDeclared":"Result declared successfully.",
-    "resultUnDeclared":"Result un declared successfully."
+    "resultUnDeclared":"Result un declared successfully.",
+    "verifyBets": "Please verify all bets of this market"
   }
 }

@@ -2759,32 +2759,32 @@ exports.declareTournamentMatchResult = async (req, res) => {
     const { result, isMatchDeclare, matchBettingDetails, userId, matchId, matchOddId, match, matchBettingType, isMatchOdd } = req.body;
     const domainData = await getUserDomainWithFaId();
 
-    for (let i = 0; i < domainData?.length; i++) {
-      const item = domainData[i];
-      let response;
-      try {
-        response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.getVerifyBet, {
-          betId: matchOddId
-        });
-        if (response?.data > 0) {
-          throw {
-            statusCode: 400,
-            message: {
-              msg: "bet.verifyBets",
-            }
-          }
-        }
-      }
-      catch (err) {
-        logger.error({
-          error: `Verify bet for the domain ${item?.domain}.`,
-          stack: err.stack,
-          message: err.message,
-        });
-        throw err;
+    // for (let i = 0; i < domainData?.length; i++) {
+    //   const item = domainData[i];
+    //   let response;
+    //   try {
+    //     response = await apiCall(apiMethod.post, item?.domain + allApiRoutes.getVerifyBet, {
+    //       betId: matchOddId
+    //     });
+    //     if (response?.data > 0) {
+    //       throw {
+    //         statusCode: 400,
+    //         message: {
+    //           msg: "bet.verifyBets",
+    //         }
+    //       }
+    //     }
+    //   }
+    //   catch (err) {
+    //     logger.error({
+    //       error: `Verify bet for the domain ${item?.domain}.`,
+    //       stack: err.stack,
+    //       message: err.message,
+    //     });
+    //     throw err;
 
-      }
-    }
+    //   }
+    // }
     const fgWallet = await getUser({
       roleName: userRoleConstant?.fairGameWallet
     }, ["id", "matchComissionType", "matchCommission"]);

@@ -61,6 +61,7 @@ exports.allApiRoutes = {
   declareResultOtherMatch: "/fairgameWallet/declare/result/other/match",
   declareResultOtherMarket: "/fairgameWallet/declare/result/other/market",
   declareResultTournametMatch: "/fairgameWallet/declare/result/tournament/match",
+  declareResultFinalMatch: "/fairgameWallet/declare/result/final/match",
   declareResultRaceMatch: "/fairgameWallet/declare/result/race/match",
   declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
   unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
@@ -68,6 +69,7 @@ exports.allApiRoutes = {
   unDeclareResultOtherMarket: "/fairgameWallet/unDeclare/result/other/market",
   unDeclareResultRaceMatch: "/fairgameWallet/unDeclare/result/race/match",
   unDeclareResultTournamentMatch: "/fairgameWallet/unDeclare/result/tournament/match",
+  unDeclareResultFinalMatch: "/fairgameWallet/unDeclare/result/final/match",
   addMatch:"/match/add",
   addRace: "/match/raceAdd",
   cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
@@ -96,6 +98,7 @@ exports.allApiRoutes = {
   getEventWiseExposure: "/fairgameWallet/eventWise/exposure/",
   marketAnalysis: "/fairgameWallet/marketAnalysis",
   virtualExposures:"/fairgameWallet/virtualBetExposure",
+  getVerifyBet:"/fairgameWallet/checkVerifyBet",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",

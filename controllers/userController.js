@@ -62,7 +62,7 @@ const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
-const { constants } = require("buffer");
+
 exports.createUser = async (req, res) => {
   try {
     let {

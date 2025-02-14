@@ -2113,11 +2113,11 @@ exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
   try {
     let { betId } = req.body;
     const domainData = await getUserDomainWithFaId();
-    let response;
+    let result=[];
 
     for (let url of domainData) {
 
-      response = await apiCall(apiMethod.post, url.domain + allApiRoutes.sessionUserWieProfitLossExpert, {
+      let response = await apiCall(apiMethod.post, url.domain + allApiRoutes.sessionUserWieProfitLossExpert, {
         betId: betId
       })
         .then((data) => data)
@@ -2135,11 +2135,12 @@ exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
           ...item, url: url.domain
         }
       });
+      result=[...result,...response.data];
     }
     return SuccessResponse(
       {
         statusCode: 200,
-        data: response?.data
+        data: result
       },
       req,
       res

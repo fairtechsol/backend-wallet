@@ -9,6 +9,7 @@ const { createUser, updateUser, changePassword, expertList, getNotification, get
 const { getPlacedBets } = require('../controllers/superAdminController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
 const { expertToWalletAuth } = require('../middleware/expertAsWallet');
+const { getUserWiseSessionBetProfitLossExpert, getResultBetProfitLoss } = require('../controllers/userController');
 
 
 
@@ -49,6 +50,8 @@ router.get('/match/competition/getMatch/:competitionId/:date',isAuthenticate,get
 router.get("/bets", expertToWalletAuth, getPlacedBets);
 router.get("/login/bet/data", getWalletBetsData);
 router.post("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
+router.post("/userwise/session/profitLoss/expert", getUserWiseSessionBetProfitLossExpert);
+router.get("/total/bet/profitLoss", getResultBetProfitLoss);
 
 
 module.exports = router;

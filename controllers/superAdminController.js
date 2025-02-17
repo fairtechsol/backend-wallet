@@ -1057,7 +1057,7 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
     let oldBetFairUserIds = [];
     let userProfitLossData = [];
-    const markets={};
+    let markets={};
 
     for (let element of users) {
       let currUserProfitLossData = {profitLoss:{}};

@@ -1124,10 +1124,9 @@ exports.getUserProfitLoss = async (req, res, next) => {
             });
 
           userProfitLossData.push(...response?.data?.profitLoss);
-          markets = response?.data?.markets?.reduce((prev, curr) => {
-            prev[curr.betId] = curr;
-            return prev
-          }, {});
+          for(let items of response?.data?.markets){
+            markets[items.betId]=items;
+          }
         }
       }
     };
@@ -1149,10 +1148,9 @@ exports.getUserProfitLoss = async (req, res, next) => {
         });
 
         userProfitLossData.push(...response?.data?.profitLoss);
-        markets = response?.data?.markets?.reduce((prev, curr) => {
-          prev[curr.betId] = curr;
-          return prev
-        }, {});
+        for(let items of response?.data?.markets){
+          markets[items.betId]=items;
+        }
       }
 
     // userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);

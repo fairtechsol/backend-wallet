@@ -1097,7 +1097,7 @@ exports.getUserProfitLoss = async (req, res, next) => {
             })
           });
         };
-        if (Object.keys(currUserProfitLossData.profitLoss).length > 0) {
+        if (Object.keys(currUserProfitLossData.profitLoss || {}).length > 0) {
           currUserProfitLossData.userName = element?.userName;
           userProfitLossData.push(currUserProfitLossData);
         }

@@ -3,7 +3,7 @@ const { logger } = require("../config/logger");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { insertTransactions } = require("../services/transactionService");
-const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId } = require("../services/userBalanceService");
+const { addInitialUserBalance, getUserBalanceDataByUserId, updateUserBalanceByUserId, updateUserBalanceData } = require("../services/userBalanceService");
 const { getUserByUserName, addUser, getUserById, getChildUser, updateUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -83,13 +83,21 @@ exports.updateBalance = async (req, res) => {
         if (transactionType == transType.add) {
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
+            let updateMyProfitLoss = parseFloat(amount);
             if (parseFloat(loginUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
+                updateMyProfitLoss = insertUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(loginUserBalanceData.myProfitLoss) + parseFloat(amount);
             }
-            let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+            // let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+            await updateUserBalanceData(user.id, { 
+                profitLoss: parseFloat(amount), 
+                myProfitLoss: updateMyProfitLoss, 
+                exposure: 0, 
+                totalCommission: 0, 
+                balance: parseFloat(amount)});
 
             if (userExistRedis) {
                 await updateUserDataRedis(reqUser.id, updatedUpdateUserBalanceData);
@@ -102,17 +110,24 @@ exports.updateBalance = async (req, res) => {
 
             updatedUpdateUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) - parseFloat(amount);
+            let updateMyProfitLoss = -parseFloat(amount);
             if (parseFloat(loginUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
+                updateMyProfitLoss = -insertUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(loginUserBalanceData.myProfitLoss) - parseFloat(amount);
             }
-            let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+            // let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
+            await updateUserBalanceData(user.id, { 
+                profitLoss: -parseFloat(amount), 
+                myProfitLoss: updateMyProfitLoss, 
+                exposure: 0, 
+                totalCommission: 0, 
+                balance: -parseFloat(amount)});
 
             if (userExistRedis) {
                 await updateUserDataRedis(reqUser.id, updatedUpdateUserBalanceData);
-
             }
 
         } else {
@@ -129,7 +144,7 @@ exports.updateBalance = async (req, res) => {
             description: remark
         }]
 
-        const transactioninserted = await insertTransactions(transactionArray);
+        insertTransactions(transactionArray);
         return SuccessResponse(
             {
                 statusCode: 200,
@@ -164,10 +179,10 @@ exports.setExposureLimit = async (req, res, next) => {
             let childUser = await getUserById(childObj.id);
             if (childUser.exposureLimit > amount || childUser.exposureLimit == 0) {
                 childUser.exposureLimit = amount;
-                await addUser(childUser);
+                await updateUser(childUser.id, { exposureLimit: amount });
             }
         });
-        await addUser(loginUser);
+        await updateUser(loginUser.id, { exposureLimit: amount });
 
 
         const domainData = await getUserDomainWithFaId();
@@ -230,7 +245,6 @@ exports.setCreditReferrence = async (req, res, next) => {
         const userExistRedis = await hasUserInCache(loginUser.id);
 
         if (userExistRedis) {
-
             await updateUserDataRedis(loginUser.id, { profitLoss });
         }
 

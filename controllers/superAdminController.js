@@ -1057,9 +1057,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
     let oldBetFairUserIds = [];
     let userProfitLossData = [];
+    let markets={};
 
     for (let element of users) {
-      let currUserProfitLossData = {};
+      let currUserProfitLossData = {profitLoss:{}};
       element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
         const faDomains =await getFaAdminDomain(element);
@@ -1079,21 +1080,27 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-          const mergeObjectsWithSum = (obj1, obj2) => Object.fromEntries(Object.entries(obj1).map(([k, v]) => [k, (v || 0) + (obj2[k] ?? 0)]).concat(Object.entries(obj2).filter(([k]) => !(k in obj1))));
-            currUserProfitLossData=mergeObjectsWithSum(response?.data?.reduce((prev,curr)=>{
-              prev.teamRateA = parseFloat(parseFloat(parseFloat(prev.teamRateA || 0) + parseFloat(curr.teamRateA || 0)).toFixed(2));
-              prev.teamRateB = parseFloat(parseFloat(parseFloat(prev.teamRateB || 0) + parseFloat(curr.teamRateB || 0)).toFixed(2));
-              prev.teamRateC = parseFloat(parseFloat(parseFloat(prev.teamRateC || 0) + parseFloat(curr.teamRateC || 0)).toFixed(2));
+            for(let items of response?.data?.markets){
+              markets[items.betId]=items;
+            }
 
-              prev.percentTeamRateA = parseFloat(parseFloat(parseFloat(prev.percentTeamRateA || 0) + parseFloat(curr.percentTeamRateA || 0)).toFixed(2));
-              prev.percentTeamRateB = parseFloat(parseFloat(parseFloat(prev.percentTeamRateB || 0) + parseFloat(curr.percentTeamRateB || 0)).toFixed(2));
-              prev.percentTeamRateC = parseFloat(parseFloat(parseFloat(prev.percentTeamRateC || 0) + parseFloat(curr.percentTeamRateC || 0)).toFixed(2));
-              return prev;
-            }, {}), currUserProfitLossData);
-        
-          };
+          response?.data?.profitLoss?.forEach((item) => {
+            Object.entries(item?.profitLoss)?.forEach(([key, val]) => {
+              Object.entries(val.teams)?.forEach(([teamKey, teamVal]) => {
+                currUserProfitLossData.profitLoss[key] = currUserProfitLossData.profitLoss[key] || { name: val.name, teams: {} };
+                currUserProfitLossData.profitLoss[key].teams[teamKey] = currUserProfitLossData.profitLoss[key].teams[teamKey] || { name: teamVal.name, pl: {} };
+                currUserProfitLossData.profitLoss[key].teams[teamKey].pl = {
+                  rate: (currUserProfitLossData.profitLoss[key].teams[teamKey].pl?.rate || 0) + (teamVal?.pl?.rate || 0),
+                  percent: parseFloat(currUserProfitLossData.profitLoss[key].teams[teamKey].pl?.percent || 0) + parseFloat(teamVal?.pl?.percent || 0),
+                }
+              })
+            })
+          });
+        };
+        if (Object.keys(currUserProfitLossData.profitLoss || {}).length > 0) {
           currUserProfitLossData.userName = element?.userName;
           userProfitLossData.push(currUserProfitLossData);
+        }
       }
       else {
         if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
@@ -1116,7 +1123,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-            userProfitLossData.push(...response?.data);
+          userProfitLossData.push(...response?.data?.profitLoss);
+          for(let items of response?.data?.markets){
+            markets[items.betId]=items;
+          }
         }
       }
     };
@@ -1137,15 +1147,18 @@ exports.getUserProfitLoss = async (req, res, next) => {
           throw err;
         });
 
-        userProfitLossData.push(...response?.data);
-    }
+        userProfitLossData.push(...response?.data?.profitLoss);
+        for(let items of response?.data?.markets){
+          markets[items.betId]=items;
+        }
+      }
 
-    userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
+    // userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data:userProfitLossData
+        data: { profitLoss: userProfitLossData, markets: Object.values(markets) }
       },
       req,
       res

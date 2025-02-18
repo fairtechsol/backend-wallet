@@ -32,7 +32,7 @@ exports.commissionMatchReport = (userId, matchId) => {
 }
 
 exports.settleCommission = async (userId) => {
-  await Commission.update({ parentId: userId },{
-    settled:true
+  await Commission.update({ parentId: userId, settled: false }, {
+    settled: true
   });
 }

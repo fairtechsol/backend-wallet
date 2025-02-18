@@ -346,8 +346,8 @@ exports.declareSessionResult = async (req, res) => {
           parentUser.exposure = parseFloat(parseFloat(parentExposure - adminBalanceData?.["exposure"]).toFixed(2));
          
           if (userCommission?.sessionCommission && item.domain == oldBetFairDomain) {
-            tempCommission += Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
-            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Number((adminBalanceData?.["totalCommission"] * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
+            tempCommission += Number(((adminBalanceData?.["totalCommission"]||0) * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
+            parentUser.totalCommission = parseFloat(parentUser.totalCommission||0) + Number(((adminBalanceData?.["totalCommission"]||0) * parseFloat(parseFloat(userCommission?.sessionCommission).toFixed(2)) / 100).toFixed(2));
 
             Object.keys(response?.bulkCommission)?.forEach((item) => {
               response?.bulkCommission?.[item]?.filter((items) => items?.superParent == userId)?.forEach((items) => {
@@ -467,7 +467,7 @@ exports.declareSessionResult = async (req, res) => {
     const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
       return prev + parseFloat(parseFloat(curr.commissionAmount * curr.partnerShip / 100).toFixed(2))
     }, 0);
-    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet).toFixed(2));
+    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet || 0).toFixed(2));
 
     if (parentUser.exposure < 0) {
       logger.info({
@@ -1187,7 +1187,7 @@ exports.declareMatchResult = async (req, res) => {
                 response?.bulkCommission?.[item]?.filter((items) => items?.superParent == parentUserId)?.forEach((items) => {
 
                   parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat(parseFloat(parseFloat(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2))));
-                  totalCommissionData += Math.abs(parseFloat(parseFloat(parseFloat(parseFloat((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2))));
+                  totalCommissionData += Math.abs(parseFloat(parseFloat(parseFloat(parseFloat((parseFloat(items?.lossAmount || 0) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2))));
 
                   bulkCommission.push({
                     createBy: item,
@@ -1212,9 +1212,9 @@ exports.declareMatchResult = async (req, res) => {
               }
               else if (parseFloat(adminBalanceData?.["userOriginalProfitLoss"]) < 0) {
 
-                parentUser.totalCommission = parseFloat(parentUser.totalCommission) + Math.abs(parseFloat(parseFloat(parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2)));
+                parentUser.totalCommission = parseFloat(parentUser.totalCommission || 0) + Math.abs(parseFloat(parseFloat(parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"] || 0)) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2)));
 
-                totalCommissionData += Math.abs(parseFloat(parseFloat(parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"])) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2)));
+                totalCommissionData += Math.abs(parseFloat(parseFloat(parseFloat((parseFloat(parseFloat(adminBalanceData?.["userOriginalProfitLoss"]||0)) * parseFloat(userCommission?.matchCommission) / 100).toFixed(2)) * parseFloat((parseFloat(userCommission.fwPartnership) / 100).toFixed(2))).toFixed(2)));
 
                 bulkCommission.push({
                   createBy: item,
@@ -1311,7 +1311,7 @@ exports.declareMatchResult = async (req, res) => {
     const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
       return prev + parseFloat(parseFloat(curr.commissionAmount * curr.partnerShip / 100).toFixed(2))
     }, 0);
-    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet).toFixed(2));
+    parentUser.totalCommission += parseFloat(parseFloat(commissionWallet || 0).toFixed(2));
 
     if (parentUser.exposure < 0) {
       logger.info({

@@ -82,16 +82,30 @@ const commissionSchema = new EntitySchema({
       type: "timestamp with time zone",
       nullable: true
     },
-    settled:{
-      type:Boolean,
-      default:false
+    settled: {
+      type: Boolean,
+      default: false
     },
-    matchType:{
+    matchType: {
       type: 'enum',
       enum: Object.values(marketBetType),
       nullable: true
     }
-  }
+  },
+  indices: [
+    {
+      name: 'commission_betId',   // index name should be start with the table name
+      columns: ['betId'],
+    },
+    {
+      name: 'commission_matchId',   // index name should be start with the table name
+      columns: ['matchId'],
+    },
+    {
+      name: 'commission_createBy',   // index name should be start with the table name
+      columns: ['createBy'],
+    }
+  ],
 });
 
 module.exports = commissionSchema;

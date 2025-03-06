@@ -15,6 +15,7 @@ const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
 const { WalletMatchBetQueue } = require("./queue/consumer.js");
 const encryptDecryptData = require("./middleware/encryptDecryptData.js");
+const compression = require('compression');
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
   // Check if the request comes from the specified domain or localhost
@@ -31,6 +32,14 @@ if (process.env.NODE_ENV == 'production') {
 } else {
   app.use(cors({ origin: "*" }));
 }
+// Configure compression for ALL HTTP traffic
+app.use(compression({
+  brotli: {
+    quality: 4, // 4-6 is ideal for APIs (balance speed/size)
+  },
+  level: 6, // gzip level 6 (optimal balance)
+  threshold: '1kb', // Skip compressing tiny responses
+}));
 
 app.enable('trust proxy');
 app.use(helmet());

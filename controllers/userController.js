@@ -42,6 +42,7 @@ const {
   updateUserBalanceByUserId,
   addInitialUserBalance,
   getBalanceSumByRoleName,
+  updateUserBalanceData,
 } = require("../services/userBalanceService");
 const { ILike, In } = require("typeorm");
 const {
@@ -485,11 +486,10 @@ exports.setExposureLimit = async (req, res, next) => {
       let childUser = await getUserById(childObj.id);
       if (childUser.exposureLimit > amount || childUser.exposureLimit == 0) {
         childUser.exposureLimit = amount;
-        await addUser(childUser);
+        await updateUser(childUser.id, { exposureLimit: amount });
       }
     });
-    await addUser(user);
-
+    await updateUser(user.id, { exposureLimit: amount });
 
     const domainData = await getFaAdminDomain(user);
 
@@ -1227,16 +1227,15 @@ exports.setCreditReferrence = async (req, res, next) => {
       creditRefrence: amount,
     };
 
-    let profitLoss =
-      parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
-      profitLoss,
-    });
+    let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
+    await updateUserBalanceData(user.id, { profitLoss: previousCreditReference - amount, balance: 0 });
+    // let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
+    //   profitLoss,
+    // });
 
     const userExistRedis = await hasUserInCache(user.id);
 
     if (userExistRedis) {
-
       await updateUserDataRedis(user.id, { profitLoss });
     }
 
@@ -1260,7 +1259,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         description: "CREDIT REFRENCE " + remark,
       },
     ];
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
     let updateLoginUser = {
       downLevelCreditRefrence:
         parseInt(loginUser.downLevelCreditRefrence) -

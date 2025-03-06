@@ -84,6 +84,15 @@ exports.socketManager = (server) => {
       origin: "*",
       methods: ["GET", "POST"],
     },
+    transports: ["websocket", "polling"], // Enable both WebSocket and polling
+    perMessageDeflate: {
+      threshold: 1024,  // Only compress messages larger than 1024 bytes
+      zlibDeflateOptions: { level: 6 }, // Maximum compression
+      zlibInflateOptions: { chunkSize: 64 * 1024 }, // Efficient decompression
+      clientNoContextTakeover: true, // Reduce memory usage
+      serverNoContextTakeover: true, // Reduce memory usage
+      serverMaxWindowBits: 10, // Low memory usage
+    }
   });
 
   // Create Redis clients using ioredis for the pub/sub mechanism

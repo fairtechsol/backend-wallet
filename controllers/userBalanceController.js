@@ -179,7 +179,7 @@ exports.settleCommissions = async (req, res) => {
             });
 
             // userData.userBal.totalCommission = 0;
-            await updateUserBalanceData(key, {
+            await updateUserBalanceData(userId, {
                 balance: 0,
                 totalCommission: -userData.userBal.totalCommission
               });

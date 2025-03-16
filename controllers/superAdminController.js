@@ -552,11 +552,17 @@ exports.setCreditReferrence = async (req, res, next) => {
       creditRefrence: amount,
     };
 
-    let profitLoss =
-      parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
-      profitLoss,
+    // let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
+    await updateUserBalanceData(user.id, {
+      profitLoss: previousCreditReference - amount,
+      myProfitLoss: 0,
+      exposure: 0,
+      totalCommission: 0,
+      balance: 0
     });
+    // let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
+    //   profitLoss,
+    // });
 
     let transactionArray = [
       {
@@ -582,10 +588,7 @@ exports.setCreditReferrence = async (req, res, next) => {
     const transactioninserted = await insertTransactions(transactionArray);
 
     let updateLoginUser = {
-      downLevelCreditRefrence:
-        parseFloat(loginUser.downLevelCreditRefrence) -
-        previousCreditReference +
-        amount,
+      downLevelCreditRefrence: parseFloat(loginUser.downLevelCreditRefrence) - previousCreditReference + amount,
     };
 
     await updateUser(user.id, updateData);
@@ -651,6 +654,9 @@ exports.updateUserBalance = async (req, res) => {
       transactionType,
       remark,
     };
+    let newUserAmount = 0, newUserUpdateMyProfitLoss = 0;
+    let loginUserAmount = 0;
+
 
     if (transactionType == transType.add) {
       if (amount > loginUserBalanceData.currentBalance)
@@ -663,22 +669,20 @@ exports.updateUserBalance = async (req, res) => {
           res
         );
       insertUserBalanceData = usersBalanceData[1];
-      updatedUpdateUserBalanceData.currentBalance =
-        parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
-      updatedUpdateUserBalanceData.profitLoss =
-        parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
-
+      updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
+      updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
+      newUserAmount = parseFloat(amount);
       if (parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
+        newUserUpdateMyProfitLoss = insertUserBalanceData.myProfitLoss;
         updatedUpdateUserBalanceData.myProfitLoss = 0;
       }
       else {
         updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount);
+        newUserUpdateMyProfitLoss = parseFloat(amount);
       }
 
-      updatedLoginUserBalanceData.currentBalance =
-        parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
-
-
+      updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
+      loginUserAmount = -parseFloat(amount);
     } else if (transactionType == transType.withDraw) {
       insertUserBalanceData = usersBalanceData[1];
       if (amount > insertUserBalanceData.currentBalance - (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
@@ -690,22 +694,21 @@ exports.updateUserBalance = async (req, res) => {
           req,
           res
         );
-      updatedUpdateUserBalanceData.currentBalance =
-        parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
-      updatedUpdateUserBalanceData.profitLoss =
-        parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
-
-
+      updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
+      updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
+      newUserAmount = -parseFloat(amount);
       if (parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
+        newUserUpdateMyProfitLoss = -insertUserBalanceData.myProfitLoss;
         updatedUpdateUserBalanceData.myProfitLoss = 0;
       }
       else {
         updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount);
+        newUserUpdateMyProfitLoss = parseFloat(amount);
       }
 
       // let newUserBalanceData = await updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData)
-      updatedLoginUserBalanceData.currentBalance =
-        parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
+      updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
+      loginUserAmount = parseFloat(amount);
     } else {
       return ErrorResponse(
         { statusCode: 400, message: { msg: "invalidData" } },
@@ -724,14 +727,19 @@ exports.updateUserBalance = async (req, res) => {
       return ErrorResponse(err?.response?.data, req, res);
     }
 
-    let newUserBalanceData = await updateUserBalanceByUserId(
-      user.id,
-      updatedUpdateUserBalanceData
-    );
-    let newLoginUserBalanceData = await updateUserBalanceByUserId(
-      reqUser.id,
-      updatedLoginUserBalanceData
-    );
+    await updateUserBalanceData(user.id, { 
+      profitLoss: newUserAmount, 
+      myProfitLoss: newUserUpdateMyProfitLoss, 
+      exposure: 0, 
+      totalCommission: 0, 
+      balance: newUserAmount});
+
+    await updateUserBalanceData(reqUser.id, { 
+      profitLoss: loginUserAmount, 
+      myProfitLoss: 0, 
+      exposure: 0, 
+      totalCommission: 0, 
+      balance: loginUserAmount});
 
     const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
@@ -1057,9 +1065,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
     let oldBetFairUserIds = [];
     let userProfitLossData = [];
+    let markets={};
 
     for (let element of users) {
-      let currUserProfitLossData = {};
+      let currUserProfitLossData = {profitLoss:{}};
       element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
         const faDomains =await getFaAdminDomain(element);
@@ -1079,21 +1088,27 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-          const mergeObjectsWithSum = (obj1, obj2) => Object.fromEntries(Object.entries(obj1).map(([k, v]) => [k, (v || 0) + (obj2[k] ?? 0)]).concat(Object.entries(obj2).filter(([k]) => !(k in obj1))));
-            currUserProfitLossData=mergeObjectsWithSum(response?.data?.reduce((prev,curr)=>{
-              prev.teamRateA = parseFloat(parseFloat(parseFloat(prev.teamRateA || 0) + parseFloat(curr.teamRateA || 0)).toFixed(2));
-              prev.teamRateB = parseFloat(parseFloat(parseFloat(prev.teamRateB || 0) + parseFloat(curr.teamRateB || 0)).toFixed(2));
-              prev.teamRateC = parseFloat(parseFloat(parseFloat(prev.teamRateC || 0) + parseFloat(curr.teamRateC || 0)).toFixed(2));
+            for(let items of response?.data?.markets){
+              markets[items.betId]=items;
+            }
 
-              prev.percentTeamRateA = parseFloat(parseFloat(parseFloat(prev.percentTeamRateA || 0) + parseFloat(curr.percentTeamRateA || 0)).toFixed(2));
-              prev.percentTeamRateB = parseFloat(parseFloat(parseFloat(prev.percentTeamRateB || 0) + parseFloat(curr.percentTeamRateB || 0)).toFixed(2));
-              prev.percentTeamRateC = parseFloat(parseFloat(parseFloat(prev.percentTeamRateC || 0) + parseFloat(curr.percentTeamRateC || 0)).toFixed(2));
-              return prev;
-            }, {}), currUserProfitLossData);
-        
-          };
+          response?.data?.profitLoss?.forEach((item) => {
+            Object.entries(item?.profitLoss)?.forEach(([key, val]) => {
+              Object.entries(val.teams)?.forEach(([teamKey, teamVal]) => {
+                currUserProfitLossData.profitLoss[key] = currUserProfitLossData.profitLoss[key] || { name: val.name, teams: {} };
+                currUserProfitLossData.profitLoss[key].teams[teamKey] = currUserProfitLossData.profitLoss[key].teams[teamKey] || { name: teamVal.name, pl: {} };
+                currUserProfitLossData.profitLoss[key].teams[teamKey].pl = {
+                  rate: (currUserProfitLossData.profitLoss[key].teams[teamKey].pl?.rate || 0) + (teamVal?.pl?.rate || 0),
+                  percent: parseFloat(currUserProfitLossData.profitLoss[key].teams[teamKey].pl?.percent || 0) + parseFloat(teamVal?.pl?.percent || 0),
+                }
+              })
+            })
+          });
+        };
+        if (Object.keys(currUserProfitLossData.profitLoss || {}).length > 0) {
           currUserProfitLossData.userName = element?.userName;
           userProfitLossData.push(currUserProfitLossData);
+        }
       }
       else {
         if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
@@ -1116,7 +1131,10 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-            userProfitLossData.push(...response?.data);
+          userProfitLossData.push(...response?.data?.profitLoss);
+          for(let items of response?.data?.markets){
+            markets[items.betId]=items;
+          }
         }
       }
     };
@@ -1137,15 +1155,18 @@ exports.getUserProfitLoss = async (req, res, next) => {
           throw err;
         });
 
-        userProfitLossData.push(...response?.data);
-    }
+        userProfitLossData.push(...response?.data?.profitLoss);
+        for(let items of response?.data?.markets){
+          markets[items.betId]=items;
+        }
+      }
 
-    userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
+    // userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data:userProfitLossData
+        data: { profitLoss: userProfitLossData, markets: Object.values(markets) }
       },
       req,
       res

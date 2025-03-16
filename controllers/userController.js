@@ -42,6 +42,7 @@ const {
   updateUserBalanceByUserId,
   addInitialUserBalance,
   getBalanceSumByRoleName,
+  updateUserBalanceData,
 } = require("../services/userBalanceService");
 const { ILike, In } = require("typeorm");
 const {
@@ -62,6 +63,7 @@ const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
+
 exports.createUser = async (req, res) => {
   try {
     let {
@@ -484,11 +486,10 @@ exports.setExposureLimit = async (req, res, next) => {
       let childUser = await getUserById(childObj.id);
       if (childUser.exposureLimit > amount || childUser.exposureLimit == 0) {
         childUser.exposureLimit = amount;
-        await addUser(childUser);
+        await updateUser(childUser.id, { exposureLimit: amount });
       }
     });
-    await addUser(user);
-
+    await updateUser(user.id, { exposureLimit: amount });
 
     const domainData = await getFaAdminDomain(user);
 
@@ -1226,16 +1227,15 @@ exports.setCreditReferrence = async (req, res, next) => {
       creditRefrence: amount,
     };
 
-    let profitLoss =
-      parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
-    let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
-      profitLoss,
-    });
+    let profitLoss = parseFloat(userBalance.profitLoss) + previousCreditReference - amount;
+    await updateUserBalanceData(user.id, { profitLoss: previousCreditReference - amount, balance: 0 });
+    // let newUserBalanceData = await updateUserBalanceByUserId(user.id, {
+    //   profitLoss,
+    // });
 
     const userExistRedis = await hasUserInCache(user.id);
 
     if (userExistRedis) {
-
       await updateUserDataRedis(user.id, { profitLoss });
     }
 
@@ -1259,7 +1259,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         description: "CREDIT REFRENCE " + remark,
       },
     ];
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
     let updateLoginUser = {
       downLevelCreditRefrence:
         parseInt(loginUser.downLevelCreditRefrence) -
@@ -1539,15 +1539,15 @@ exports.getResultBetProfitLoss = async (req, res) => {
     let { matchId, betId, isSession, url, id, userId, roleName } = req.query;
     let data = [];
 
-    let newUserTemp = JSON.parse(JSON.stringify(req.user));
-    if (req.user.roleName === userRoleConstant.fairGameWallet && id) {
+    let newUserTemp = JSON.parse(JSON.stringify(req.user||{}));
+    if (req.user?.roleName === userRoleConstant.fairGameWallet && id) {
       id = await updateNewUserTemp(newUserTemp, id)
     }
     newUserTemp.roleName = roleName || newUserTemp.roleName;
     newUserTemp.id = userId || newUserTemp.id;
     if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user.roleName }, {})
+      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user?.roleName || userRoleConstant.fairGameWallet }, {})
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -2097,6 +2097,54 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       req,
       res
     );
+
+  } catch (error) {
+    logger.error({
+      context: `error in get all bets profit loss`,
+      error: error.message,
+      stake: error.stack,
+    });
+    return ErrorResponse(error, req, res);
+  }
+}
+
+exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
+  try {
+    let { betId } = req.body;
+    const domainData = await getUserDomainWithFaId();
+    let result=[];
+
+    for (let url of domainData) {
+
+      let response = await apiCall(apiMethod.post, url.domain + allApiRoutes.sessionUserWieProfitLossExpert, {
+        betId: betId
+      })
+        .then((data) => data)
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url.domain} getting user list`,
+            error: err.message,
+            stake: err.stack,
+          });
+          throw err;
+        });
+
+      response.data = response?.data?.map((item) => {
+        return {
+          ...item, url: url.domain
+        }
+      });
+      result=[...result,...response.data];
+    }
+    return SuccessResponse(
+      {
+        statusCode: 200,
+        data: result
+      },
+      req,
+      res
+    );
+
 
   } catch (error) {
     logger.error({

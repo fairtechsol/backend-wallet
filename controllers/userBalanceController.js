@@ -2,7 +2,7 @@ const { transType, socketData, matchComissionTypeConstant, userRoleConstant } = 
 const { getUser, getUsersWithUserBalance, getUserDataWithUserBalance, } = require('../services/userService');
 const { ErrorResponse, SuccessResponse } = require('../utils/response')
 const { insertTransactions } = require('../services/transactionService')
-const { updateUserBalanceByUserId, getUserBalanceDataByUserId, addInitialUserBalance } = require('../services/userBalanceService');
+const { updateUserBalanceByUserId, getUserBalanceDataByUserId, addInitialUserBalance, updateUserBalanceData } = require('../services/userBalanceService');
 const { sendMessageToUser } = require('../sockets/socketManager');
 const { logger } = require('../config/logger');
 const { settleCommission, insertCommissions } = require('../services/commissionService');
@@ -32,51 +32,74 @@ exports.updateUserBalance = async (req, res) => {
         loginUserBalanceData = usersBalanceData[0]
         let updatedLoginUserBalanceData = {}
         let updatedUpdateUserBalanceData = {}
+        let loginUserBalanceChange = 0;
         if (transactionType == transType.add) {
             if (amount > loginUserBalanceData.currentBalance)
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             insertUserBalanceData = usersBalanceData[1]
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) + parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
+            let updateMyProfitLoss = parseFloat(amount);
             if (parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
+                updateMyProfitLoss = insertUserBalanceData.myProfitLoss;
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount);
             }
-            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+            // updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+            await updateUserBalanceData(user.id, { 
+                profitLoss: parseFloat(amount), 
+                myProfitLoss: updateMyProfitLoss, 
+                exposure: 0, 
+                totalCommission: 0, 
+                balance: parseFloat(amount)});
 
             if (userExistRedis) {
                 await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
             }
 
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) - parseFloat(amount);
+            loginUserBalanceChange = -parseFloat(amount);
         } else if (transactionType == transType.withDraw) {
             insertUserBalanceData = usersBalanceData[1]
             if (amount > insertUserBalanceData.currentBalance- (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
-
+            let updateMyProfitLoss = -parseFloat(amount);
             if (parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
+                updateMyProfitLoss = -insertUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount);
             }
-
-            updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+            // updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
+            await updateUserBalanceData(user.id, { 
+                profitLoss: -parseFloat(amount), 
+                myProfitLoss: updateMyProfitLoss, 
+                exposure: 0, 
+                totalCommission: 0, 
+                balance: -parseFloat(amount)});
 
             if (userExistRedis) {
                 await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
             }
 
             updatedLoginUserBalanceData.currentBalance = parseFloat(loginUserBalanceData.currentBalance) + parseFloat(amount);
+            loginUserBalanceChange = parseFloat(amount);
         } else {
             return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.InvalidTransactionType" } }, req, res);
         }
 
-        updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
+        // updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
+        await updateUserBalanceData(reqUser.id, { 
+            profitLoss: 0, 
+            myProfitLoss: 0, 
+            exposure: 0, 
+            totalCommission: 0, 
+            balance: loginUserBalanceChange});
         const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
         if (parentUserExistRedis) {
@@ -155,9 +178,12 @@ exports.settleCommissions = async (req, res) => {
                 settled: true
             });
 
-            userData.userBal.totalCommission = 0;
-
-            await addInitialUserBalance(userData.userBal);
+            // userData.userBal.totalCommission = 0;
+            await updateUserBalanceData(userId, {
+                balance: 0,
+                totalCommission: -userData.userBal.totalCommission
+              });
+            // await addInitialUserBalance(userData.userBal);
 
         }
         return SuccessResponse(

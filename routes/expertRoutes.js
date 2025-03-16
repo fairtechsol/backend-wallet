@@ -9,19 +9,21 @@ const { createUser, updateUser, changePassword, expertList, getNotification, get
 const { getPlacedBets } = require('../controllers/superAdminController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
 const { expertToWalletAuth } = require('../middleware/expertAsWallet');
+const { getUserWiseSessionBetProfitLossExpert, getResultBetProfitLoss } = require('../controllers/userController');
+const { declareApiLimiter } = require('../middleware/declareApiLimit');
 
 
 
 
-router.post('/add',isAuthenticate,checkTransactionPassword,validator(CreateExpertValidate),createUser);
-router.post('/update',isAuthenticate,checkTransactionPassword,validator(UpdateExpertValidate),updateUser);
-router.post('/password',isAuthenticate,checkTransactionPassword,validator(changePasswordExpertValidate),changePassword);
-router.get('/list',isAuthenticate,expertList);
+router.post('/add', isAuthenticate, checkTransactionPassword, validator(CreateExpertValidate), createUser);
+router.post('/update', isAuthenticate, checkTransactionPassword, validator(UpdateExpertValidate), updateUser);
+router.post('/password', isAuthenticate, checkTransactionPassword, validator(changePasswordExpertValidate), changePassword);
+router.get('/list', isAuthenticate, expertList);
 router.get("/notification", isAuthenticate, getNotification);
 
-router.post("/declare/result/session", declareSessionResult);
-router.post("/declare/noResult/session", declareSessionNoResult);
-router.post("/unDeclare/result/session", unDeclareSessionResult);
+router.post("/declare/result/session", declareApiLimiter, declareSessionResult);
+router.post("/declare/noResult/session", declareApiLimiter, declareSessionNoResult);
+router.post("/unDeclare/result/session", declareApiLimiter, unDeclareSessionResult);
 
 router.post("/declare/result/match", declareMatchResult);
 router.post("/unDeclare/result/match", unDeclareMatchResult);
@@ -32,8 +34,8 @@ router.post("/unDeclare/result/other/match", unDeclareOtherMatchResult);
 router.post("/declare/result/other/market", declareMatchOtherMarketResult);
 router.post("/unDeclare/result/other/market", unDeclareMatchOtherMarketResult);
 
-router.post("/declare/result/tournament/match", declareTournamentMatchResult);
-router.post("/unDeclare/result/tournament/match", unDeclareTournamentMatchResult);
+router.post("/declare/result/tournament/match", declareApiLimiter, declareTournamentMatchResult);
+router.post("/unDeclare/result/tournament/match", declareApiLimiter, unDeclareTournamentMatchResult);
 
 router.post("/declare/result/race/match", declareRacingMatchResult);
 router.post("/unDeclare/result/race/match", unDeclareRaceMatchResult);
@@ -49,6 +51,8 @@ router.get('/match/competition/getMatch/:competitionId/:date',isAuthenticate,get
 router.get("/bets", expertToWalletAuth, getPlacedBets);
 router.get("/login/bet/data", getWalletBetsData);
 router.post("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
+router.post("/userwise/session/profitLoss/expert", getUserWiseSessionBetProfitLossExpert);
+router.get("/total/bet/profitLoss", getResultBetProfitLoss);
 
 
 module.exports = router;

@@ -30,6 +30,7 @@ const dataSourceOption = {
   migrationsTableName: "migrations",
   namingStrategy: new PluralNamingStrategy(),
 };
+dataSourceOption.logging = true;
 if (process.env.NODE_ENV == 'production') {
   dataSourceOption.ssl = {
     rejectUnauthorized: false

@@ -37,7 +37,6 @@ const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
 const {
   getUserBalanceDataByUserId,
-  getAllchildsCurrentBalanceSum,
   getAllChildProfitLossSum,
   updateUserBalanceByUserId,
   addInitialUserBalance,

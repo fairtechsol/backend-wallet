@@ -3,7 +3,6 @@ const {
   transType,
   walletDescription,
   oldBetFairDomain,
-  redisKeys,
   partnershipPrefixByRole,
 } = require("../config/contants");
 const {
@@ -16,7 +15,6 @@ const {
   userBlockUnblock,
   betBlockUnblock,
   getParentUsers,
-  getFirstLevelChildUser,
   getFirstLevelChildUserWithPartnership,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -44,7 +42,7 @@ const {
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { hasUserInCache, updateUserDataRedis, getUserRedisKeys, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
+const { hasUserInCache, updateUserDataRedis, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 const { updateSuperAdminData } = require("./expertController");

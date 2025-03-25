@@ -13,8 +13,6 @@ const i18n = require("./config/i18n");
 const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
-const { WalletMatchBetQueue } = require("./queue/consumer.js");
-const encryptDecryptData = require("./middleware/encryptDecryptData.js");
 const compression = require('compression');
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {

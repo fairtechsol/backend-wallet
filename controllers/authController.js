@@ -1,7 +1,6 @@
 const {
   userRoleConstant,
   redisTimeOut,
-  partnershipPrefixByRole,
   differLoginTypeByRoles,
   jwtSecret,
 } = require("../config/contants");
@@ -9,9 +8,9 @@ const internalRedis = require("../config/internalRedisConnection");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { getUserById, getUserWithUserBalance } = require("../services/userService");
+const { getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
-const { forceLogoutIfLogin, settingBetsDataAtLogin, settingOtherMatchBetsDataAtLogin, settingRacingMatchBetsDataAtLogin, settingTournamentMatchBetsDataAtLogin } = require("../services/commonService");
+const { forceLogoutIfLogin, settingBetsDataAtLogin, settingTournamentMatchBetsDataAtLogin } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { updateUserDataRedis } = require("../services/redis/commonFunctions");
 
@@ -50,8 +49,6 @@ const setUserDetailsRedis = async (user) => {
   if (!redisUserData) {
     // Fetch and set betting data at login
     let betData = await settingBetsDataAtLogin(user);
-    let otherMatchBetData=await settingOtherMatchBetsDataAtLogin(user);
-    let racingMatchBetData = await settingRacingMatchBetsDataAtLogin(user);
     let tournamentMatchBetData = await settingTournamentMatchBetsDataAtLogin(user);
 
     // Set user details and partnerships in Redis
@@ -63,8 +60,6 @@ const setUserDetailsRedis = async (user) => {
       currentBalance: user?.userBal?.currentBalance || 0,
       roleName: user.roleName,
       ...(betData || {}),
-      ...(otherMatchBetData || {}),
-      ...(racingMatchBetData || {}),
       ...(tournamentMatchBetData || {}),
     });
 

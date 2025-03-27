@@ -85,14 +85,14 @@ exports.updateBalance = async (req, res) => {
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
             let updateMyProfitLoss = parseFloat(amount);
             if (parseFloat(loginUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
-                updateMyProfitLoss = insertUserBalanceData.myProfitLoss
+                updateMyProfitLoss = loginUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(loginUserBalanceData.myProfitLoss) + parseFloat(amount);
             }
             // let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
-            await updateUserBalanceData(user.id, { 
+            await updateUserBalanceData(reqUser.id, { 
                 profitLoss: parseFloat(amount), 
                 myProfitLoss: updateMyProfitLoss, 
                 exposure: 0, 
@@ -112,14 +112,14 @@ exports.updateBalance = async (req, res) => {
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) - parseFloat(amount);
             let updateMyProfitLoss = -parseFloat(amount);
             if (parseFloat(loginUserBalanceData.myProfitLoss) - parseFloat(amount) < 0) {
-                updateMyProfitLoss = -insertUserBalanceData.myProfitLoss
+                updateMyProfitLoss = -loginUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(loginUserBalanceData.myProfitLoss) - parseFloat(amount);
             }
             // let newUserBalanceData = await updateUserBalanceByUserId(reqUser.id, updatedUpdateUserBalanceData);
-            await updateUserBalanceData(user.id, { 
+            await updateUserBalanceData(reqUser.id, { 
                 profitLoss: -parseFloat(amount), 
                 myProfitLoss: updateMyProfitLoss, 
                 exposure: 0, 

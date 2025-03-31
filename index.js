@@ -14,6 +14,7 @@ const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
 const compression = require('compression');
+require("./grpc/index");
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
   // Check if the request comes from the specified domain or localhost

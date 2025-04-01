@@ -5,7 +5,7 @@ const validator = require('../middleware/joi.validator')
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
-const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, getWalletBetsData, lockUnlockExpert, declareCardMatchResult, declareFinalMatchResult, unDeclareFinalMatchResult } = require('../controllers/expertController');
+const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, getWalletBetsData, lockUnlockExpert, declareCardMatchResult } = require('../controllers/expertController');
 const { getPlacedBets } = require('../controllers/superAdminController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
 const { expertToWalletAuth } = require('../middleware/expertAsWallet');
@@ -16,9 +16,6 @@ router.post('/update', isAuthenticate, checkTransactionPassword, validator(Updat
 router.post('/password', isAuthenticate, checkTransactionPassword, validator(changePasswordExpertValidate), changePassword);
 router.get('/list', isAuthenticate, expertList);
 router.get("/notification", isAuthenticate, getNotification);
-
-router.post("/declare/result/final/match", declareFinalMatchResult);
-router.post("/unDeclare/result/final/match", unDeclareFinalMatchResult);
 
 router.post("/declare/result/card/match", apiLimiter, declareCardMatchResult);
 

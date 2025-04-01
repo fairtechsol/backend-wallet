@@ -6,10 +6,10 @@ const { getUserDomainWithFaId } = require("../../../services/domainDataService")
 const { getUserRedisData, deleteKeyFromUserRedis, incrementValuesRedis } = require("../../../services/redis/commonFunctions");
 const { getUserBalanceDataByUserId, updateUserBalanceData } = require("../../../services/userBalanceService");
 const { getUser, getUserById, getUsersWithoutCount } = require("../../../services/userService");
-const { sendMessageToUser } = require("../../../sockets/socketManager");
+const { sendMessageToUser, broadcastEvent } = require("../../../sockets/socketManager");
 const grpc = require("@grpc/grpc-js");
 const { __mf } = require("i18n");
-const { declareMatchHandler, unDeclareMatchHandler } = require("../../grpcClient/handlers/wallet/declareMatchHandler");
+const { declareMatchHandler, unDeclareMatchHandler, unDeclareFinalMatchHandler, declareFinalMatchHandler } = require("../../grpcClient/handlers/wallet/declareMatchHandler");
 
 exports.declareTournamentMatchResult = async (call) => {
   try {
@@ -615,6 +615,94 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     deleteCommission(matchBetting?.id);
 
     return { data: { profitLoss: resultProfitLoss, profitLossWallet: JSON.stringify(profitLossDataWallet) } };
+
+  } catch (error) {
+    logger.error({
+      error: `Error at un declare match result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    throw {
+      code: grpc.status.INTERNAL,
+      message: error?.message || __mf("internalServerError"),
+    };
+  }
+}
+
+
+exports.declareFinalMatchResult = async (call) => {
+  try {
+    const { matchId, matchType } = call.request;
+    const domainData = await getUserDomainWithFaId();
+
+    for (let i = 0; i < domainData?.length; i++) {
+      const item = domainData[i];
+      try {
+        await declareFinalMatchHandler({
+          matchId, matchType
+        }, item?.domain);
+      }
+      catch (err) {
+        logger.error({
+          error: `Error at declare match result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        continue;
+      }
+
+    }
+    broadcastEvent(socketData.matchResult, {
+      matchId,
+      gameType: matchType,
+      isMatchDeclare: true
+    });
+
+
+    return {}
+  } catch (error) {
+    logger.error({
+      error: `Error at declare tournament match result for the expert.`,
+      stack: error.stack,
+      message: error.message,
+    });
+    // Handle any errors and return an error response
+    throw {
+      code: grpc.status.INTERNAL,
+      message: error?.message || __mf("internalServerError"),
+    };
+  }
+}
+
+exports.unDeclareFinalMatchResult = async (call) => {
+  try {
+    const { matchId, matchType } = call.request;
+    const domainData = await getUserDomainWithFaId();
+
+    for (let i = 0; i < domainData?.length; i++) {
+      let item = domainData[i];
+      await unDeclareFinalMatchHandler({
+        matchId,
+        matchType
+      }, item?.domain).then((data) => data).catch(async (err) => {
+        logger.error({
+          error: `Error at un Declare match result for the domain ${item?.domain}.`,
+          stack: err.stack,
+          message: err.message,
+        });
+
+        return;
+      });
+    }
+
+    broadcastEvent(socketData.matchResultUnDeclare, {
+      matchId,
+      gameType: matchType,
+    });
+
+    return {}
 
   } catch (error) {
     logger.error({

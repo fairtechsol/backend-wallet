@@ -5,27 +5,17 @@ const validator = require('../middleware/joi.validator')
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
-const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, declareSessionNoResult, unDeclareSessionResult, getWalletBetsData, lockUnlockExpert, declareCardMatchResult, unDeclareTournamentMatchResult, declareTournamentMatchResult, declareFinalMatchResult, unDeclareFinalMatchResult } = require('../controllers/expertController');
+const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, getWalletBetsData, lockUnlockExpert, declareCardMatchResult, declareFinalMatchResult, unDeclareFinalMatchResult } = require('../controllers/expertController');
 const { getPlacedBets } = require('../controllers/superAdminController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
 const { expertToWalletAuth } = require('../middleware/expertAsWallet');
 const { getUserWiseSessionBetProfitLossExpert, getResultBetProfitLoss } = require('../controllers/userController');
-const { declareApiLimiter } = require('../middleware/declareApiLimit');
-
-
-
 
 router.post('/add', isAuthenticate, checkTransactionPassword, validator(CreateExpertValidate), createUser);
 router.post('/update', isAuthenticate, checkTransactionPassword, validator(UpdateExpertValidate), updateUser);
 router.post('/password', isAuthenticate, checkTransactionPassword, validator(changePasswordExpertValidate), changePassword);
 router.get('/list', isAuthenticate, expertList);
 router.get("/notification", isAuthenticate, getNotification);
-
-router.post("/declare/noResult/session", declareApiLimiter, declareSessionNoResult);
-router.post("/unDeclare/result/session", declareApiLimiter, unDeclareSessionResult);
-
-router.post("/declare/result/tournament/match", declareApiLimiter, declareTournamentMatchResult);
-router.post("/unDeclare/result/tournament/match", declareApiLimiter, unDeclareTournamentMatchResult);
 
 router.post("/declare/result/final/match", declareFinalMatchResult);
 router.post("/unDeclare/result/final/match", unDeclareFinalMatchResult);

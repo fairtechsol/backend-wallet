@@ -13,6 +13,7 @@ message DeclareTournamentRequest {
       string runnerName = 2;
     }
     repeated Runners runners = 5;
+    string type = 6;
   }
   MatchBetting matchBettingDetails = 3;
   string userId = 4;
@@ -52,7 +53,7 @@ message UnDeclareTournamentRequest {
     string stopAt = 7;
     string type = 8;
   }
-  MatchBetting matchBettingDetails = 2;
+  MatchBetting matchBetting = 2;
   string userId = 3;
   string matchId = 4;
   

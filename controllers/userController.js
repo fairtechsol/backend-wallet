@@ -62,6 +62,7 @@ const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
+const { sessionProfitLossBetsData } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
 
 exports.createUser = async (req, res) => {
   try {
@@ -1538,7 +1539,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
     let { matchId, betId, isSession, url, id, userId, roleName } = req.query;
     let data = [];
 
-    let newUserTemp = JSON.parse(JSON.stringify(req.user||{}));
+    let newUserTemp = JSON.parse(JSON.stringify(req.user || {}));
     if (req.user?.roleName === userRoleConstant.fairGameWallet && id) {
       id = await updateNewUserTemp(newUserTemp, id)
     }
@@ -1546,8 +1547,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
     newUserTemp.id = userId || newUserTemp.id;
     if (url) {
 
-      let response = await apiCall(apiMethod.post, url + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user?.roleName || userRoleConstant.fairGameWallet }, {})
-        .then((data) => data)
+      let response = await sessionProfitLossBetsData({ user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: userId || id, partnerShipRoleName: req.user?.roleName || userRoleConstant.fairGameWallet }, url)
         .catch((err) => {
           logger.error({
             context: `error in ${url} getting profit loss for all bets.`,
@@ -1558,7 +1558,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
           throw err;
         });
 
-      data = response?.data;
+      data = response;
     }
     else {
       let domainData;
@@ -1572,7 +1572,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await apiCall(apiMethod.post, domain?.domain + allApiRoutes.betWiseProfitLoss, { user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, {})
+        let response = await sessionProfitLossBetsData({ user: newUserTemp, matchId: matchId, betId: betId, isSession: isSession == 'true', searchId: id, partnerShipRoleName: req.user.roleName }, domain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1584,7 +1584,7 @@ exports.getResultBetProfitLoss = async (req, res) => {
             throw err;
           });
 
-        data?.push(...response?.data);
+        data?.push(...response);
       }
     }
     return SuccessResponse(
@@ -2111,7 +2111,7 @@ exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
   try {
     let { betId } = req.body;
     const domainData = await getUserDomainWithFaId();
-    let result=[];
+    let result = [];
 
     for (let url of domainData) {
 
@@ -2133,7 +2133,7 @@ exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
           ...item, url: url.domain
         }
       });
-      result=[...result,...response.data];
+      result = [...result, ...response.data];
     }
     return SuccessResponse(
       {
@@ -2381,12 +2381,12 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
 exports.generateParmanentDelete = async (req, res) => {
   try {
     const { password, code } = req.body;
-    if(!checkConstPassword(code)){
+    if (!checkConstPassword(code)) {
       return ErrorResponse({ statusCode: 400, message: { msg: "user.invalidVerifyPassword" } }, req, res);
     }
     let bcryptPassword = await bcrypt.hash(password, process.env.BCRYPTSALT);
     await addUpdateDeleteParmanentDelete(bcryptPassword, parmanentDeletePassType, req.user.id);
-    
+
     return SuccessResponse({ statusCode: 200, data: { success: true } }, req, res);
   } catch (error) {
     logger.error({ message: "Error in change constant password for delete parmanent bet ", stack: error?.stack, context: error?.message });

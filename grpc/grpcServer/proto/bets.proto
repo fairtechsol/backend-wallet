@@ -16,7 +16,33 @@ message GetBetsLoginDataResponse {
   string data = 1; 
 }
 
+
+message GetSessionProfitLossUserWiseRequest {
+  string betId = 1; 
+}
+
+message  GetSessionProfitLossUserWiseResponse {
+  string data = 1; 
+}
+
+// Request for session profit/loss user-wise
+message SessionProfitLossBetRequest {
+  string betId = 1;
+  string matchId = 2;
+  string url = 3;
+  string userId = 4;
+  bool isSession = 5; // will typically be true
+  string roleName = 6; // typically "user"
+}
+
+// Response for session profit/loss
+message SessionProfitLossBetResponse {
+  string data = 1;
+}
+
 service BetsProvider {
   rpc GetBets(GetBetsRequest) returns (GetBetsResponse);
   rpc GetBetsLoginData(GetBetsLoginDataRequest) returns (GetBetsLoginDataResponse);
+  rpc GetSessionProfitLossUserWise(GetSessionProfitLossUserWiseRequest) returns (GetSessionProfitLossUserWiseResponse);
+  rpc GetSessionProfitLossBet(SessionProfitLossBetRequest) returns (SessionProfitLossBetResponse);
 }

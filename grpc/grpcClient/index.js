@@ -20,12 +20,19 @@ const userProtoOptionsArray = [
     path: `${__dirname}/proto/match.proto`, //path to proto file
     package: "matchProvider",//package in proto name
     service: "MatchProvider",//service name in proto file
+  },
+  {
+    path: `${__dirname}/proto/user.proto`, //path to proto file
+    package: "userProvider",//package in proto name
+    service: "UserService",//service name in proto file
   }
 ];
 
+const expertServerAddress = "localhost:60600";
 
 const grpcReq = {
   user: (address) => new GrpcClient(userProtoOptionsArray, address),
+  expert: new GrpcClient(userProtoOptionsArray, expertServerAddress),
 };
 
 module.exports = grpcReq;

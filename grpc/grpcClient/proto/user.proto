@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package userProvider;
+
+// Message for creating a new user
+message CreateExpertRequest {
+  string userName = 1;
+  string fullName = 2;
+  string password = 3;
+  string confirmPassword = 4;
+  string phoneNumber = 5;
+  string city = 6;
+  string remark = 7;
+
+  string createBy = 8; // ID of the admin/user who created this user
+
+  // Privileges
+  bool allPrivilege = 9;
+  bool addMatchPrivilege = 10;
+  bool betFairMatchPrivilege = 11;
+  bool bookmakerMatchPrivilege = 12;
+  bool sessionMatchPrivilege = 13;
+}
+
+message CreateExpertResponse {}
+
+message CreateSuperAdminRequest {
+    string data = 1;
+  }
+  
+message CreateSuperAdminResponse {}
+
+message UpdateSuperAdminRequest {
+    string data = 1;
+  }
+  
+  // Response after creating a user
+message UpdateSuperAdminResponse {}
+
+message ChangePasswordRequest {
+    string password = 1;
+    string userId = 2;
+  }
+  
+  // Response after creating a user
+message ChangePasswordResponse {}
+
+// Message for setting exposure limit
+message SetExposureLimitRequest {
+  string userId = 1;
+  float exposureLimit = 2;
+}
+
+message SetExposureLimitResponse {}
+
+// Message for setting credit reference
+message SetCreditReferenceRequest {
+  string userId = 1;
+  float amount = 2;
+  string remark = 3;
+}
+
+message SetCreditReferenceResponse {}
+
+// Message for updating user balance
+message UpdateUserBalanceRequest {
+    string userId = 1;
+    float amount = 2;
+    string transactionType = 3;
+    string remark = 4;
+}
+
+message UpdateUserBalanceResponse {}
+
+// Message for locking/unlocking a super admin
+message LockUnlockSuperAdminRequest {
+    string userId = 1;
+    string loginId = 2;
+    bool betBlock = 3;
+    bool userBlock = 4;
+}
+
+message LockUnlockSuperAdminResponse {}
+
+// Service for user management
+service UserService {
+  rpc CreateExpert(CreateExpertRequest) returns (CreateExpertResponse);
+  rpc CreateSuperAdmin(CreateSuperAdminRequest) returns (CreateSuperAdminResponse);
+  rpc UpdateSuperAdmin(UpdateSuperAdminRequest) returns (UpdateSuperAdminResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc SetExposureLimit(SetExposureLimitRequest) returns (SetExposureLimitResponse);
+  rpc SetCreditReference(SetCreditReferenceRequest) returns (SetCreditReferenceResponse);
+  rpc UpdateUserBalance(UpdateUserBalanceRequest) returns (UpdateUserBalanceResponse);
+  rpc LockUnlockSuperAdmin(LockUnlockSuperAdminRequest) returns (LockUnlockSuperAdminResponse);
+}

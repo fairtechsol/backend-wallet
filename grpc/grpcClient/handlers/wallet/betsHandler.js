@@ -44,3 +44,16 @@ exports.sessionProfitLossBetsData = async (requestData,address) => {
       throw error;
   }
 };
+
+exports.deleteMultipleBetHandler = async (requestData, address) => {
+  try {
+    // Call the gRPC method and await the response
+     await grpcReq.user(address).callMethod(
+      "BetsProvider",
+      "DeleteMultipleBet",
+      requestData
+    );
+  } catch (error) {
+    throw error;
+  }
+};

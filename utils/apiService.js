@@ -43,15 +43,6 @@ exports.apiCall = async (method, url, data, headers, ReqQuery) => {
 
 exports.allApiRoutes = {
   //user routes
-  createSuperAdmin: "/fairgameWallet/add/user",
-  updateSuperAdmin: "/fairgameWallet/update/user",
-  changePassword: "/fairgameWallet/changePassword",
-  setExposureLimit: "/fairgameWallet/update/exposure",
-  setCreditReferrence: "/fairgameWallet/update/creditReference",
-  updateUserBalance: "/fairgameWallet/update/balance",
-  lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
-  deleteMultipleBet: "/bet/deleteMultipleBet",
-  deleteMultipleBetForTournament:"/bet/deleteMultipleBetForTournament",
   declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
   cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
   cardMatchWiseProfitLoss:"/fairgameWallet/card/total/matchWise/profitLoss",
@@ -59,8 +50,6 @@ exports.allApiRoutes = {
   profitLoss: "/fairgameWallet/total/profitLoss",
   matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
   userWiseProfitLoss:"/fairgameWallet/userwise/profitLoss",
-  sessionUserWieProfitLossExpert:"/fairgameWallet/user/session/profitLoss/expert",
-  betWiseProfitLoss:"/fairgameWallet/total/bet/profitLoss",
   sessionBetProfitLoss:"/fairgameWallet/total/session/profitLoss",
   isUserExist:"/fairgameWallet/user/exist",
   commissionReportsMatches:"/fairgameWallet/commissionMatch/",
@@ -81,7 +70,6 @@ exports.allApiRoutes = {
   marketAnalysis: "/fairgameWallet/marketAnalysis",
   virtualExposures:"/fairgameWallet/virtualBetExposure",
   EXPERTS: {
-    add: "/user/add",
     update: "/user/update",
     changePassword: "/user/admin/password",
     expertList: "/user/list",
@@ -97,9 +85,7 @@ exports.allApiRoutes = {
     matchDetails: "/superAdmin/match/",
     raceDetails: "/superAdmin/match/racing/",
     cardDetails: "/superAdmin/match/card/",
-    otherMatchDetails: "/superAdmin/otherMatch/",
     matchList: "/superAdmin/match/list",
-    MatchBettingDetail: "/superAdmin/matchBetting/",
     raceBettingDetail : "/superAdmin/raceBetting/",
     racingMatchList: "/superAdmin/match/racing/list",
     racingMatchCountryCodeList: "/superAdmin/match/racing/countryCode",

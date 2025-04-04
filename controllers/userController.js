@@ -63,6 +63,7 @@ const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { sessionProfitLossBetsData } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
+const { lockUnlockSuperAdminHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 
 exports.createUser = async (req, res) => {
   try {
@@ -2107,53 +2108,6 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
   }
 }
 
-exports.getUserWiseSessionBetProfitLossExpert = async (req, res) => {
-  try {
-    let { betId } = req.body;
-    const domainData = await getUserDomainWithFaId();
-    let result = [];
-
-    for (let url of domainData) {
-
-      let response = await apiCall(apiMethod.post, url.domain + allApiRoutes.sessionUserWieProfitLossExpert, {
-        betId: betId
-      })
-        .then((data) => data)
-        .catch((err) => {
-          logger.error({
-            context: `error in ${url.domain} getting user list`,
-            error: err.message,
-            stake: err.stack,
-          });
-          throw err;
-        });
-
-      response.data = response?.data?.map((item) => {
-        return {
-          ...item, url: url.domain
-        }
-      });
-      result = [...result, ...response.data];
-    }
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        data: result
-      },
-      req,
-      res
-    );
-
-
-  } catch (error) {
-    logger.error({
-      context: `error in get all bets profit loss`,
-      error: error.message,
-      stake: error.stack,
-    });
-    return ErrorResponse(error, req, res);
-  }
-}
 
 exports.getCommissionMatchReports = async (req, res) => {
   try {
@@ -2364,13 +2318,9 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
       const domain = item?.isUrl ? await getDomainByUserId(item?.id) : oldBetFairDomain;
 
       try {
-        await apiCall(
-          apiMethod.post,
-          domain + allApiRoutes.lockUnlockSuperAdmin,
-          body
-        );
+        await lockUnlockSuperAdminHandler(body, domain);
       } catch (err) {
-        logger.error({ message: "Error in performing block operation of user or bet.", stack: err?.stack, context: err?.message })
+        logger.error({ message: "Error in performing block operation of user or bet.", stack: err?.details, context: err?.details })
         continue;
       }
     }

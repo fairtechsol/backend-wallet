@@ -1,4 +1,5 @@
 const { expertDomain, redisKeys, socketData } = require('../config/contants.js');
+const { deleteMultipleBetHandler } = require('../grpc/grpcClient/handlers/wallet/betsHandler.js');
 const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
 const { sendMessageToUser } = require('../sockets/socketManager.js');
 const { allApiRoutes, apiCall, apiMethod } = require('../utils/apiService.js');
@@ -29,11 +30,7 @@ exports.deleteMultipleBet = async (req, res) => {
         }
         let promiseArray = []
         for (let url in urlData) {
-            let promise = apiCall(
-                apiMethod.post,
-                url + allApiRoutes.deleteMultipleBet,
-                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
-            );
+            let promise = deleteMultipleBetHandler({ data: JSON.stringify(urlData[url]), deleteReason, matchId, isPermanentDelete }, url);
             promiseArray.push(promise);
         }
         let failedUrl = new Set();

@@ -21,7 +21,7 @@ const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const {  getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
+const { getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
 const {
   getUserBalanceDataByUserId,
   updateUserBalanceByUserId,
@@ -47,6 +47,7 @@ const { getCasinoCardResult, getCardResultData } = require("../services/cardServ
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 const { updateSuperAdminData } = require("./expertController");
 const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
+const { createSuperAdminHandler, updateSuperAdminHandler, changePasswordHandler, setExposureLimitHandler, setCreditReferenceHandler, updateUserBalanceHandler, lockUnlockSuperAdminHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -212,10 +213,9 @@ exports.createSuperAdmin = async (req, res) => {
       domain: { domain, logo, sidebarColor, headerColor, footerColor },
     };
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.createSuperAdmin,
-        response
+      await createSuperAdminHandler(
+        response,
+        domain
       );
     } catch (err) {
       logger.error({
@@ -224,7 +224,7 @@ exports.createSuperAdmin = async (req, res) => {
         stake: err?.stack
       });
       await deleteUser(response?.id);
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
 
     let updateUser = {};
@@ -258,7 +258,7 @@ exports.createSuperAdmin = async (req, res) => {
       });
     }
 
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
     let insertUserBalanceData = {
       currentBalance: 0,
       userId: insertUser.id,
@@ -353,32 +353,32 @@ exports.updateSuperAdmin = async (req, res) => {
     }
     let domainData = {};
     let response = {};
-    let domain = isOldFairGame ? {domain:oldBetFairDomain} : {};
+    let domain = isOldFairGame ? { domain: oldBetFairDomain } : {};
 
-    if(!isOldFairGame){
+    if (!isOldFairGame) {
 
-    domain = await getDomainDataByUserId(updateUser.id, [
-      "id",
-      "logo",
-      "sidebarColor",
-      "footerColor",
-      "headerColor",
-      "domain",
-    ]);
-    if (!domain)
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "invalidData" } },
-        req,
-        res
-      );
+      domain = await getDomainDataByUserId(updateUser.id, [
+        "id",
+        "logo",
+        "sidebarColor",
+        "footerColor",
+        "headerColor",
+        "domain",
+      ]);
+      if (!domain)
+        return ErrorResponse(
+          { statusCode: 400, message: { msg: "invalidData" } },
+          req,
+          res
+        );
 
-    domainData = {
-      logo: logo || domain.logo,
-      sidebarColor: sidebarColor || domain.sidebarColor,
-      headerColor: headerColor || domain.headerColor,
-      footerColor: footerColor || domain.footerColor,
-    };
-  }
+      domainData = {
+        logo: logo || domain.logo,
+        sidebarColor: sidebarColor || domain.sidebarColor,
+        headerColor: headerColor || domain.headerColor,
+        footerColor: footerColor || domain.footerColor,
+      };
+    }
 
     if (!isOldFairGame) {
       response["domain"] = domainData;
@@ -397,17 +397,13 @@ exports.updateSuperAdmin = async (req, res) => {
     response["isOldFairGame"] = isOldFairGame;
 
     try {
-      await apiCall(
-        "post",
-        domain.domain + allApiRoutes.updateSuperAdmin,
-        response
-      );
+      await updateSuperAdminHandler(response, domain.domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
     await addUser(updateUser);
     if (!isOldFairGame) {
-       await updateDomain(domain.id, domainData);
+      await updateDomain(domain.id, domainData);
     }
     return SuccessResponse(
       {
@@ -432,8 +428,8 @@ exports.setExposureLimit = async (req, res, next) => {
     let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
     if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Login user" } } }, req, res);
 
-    if ( parseFloat(amount) > loginUser.exposureLimit)
-      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" , keys: { amount: loginUser.exposureLimit }} }, req, res);
+    if (parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: loginUser.exposureLimit } } }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
@@ -461,13 +457,9 @@ exports.setExposureLimit = async (req, res, next) => {
     let response = lodash.pick(user, ["id", "exposureLimit"]);
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.setExposureLimit,
-        response
-      );
+      await setExposureLimitHandler(response, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
 
     await addUser(user);
@@ -537,13 +529,9 @@ exports.setCreditReferrence = async (req, res, next) => {
     };
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.setCreditReferrence,
-        data
-      );
+      await setCreditReferenceHandler(data, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
 
     let previousCreditReference = parseFloat(user.creditRefrence);
@@ -584,7 +572,7 @@ exports.setCreditReferrence = async (req, res, next) => {
       },
     ];
 
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
 
     let updateLoginUser = {
       downLevelCreditRefrence: parseFloat(loginUser.downLevelCreditRefrence) - previousCreditReference + amount,
@@ -717,33 +705,33 @@ exports.updateUserBalance = async (req, res) => {
     }
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domainData + allApiRoutes.updateUserBalance,
-        body
+      await updateUserBalanceHandler(
+        body, domainData
       );
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
 
-    await updateUserBalanceData(user.id, { 
-      profitLoss: newUserAmount, 
-      myProfitLoss: newUserUpdateMyProfitLoss, 
-      exposure: 0, 
-      totalCommission: 0, 
-      balance: newUserAmount});
+    await updateUserBalanceData(user.id, {
+      profitLoss: newUserAmount,
+      myProfitLoss: newUserUpdateMyProfitLoss,
+      exposure: 0,
+      totalCommission: 0,
+      balance: newUserAmount
+    });
 
-    await updateUserBalanceData(reqUser.id, { 
-      profitLoss: loginUserAmount, 
-      myProfitLoss: 0, 
-      exposure: 0, 
-      totalCommission: 0, 
-      balance: loginUserAmount});
+    await updateUserBalanceData(reqUser.id, {
+      profitLoss: loginUserAmount,
+      myProfitLoss: 0,
+      exposure: 0,
+      totalCommission: 0,
+      balance: loginUserAmount
+    });
 
     const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
     if (parentUserExistRedis) {
-        await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
+      await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
     }
 
     let transactionArray = [
@@ -788,7 +776,7 @@ exports.updateUserBalance = async (req, res) => {
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
-   const { userId, betBlock, userBlock, userDomain } = req.body;
+    const { userId, betBlock, userBlock, userDomain } = req.body;
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information
@@ -853,13 +841,9 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     };
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.lockUnlockSuperAdmin,
-        body
-      );
+      await lockUnlockSuperAdminHandler(body, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.details }, req, res);
     }
 
     // Return success response
@@ -902,11 +886,8 @@ exports.changePassword = async (req, res, next) => {
       password,
       userId,
     };
-    try {
-      apiCall(apiMethod.post, domain + allApiRoutes.changePassword, body);
-    } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
-    }
+    changePasswordHandler(body, domain);
+
     // Update loginAt, password, and reset transactionPassword
     await updateUser(userId, {
       loginAt: null,
@@ -1064,15 +1045,15 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
     let oldBetFairUserIds = [];
     let userProfitLossData = [];
-    let markets={};
+    let markets = {};
 
     for (let element of users) {
-      let currUserProfitLossData = {profitLoss:{}};
+      let currUserProfitLossData = { profitLoss: {} };
       element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
+        const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
-       
+
           const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
             userIds: JSON.stringify(element),
           })
@@ -1087,9 +1068,9 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-            for(let items of response?.data?.markets){
-              markets[items.betId]=items;
-            }
+          for (let items of response?.data?.markets) {
+            markets[items.betId] = items;
+          }
 
           response?.data?.profitLoss?.forEach((item) => {
             Object.entries(item?.profitLoss)?.forEach(([key, val]) => {
@@ -1114,7 +1095,7 @@ exports.getUserProfitLoss = async (req, res, next) => {
           oldBetFairUserIds.push(element);
         }
         else {
-          const doaminData =await getDomainByUserId(element.id);
+          const doaminData = await getDomainByUserId(element.id);
 
           const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLoss + matchId, null, {}, {
             userIds: JSON.stringify(element),
@@ -1131,16 +1112,16 @@ exports.getUserProfitLoss = async (req, res, next) => {
             });
 
           userProfitLossData.push(...response?.data?.profitLoss);
-          for(let items of response?.data?.markets){
-            markets[items.betId]=items;
+          for (let items of response?.data?.markets) {
+            markets[items.betId] = items;
           }
         }
       }
     };
 
-   
+
     if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLoss + matchId, null,{}, {
+      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLoss + matchId, null, {}, {
         userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
       })
         .then((data) => data)
@@ -1154,11 +1135,11 @@ exports.getUserProfitLoss = async (req, res, next) => {
           throw err;
         });
 
-        userProfitLossData.push(...response?.data?.profitLoss);
-        for(let items of response?.data?.markets){
-          markets[items.betId]=items;
-        }
+      userProfitLossData.push(...response?.data?.profitLoss);
+      for (let items of response?.data?.markets) {
+        markets[items.betId] = items;
       }
+    }
 
     // userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
 
@@ -1201,11 +1182,11 @@ exports.getUserRacingProfitLoss = async (req, res, next) => {
       let currUserProfitLossData = {};
       element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
+        const faDomains = await getFaAdminDomain(element);
         let totalPLVal = 0;
 
         for (let usersDomain of faDomains) {
-       
+
           const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
             userIds: JSON.stringify(element),
           })
@@ -1230,9 +1211,9 @@ exports.getUserRacingProfitLoss = async (req, res, next) => {
             });
             return prev;
           }, {}), currUserProfitLossData);
-        
-          };
-          currUserProfitLossData.userName = element?.userName;
+
+        };
+        currUserProfitLossData.userName = element?.userName;
         if (totalPLVal != 0) {
           userProfitLossData.push(currUserProfitLossData);
         }
@@ -1242,7 +1223,7 @@ exports.getUserRacingProfitLoss = async (req, res, next) => {
           oldBetFairUserIds.push(element);
         }
         else {
-          const doaminData =await getDomainByUserId(element.id);
+          const doaminData = await getDomainByUserId(element.id);
 
           const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
             userIds: JSON.stringify(element),
@@ -1258,14 +1239,14 @@ exports.getUserRacingProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-            userProfitLossData.push(...response?.data);
+          userProfitLossData.push(...response?.data);
         }
       }
     };
 
-   
+
     if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLossRacing + matchId, null,{}, {
+      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
         userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
       })
         .then((data) => data)
@@ -1279,13 +1260,13 @@ exports.getUserRacingProfitLoss = async (req, res, next) => {
           throw err;
         });
 
-        userProfitLossData.push(...response?.data);
+      userProfitLossData.push(...response?.data);
     }
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data:userProfitLossData
+        data: userProfitLossData
       },
       req,
       res
@@ -1337,16 +1318,16 @@ exports.lockUnlockUserByUserPanel = async (req, res, next) => {
   }
 };
 
-exports.getCardResult = async ( req, res ) => {
+exports.getCardResult = async (req, res) => {
   try {
 
     const { type } = req.params;
-    const query  = req.query;
+    const query = req.query;
     const currGameWinner = new CardResultTypeWin(type).getCardGameProfitLoss();
     const select = ['cardResult.gameType as "gameType"', "cardResult.id as id", 'cardResult.createdAt as "createdAt"', currGameWinner, `"cardResult".result ->> 'mid' as mid`]
 
     let result = await getCasinoCardResult(query, { gameType: type }, select);
-    
+
     SuccessResponse(
       {
         statusCode: 200,
@@ -1355,7 +1336,7 @@ exports.getCardResult = async ( req, res ) => {
       req,
       res
     );
-  } catch ( error ) {
+  } catch (error) {
     logger.error({
       error: `Error while getting card results.`,
       stack: error.stack,
@@ -1372,11 +1353,11 @@ exports.getCardResult = async ( req, res ) => {
   }
 }
 
-exports.getCardResultDetail = async ( req, res ) => {
+exports.getCardResultDetail = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await getCardResultData(`result ->> 'mid' = '${id}' `);
-    
+
     SuccessResponse(
       {
         statusCode: 200,
@@ -1385,7 +1366,7 @@ exports.getCardResultDetail = async ( req, res ) => {
       req,
       res
     );
-  } catch ( error ) {
+  } catch (error) {
     logger.error({
       error: `Error while getting card result detail.`,
       stack: error.stack,

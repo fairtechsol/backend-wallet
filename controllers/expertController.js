@@ -1,15 +1,13 @@
-const { expertDomain, userRoleConstant, redisKeys, socketData, unDeclare, oldBetFairDomain, matchComissionTypeConstant, marketBetType, sessionBettingType, matchBettingType } = require("../config/contants");
+const { expertDomain, userRoleConstant, redisKeys, socketData } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { addResultFailed } = require("../services/betService");
-const { insertCommissions, getCombinedCommission, deleteCommission } = require("../services/commissionService");
-const { mergeProfitLoss, settingBetsDataAtLogin, settingTournamentMatchBetsDataAtLogin } = require("../services/commonService");
-const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisData, updateUserDataRedis, deleteKeyFromUserRedis, incrementValuesRedis, getCasinoDomainBets, deleteHashKeysByPattern, delCardBetPlaceRedis } = require("../services/redis/commonFunctions");
-const { getUserBalanceDataByUserId, updateUserBalanceData, updateUserExposure } = require("../services/userBalanceService");
-const { getUser, getUserById, getUsersWithoutCount } = require("../services/userService");
-const { sendMessageToUser, broadcastEvent } = require("../sockets/socketManager");
+const { createExpertHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
+const { getUserRedisData, deleteKeyFromUserRedis, incrementValuesRedis, getCasinoDomainBets, deleteHashKeysByPattern, delCardBetPlaceRedis } = require("../services/redis/commonFunctions");
+const { getUserBalanceDataByUserId, updateUserBalanceData } = require("../services/userBalanceService");
+const { getUser } = require("../services/userService");
+const { sendMessageToUser } = require("../sockets/socketManager");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
+
 exports.createUser = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
@@ -31,15 +29,13 @@ exports.createUser = async (req, res) => {
       confirmPassword,
       remark
     };
-    let domain = expertDomain;
-    let apiResponse = {}
-    try {
-      apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.add, userData)
-    } catch (error) {
-      throw error?.response?.data
-    }
+    await createExpertHandler(userData).catch((err) => {
+      logger.error(err);
+      throw err?.response?.data;
+    })
+
     // Send success response with the created user data
-    return SuccessResponse({ statusCode: 200, message: { msg: "created", keys: { name: "User" } }, data: apiResponse.data }, req, res
+    return SuccessResponse({ statusCode: 200, message: { msg: "add", keys: { key: "User" } } }, req, res
     );
   } catch (err) {
     // Handle any errors and return an error response

@@ -7,7 +7,6 @@ const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth
 const { CreateExpertValidate, UpdateExpertValidate, changePasswordExpertValidate } = require('../validators/expertValidator');
 const { createUser, updateUser, changePassword, expertList, getNotification, getMatchCompetitionsByType, getMatchDatesByCompetitionId, getMatchDatesByCompetitionIdAndDate, lockUnlockExpert, declareCardMatchResult } = require('../controllers/expertController');
 const apiLimiter = require('../middleware/casinoApiHitLimiter');
-const { getUserWiseSessionBetProfitLossExpert, getResultBetProfitLoss } = require('../controllers/userController');
 
 router.post('/add', isAuthenticate, checkTransactionPassword, validator(CreateExpertValidate), createUser);
 router.post('/update', isAuthenticate, checkTransactionPassword, validator(UpdateExpertValidate), updateUser);
@@ -21,8 +20,6 @@ router.get('/match/competitionList/:type',isAuthenticate,getMatchCompetitionsByT
 router.get('/match/competition/dates/:competitionId',isAuthenticate,getMatchDatesByCompetitionId);
 router.get('/match/competition/getMatch/:competitionId/:date',isAuthenticate,getMatchDatesByCompetitionIdAndDate);
 router.post("/lockUnlockExpert", isAuthenticate, lockUnlockExpert)
-router.post("/userwise/session/profitLoss/expert", getUserWiseSessionBetProfitLossExpert);
-router.get("/total/bet/profitLoss", getResultBetProfitLoss);
 
 
 module.exports = router;

@@ -46,6 +46,7 @@ const { hasUserInCache, updateUserDataRedis, getUserRedisData, incrementValuesRe
 const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
 const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 const { updateSuperAdminData } = require("./expertController");
+const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -970,22 +971,22 @@ exports.getPlacedBets = async (req, res, next) => {
 
     let promiseArray = []
     if (domain) {
-      let promise = apiCall(apiMethod.get, domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+      let promise = getBets({ query: JSON.stringify({ ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id }) }, domain);
       promiseArray.push(promise);
     }
     else {
       for (let url of domainData) {
-        let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+        let promise = getBets({ query: JSON.stringify({ ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id }) }, url?.domain);
         promiseArray.push(promise);
       }
     }
     await Promise.allSettled(promiseArray)
       .then(async results => {
-          for (let item of results) {
-            if (item?.status == "fulfilled") {
-              result = await mergeBetsArray(result, item?.value?.data?.rows);
-            }
+        for (let item of results) {
+          if (item?.status == "fulfilled") {
+            result = await mergeBetsArray(result, item?.value?.rows);
           }
+        }
       })
       .catch(error => {
         logger.error({

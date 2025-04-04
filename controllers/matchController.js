@@ -191,7 +191,6 @@ exports.cardDetails = async (req, res) => {
   }
 };
 
-
 exports.listMatch = async (req, res) => {
   try {
     let user = req.user;
@@ -256,40 +255,6 @@ exports.listMatch = async (req, res) => {
       res
     );
   } catch (err) {
-    return ErrorResponse(err, req, res);
-  }
-};
-
-exports.addMatch = async (req, res) => {
-  try {
-    const domainData = await getUserDomainWithFaId();
-
-    let promiseArray = []
-
-    for (let url of domainData) {
-      const promise = apiCall(apiMethod.post, url?.domain + allApiRoutes.addMatch, req.body).then();
-      promiseArray.push(promise);
-    }
-
-    await Promise.allSettled(promiseArray)
-      .catch(error => {
-        throw error;
-      });
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        message: { msg: "add", keys: { name: "Match" } },
-      },
-      req,
-      res
-    );
-  } catch (err) {
-    logger.error({
-      context: "Error in add match user side.",
-      message: err.message,
-      stake: err.stack
-    });
     return ErrorResponse(err, req, res);
   }
 };
@@ -519,39 +484,6 @@ exports.listRacingCountryCode = async (req, res) => {
   }
 };
 
-exports.raceAdd = async (req, res) => {
-  try {
-    const domainData = await getUserDomainWithFaId();
-
-    let promiseArray = []
-
-    for (let url of domainData) {
-      const promise = apiCall(apiMethod.post, url?.domain + allApiRoutes.addRace, req.body).then();
-      promiseArray.push(promise);
-    }
-
-    await Promise.allSettled(promiseArray)
-      .catch(error => {
-        throw error;
-      });
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        message: { msg: "add", keys: { name: "Match" } },
-      },
-      req,
-      res
-    );
-  } catch (err) {
-    logger.error({
-      context: "Error in add match user side.",
-      message: err.message,
-      stake: err.stack
-    });
-    return ErrorResponse(err, req, res);
-  }
-};
 
 exports.raceMarketAnalysis = async (req, res) => {
   try {

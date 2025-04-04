@@ -52,18 +52,7 @@ exports.allApiRoutes = {
   lockUnlockSuperAdmin: "/fairgameWallet/lockUnlock",
   deleteMultipleBet: "/bet/deleteMultipleBet",
   deleteMultipleBetForTournament:"/bet/deleteMultipleBetForTournament",
-  declareResultSession: "/fairgameWallet/declare/result/session",
-  unDeclareResultSession: "/fairgameWallet/unDeclare/result/session",
-  declareNoResultSession: "/fairgameWallet/declare/noResult/session",
-  declareResultMatch: "/fairgameWallet/declare/result/match",
-  declareResultTournametMatch: "/fairgameWallet/declare/result/tournament/match",
-  declareResultFinalMatch: "/fairgameWallet/declare/result/final/match",
   declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
-  unDeclareResultMatch: "/fairgameWallet/unDeclare/result/match",
-  unDeclareResultTournamentMatch: "/fairgameWallet/unDeclare/result/tournament/match",
-  unDeclareResultFinalMatch: "/fairgameWallet/unDeclare/result/final/match",
-  addMatch:"/match/add",
-  addRace: "/match/raceAdd",
   cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
   cardMatchWiseProfitLoss:"/fairgameWallet/card/total/matchWise/profitLoss",
   cardBetWiseProfitLoss:"/fairgameWallet/card/total/bet/profitLoss",
@@ -91,7 +80,6 @@ exports.allApiRoutes = {
   getEventWiseExposure: "/fairgameWallet/eventWise/exposure/",
   marketAnalysis: "/fairgameWallet/marketAnalysis",
   virtualExposures:"/fairgameWallet/virtualBetExposure",
-  getVerifyBet:"/fairgameWallet/checkVerifyBet",
   EXPERTS: {
     add: "/user/add",
     update: "/user/update",
@@ -118,7 +106,6 @@ exports.allApiRoutes = {
     tournamentBettingDetail : "/superAdmin/tournamentBetting/",
   },
   bets: {
-    placedBet: "/fairgameWallet/getBet",
     betCount:"/fairgameWallet/betCounts"
   },
   MICROSERVICE : {

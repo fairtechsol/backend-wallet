@@ -289,49 +289,6 @@ exports.lockUnlockExpert = async (req, res) => {
 
 }
 
-exports.getWalletBetsData = async (req, res) => {
-  try {
-    const user = await getUser({
-      roleName: userRoleConstant.fairGameWallet
-    });
-
-    let result = {};
-
-    const betData = await getUserRedisData(user.id);
-    if (betData) {
-      Object.keys(betData)?.forEach((item) => {
-        if (item?.includes(redisKeys.profitLoss)) {
-          result[item] = betData[item];
-        }
-      });
-    }
-    else {
-      result = await settingBetsDataAtLogin(user);
-      let tournamentMatchBetData = await settingTournamentMatchBetsDataAtLogin(user);
-      result = { ...result, ...tournamentMatchBetData }
-    }
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        data: result
-      },
-      req,
-      res
-    );
-  }
-  catch (error) {
-    logger.error({
-      error: `Error at getting bet data from wallet.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    // Handle any errors and return an error response
-    return ErrorResponse(error, req, res);
-  }
-}
-
-
 exports.declareCardMatchResult = async (req, res) => {
   try {
 

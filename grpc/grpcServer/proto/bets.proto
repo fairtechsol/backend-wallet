@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package betsProvider;
+
+message GetBetsRequest {
+  string query = 1; 
+}
+
+message GetBetsResponse {
+  string data = 1; 
+}
+
+message GetBetsLoginDataRequest {}
+
+message GetBetsLoginDataResponse {
+  string data = 1; 
+}
+
+service BetsProvider {
+  rpc GetBets(GetBetsRequest) returns (GetBetsResponse);
+  rpc GetBetsLoginData(GetBetsLoginDataRequest) returns (GetBetsLoginDataResponse);
+}

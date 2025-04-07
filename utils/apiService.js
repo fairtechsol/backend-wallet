@@ -43,11 +43,6 @@ exports.apiCall = async (method, url, data, headers, ReqQuery) => {
 
 exports.allApiRoutes = {
   //user routes
-  isUserExist:"/fairgameWallet/user/exist",
-  commissionReportsMatches:"/fairgameWallet/commissionMatch/",
-  commissionReportsBetPlaced:"/fairgameWallet/commissionBetPlaced/",
-  userList:"/fairgameWallet/user/list/",
-  userTotalBalance:"/fairgameWallet/child/totalBalance",
   userBalanceSum:"/fairgameWallet/users/balanceSum/",
   commissionSettled:"/fairgameWallet/settle/commission",
   matchLock:"/fairgameWallet/userMatchLock",

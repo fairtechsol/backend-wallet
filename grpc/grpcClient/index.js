@@ -35,6 +35,11 @@ const userProtoOptionsArray = [
     path: `${__dirname}/proto/matchProfitLossReport.proto`, // path to proto file
     package: "matchProfitLossProvider", // package in proto name
     service: "MatchProfitLossService", // service name in proto file
+  },
+  {
+    path: `${__dirname}/proto/commission.proto`, // path to proto file
+    package: "commissionProvider", // package in proto name
+    service: "CommissionProvider", // service name in proto file
   }
 ];
 

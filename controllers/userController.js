@@ -60,9 +60,10 @@ const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { sessionProfitLossBetsData } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
-const { lockUnlockSuperAdminHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
+const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalanceHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 const {getCardTotalProfitLossHandler, getCardDomainProfitLossHandler, getCardResultBetProfitLossHandler}=require("../grpc/grpcClient/handlers/wallet/cardHandler")
 const { getTotalProfitLossHandler, getDomainProfitLossHandler, getUserWiseBetProfitLossHandler, getSessionBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/matchProfitLossHandler");
+const { getCommissionReportHandler, getCommissionBetReportHandler } = require("../grpc/grpcClient/handlers/wallet/commissionHandler");
 
 exports.createUser = async (req, res) => {
   try {
@@ -528,9 +529,11 @@ exports.userList = async (req, res, next) => {
     const { type, userId, domain, roleName, ...apiQuery } = req.query;
 
     if (domain) {
-      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userList, null, {}, {
-        ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
-      })
+      let response = await getUserListHandler({
+        query: JSON.stringify({
+          ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
+        })
+      }, domain)
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -545,7 +548,7 @@ exports.userList = async (req, res, next) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          data: response?.data
+          data: response
         },
         req,
         res
@@ -841,9 +844,11 @@ exports.getTotalUserListBalance = async (req, res, next) => {
     const { type, userId, domain, roleName, ...apiQuery } = req.query;
 
     if (domain) {
-      let response = await apiCall(apiMethod.get, domain + allApiRoutes.userTotalBalance, null, {}, {
-        ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
-      })
+      let response = await getTotalUserListBalanceHandler({
+        query: JSON.stringify({
+          ...(type ? { type: type } : {}), roleName, userId, ...apiQuery
+        })
+      }, domain)
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -858,7 +863,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          data: response?.data
+          data: response
         },
         req,
         res
@@ -1906,11 +1911,11 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
     userId = userId || req.user.id;
 
     if (url) {
-      let response = await apiCall({
-        user: {
+      let response = await getUserWiseBetProfitLossHandler({
+        user: JSON.stringify({
           roleName: roleName,
           id: userId
-        },
+        }),
         matchId: matchId,
         searchId: id,
         partnerShipRoleName: req.user.roleName,
@@ -1927,7 +1932,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
           throw err;
         });
 
-      response.data = response?.data?.map((item) => {
+      response = response?.map((item) => {
         return {
           ...item, url: url
         }
@@ -1936,7 +1941,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          data: response?.data
+          data: response
         },
         req,
         res
@@ -1977,11 +1982,11 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
         const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
-          let response = await apiCall( {
-            user: {
+          let response = await getUserWiseBetProfitLossHandler( {
+            user: JSON.stringify({
               roleName: element?.roleName,
               id: element?.id
-            },
+            }),
             matchId: matchId,
             // searchId: id,
             partnerShipRoleName: req.user.roleName,
@@ -1998,7 +2003,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
               throw err;
             });
 
-          response?.data?.forEach((item) => {
+          response?.forEach((item) => {
 
             if (usersData[element?.id]) {
               usersData[element?.id] = {
@@ -2040,7 +2045,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             runnerId: runnerId
           }, userDomain?.domain);
 
-          response?.data?.forEach((item) => {
+          response?.forEach((item) => {
             if (usersData[element?.id]) {
               usersData[element?.id] = {
                 ...usersData[element?.id],
@@ -2079,7 +2084,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         runnerId: runnerId
       }, oldBetFairDomain);
 
-      response?.data?.forEach((item) => {
+      response?.forEach((item) => {
         usersData[item?.userId] = { ...item, url: oldBetFairDomain };
       });
     }
@@ -2112,10 +2117,13 @@ exports.getCommissionMatchReports = async (req, res) => {
     }
     else {
       try {
-        let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.commissionReportsMatches + userId, null, null, req.query);
-        commissionReportData = response?.data;
+        let response = await getCommissionReportHandler({
+          userId: userId,
+          query: JSON.stringify(req.query)
+        }, oldBetFairDomain);
+        commissionReportData = response;
       } catch (err) {
-        return ErrorResponse(err?.response?.data, req, res);
+        return ErrorResponse(err?.details, req, res);
       }
     }
     return SuccessResponse({ statusCode: 200, data: commissionReportData }, req, res);
@@ -2142,10 +2150,13 @@ exports.getCommissionBetPlaced = async (req, res) => {
     }
     else {
       try {
-        let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.commissionReportsBetPlaced + userId, null, null, req.query);
-        commissionReportData = response?.data;
+        let response = await getCommissionBetReportHandler({
+          userId: userId,
+          matchId: matchId,
+        }, oldBetFairDomain);
+        commissionReportData = response;
       } catch (err) {
-        return ErrorResponse(err?.response?.data, req, res);
+        return ErrorResponse(err?.details, req, res);
       }
     }
     return SuccessResponse({ statusCode: 200, data: commissionReportData }, req, res);

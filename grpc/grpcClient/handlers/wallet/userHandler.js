@@ -95,3 +95,29 @@ exports.lockUnlockSuperAdminHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.getUserListHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "UserService",
+            "GetUserList",
+            requestData
+        );
+        return JSON.parse(response.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.getTotalUserListBalanceHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "UserService",
+            "GetTotalUserListBalance",
+            requestData
+        );
+        return JSON.parse(response.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};

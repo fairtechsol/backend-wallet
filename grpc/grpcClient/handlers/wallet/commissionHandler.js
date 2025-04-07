@@ -25,3 +25,15 @@ exports.getCommissionBetReportHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.settleCommissionHandler = async (requestData, address) => {
+    try {
+        await grpcReq.user(address).callMethod(
+            "CommissionProvider",
+            "SettleCommission",
+            requestData
+        );
+    } catch (error) {
+        throw error;
+    }
+};

@@ -9,6 +9,7 @@ const { settleCommission, insertCommissions } = require('../services/commissionS
 const { apiCall, apiMethod, allApiRoutes } = require('../utils/apiService');
 const { hasUserInCache, updateUserDataRedis } = require('../services/redis/commonFunctions');
 const { __mf } = require('i18n');
+const { settleCommissionHandler } = require('../grpc/grpcClient/handlers/wallet/commissionHandler');
 
 exports.updateUserBalance = async (req, res) => {
     try {
@@ -150,12 +151,9 @@ exports.settleCommissions = async (req, res) => {
         }
 
         if (domain) {
-            await apiCall(apiMethod.post, domain + allApiRoutes.commissionSettled, {
-                userId: userId
-            })
-                .then((data) => data)
+            await settleCommissionHandler({ userId: userId }, domain)
                 .catch((err) => {
-                    if(err.response.data.message == __mf("userBalance.commissionAlreadySettled")){
+                    if(err.details.message == __mf("userBalance.commissionAlreadySettled")){
                         return null;
                     }
                     logger.error({

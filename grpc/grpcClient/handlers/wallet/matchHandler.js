@@ -25,3 +25,15 @@ exports.addRaceMatchHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.matchLockHandler = async (requestData, address) => {
+    try {
+        await grpcReq.user(address).callMethod(
+            "MatchProvider",
+            "MatchLock",
+            requestData
+        );
+    } catch (error) {
+        throw error;
+    }
+};

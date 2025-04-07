@@ -60,8 +60,8 @@ const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { sessionProfitLossBetsData } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
-const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalanceHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
-const {getCardTotalProfitLossHandler, getCardDomainProfitLossHandler, getCardResultBetProfitLossHandler}=require("../grpc/grpcClient/handlers/wallet/cardHandler")
+const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalanceHandler, userBalanceSumHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
+const { getCardTotalProfitLossHandler, getCardDomainProfitLossHandler, getCardResultBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/cardHandler")
 const { getTotalProfitLossHandler, getDomainProfitLossHandler, getUserWiseBetProfitLossHandler, getSessionBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/matchProfitLossHandler");
 const { getCommissionReportHandler, getCommissionBetReportHandler } = require("../grpc/grpcClient/handlers/wallet/commissionHandler");
 
@@ -639,10 +639,7 @@ exports.userList = async (req, res, next) => {
         const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
 
-          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + element.id, null, {}, {
-            roleName: element.roleName,
-
-          })
+          const response = await userBalanceSumHandler({ roleName: element.roleName, userId: element.id }, usersDomain?.domain)
             .then((data) => data)
             .catch((err) => {
               logger.error({
@@ -664,9 +661,7 @@ exports.userList = async (req, res, next) => {
         }
         else {
           const userDomain = await getDomainDataByUserId(element.id, ["domain"]);
-          let response = await apiCall(apiMethod.get, userDomain?.domain + allApiRoutes.userBalanceSum + element.id, null, {}, {
-            roleName: element.roleName
-          })
+          let response = await userBalanceSumHandler({ roleName: element.roleName, userId: element.id }, userDomain?.domain)
             .then((data) => data)
             .catch((err) => {
               logger.error({
@@ -684,7 +679,7 @@ exports.userList = async (req, res, next) => {
     };
 
     if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userBalanceSum + oldBetFairUserIds?.join(","), null, {})
+      let response = await userBalanceSumHandler({ userId: oldBetFairUserIds?.join(",") }, oldBetFairDomain)
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -916,10 +911,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       let domainData = await getUserDomainWithFaId();
 
       for (let usersDomain of domainData) {
-        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + where.createBy, null, {}, {
-          roleName: userRole,
-
-        })
+        const response = await userBalanceSumHandler({ roleName: userRole, userId: where.createBy }, usersDomain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -939,10 +931,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       const faDomains = await getFaAdminDomain({ id: where.createBy });
       for (let usersDomain of faDomains) {
 
-        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + where.createBy, null, {}, {
-          roleName: userRole,
-
-        })
+        const response = await userBalanceSumHandler({ roleName: userRole, userId: where.createBy }, usersDomain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1094,10 +1083,7 @@ exports.userBalanceDetails = async (req, res, next) => {
       let domainData = await getUserDomainWithFaId();
 
       for (let usersDomain of domainData) {
-        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + loginUser.id, null, {}, {
-          roleName: loginUser.roleName,
-
-        })
+        const response = await userBalanceSumHandler({ roleName: loginUser.roleName, userId: loginUser.id }, usersDomain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1117,10 +1103,7 @@ exports.userBalanceDetails = async (req, res, next) => {
       const faDomains = await getFaAdminDomain({ id: loginUser.id });
       for (let usersDomain of faDomains) {
 
-        const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userBalanceSum + loginUser.id, null, {}, {
-          roleName: loginUser.roleName,
-
-        })
+        const response = await userBalanceSumHandler({ roleName: loginUser.roleName, userId: loginUser.id }, usersDomain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1492,13 +1475,13 @@ exports.getDomainProfitLoss = async (req, res) => {
     }
 
     for (let url of domainData) {
-      let data = await getDomainProfitLossHandler({ 
-        user: JSON.stringify(newUserTemp), 
-        startDate, 
-        endDate, 
-        type, 
-        searchId: id, 
-        isRacing 
+      let data = await getDomainProfitLossHandler({
+        user: JSON.stringify(newUserTemp),
+        startDate,
+        endDate,
+        type,
+        searchId: id,
+        isRacing
       }, url?.domain)
         .catch((err) => {
           logger.error({
@@ -1633,7 +1616,7 @@ exports.getCardTotalProfitLoss = async (req, res) => {
 
     for (let url of domainData) {
       let data = await getCardTotalProfitLossHandler({
-        user: JSON.stringify(newUserTemp), startDate: startDate, endDate: endDate, searchId: id,partnerShipRoleName:roleName
+        user: JSON.stringify(newUserTemp), startDate: startDate, endDate: endDate, searchId: id, partnerShipRoleName: roleName
       }, url.domain)
         .then((data) => data)
         .catch((err) => {
@@ -1702,7 +1685,7 @@ exports.getCardDomainProfitLoss = async (req, res) => {
     }
 
     for (let url of domainData) {
-      let data = await getCardDomainProfitLossHandler( { user: newUserTemp, startDate: startDate, endDate: endDate, searchId: id, matchId: matchId }, url?.domain)
+      let data = await getCardDomainProfitLossHandler({ user: newUserTemp, startDate: startDate, endDate: endDate, searchId: id, matchId: matchId }, url?.domain)
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1783,7 +1766,7 @@ exports.getCardResultBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await getCardResultBetProfitLossHandler( { user: newUserTemp, runnerId: runnerId, searchId: id, partnerShipRoleName: req.user.roleName }, domain?.domain)
+        let response = await getCardResultBetProfitLossHandler({ user: newUserTemp, runnerId: runnerId, searchId: id, partnerShipRoleName: req.user.roleName }, domain?.domain)
           .then((data) => data)
           .catch((err) => {
             logger.error({
@@ -1828,11 +1811,11 @@ exports.getSessionBetProfitLoss = async (req, res) => {
     newUserTemp.roleName = roleName || newUserTemp.roleName;
     newUserTemp.id = userId || newUserTemp.id;
     if (url) {
-      let response = await getSessionBetProfitLossHandler({ 
-        user: JSON.stringify(newUserTemp), 
-        matchId: matchId, 
-        searchId: userId || id, 
-        partnerShipRoleName: req.user.roleName 
+      let response = await getSessionBetProfitLossHandler({
+        user: JSON.stringify(newUserTemp),
+        matchId: matchId,
+        searchId: userId || id,
+        partnerShipRoleName: req.user.roleName
       }, url)
         .then((data) => data)
         .catch((err) => {
@@ -1858,11 +1841,11 @@ exports.getSessionBetProfitLoss = async (req, res) => {
       }
 
       for (let domain of domainData) {
-        let response = await getSessionBetProfitLossHandler({ 
-          user: JSON.stringify(newUserTemp), 
-          matchId: matchId, 
-          searchId: id, 
-          partnerShipRoleName: req.user.roleName 
+        let response = await getSessionBetProfitLossHandler({
+          user: JSON.stringify(newUserTemp),
+          matchId: matchId,
+          searchId: id,
+          partnerShipRoleName: req.user.roleName
         }, domain?.domain)
           .then((data) => data)
           .catch((err) => {
@@ -1920,7 +1903,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
         searchId: id,
         partnerShipRoleName: req.user.roleName,
         runnerId: runnerId
-      },url)
+      }, url)
         .then((data) => data)
         .catch((err) => {
           logger.error({
@@ -1982,7 +1965,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
         const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
-          let response = await getUserWiseBetProfitLossHandler( {
+          let response = await getUserWiseBetProfitLossHandler({
             user: JSON.stringify({
               roleName: element?.roleName,
               id: element?.id
@@ -1991,7 +1974,7 @@ exports.getUserWiseBetProfitLoss = async (req, res) => {
             // searchId: id,
             partnerShipRoleName: req.user.roleName,
             runnerId: runnerId
-          },usersDomain?.domain)
+          }, usersDomain?.domain)
             .then((data) => data)
             .catch((err) => {
               logger.error({

@@ -121,3 +121,19 @@ exports.getTotalUserListBalanceHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.userBalanceSumHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "UserService",
+            "UserBalanceSum",
+            {
+                roleName: requestData.roleName,
+                userId: requestData.userId
+            }
+        );
+        return JSON.parse(response.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};

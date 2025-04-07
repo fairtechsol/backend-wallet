@@ -137,3 +137,64 @@ exports.userBalanceSumHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.getUserProfitLossHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "UserService",
+            "GetUserProfitLoss",
+            requestData
+        );
+        return JSON.parse(response.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.deleteUserHandler = async (requestData, address) => {
+    try {
+        await grpcReq.user(address).callMethod(
+            "UserService", 
+            "DeleteUser",
+            {
+                roleName: requestData.roleName,
+                userId: requestData.userId
+            }
+        );
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.checkUserBalanceHandler = async (requestData, address) => {
+    try {
+        await grpcReq.user(address).callMethod(
+            "UserService",
+            "CheckUserBalance",
+            {
+                roleName: requestData.roleName,
+                userId: requestData.userId 
+            }
+        );
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.userSearchHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "UserService",
+            "UserSearch",
+            {
+                id: requestData.id,
+                roleName: requestData.roleName,
+                userName: requestData.userName,
+                isUser: requestData.isUser
+            }
+        );
+        return JSON.parse(response.data || "[]");
+    } catch (error) {
+        throw error;
+    }
+};

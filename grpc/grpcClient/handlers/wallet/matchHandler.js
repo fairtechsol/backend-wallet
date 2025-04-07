@@ -37,3 +37,42 @@ exports.matchLockHandler = async (requestData, address) => {
         throw error;
     }
 };
+
+exports.userEventWiseExposureHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "MatchProvider",
+            "UserEventWiseExposure",
+            requestData
+        );
+        return JSON.parse(response?.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.marketAnalysisHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "MatchProvider",
+            "MarketAnalysis",
+            requestData
+        );
+        return JSON.parse(response?.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};
+
+exports.virtualEventWiseExposureHandler = async (requestData, address) => {
+    try {
+        const response = await grpcReq.user(address).callMethod(
+            "MatchProvider",
+            "VirtualEventWiseExposure",
+            requestData
+        );
+        return JSON.parse(response?.data || "{}");
+    } catch (error) {
+        throw error;
+    }
+};

@@ -60,7 +60,7 @@ const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
 const { sessionProfitLossBetsData } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
-const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalanceHandler, userBalanceSumHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
+const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalanceHandler, userBalanceSumHandler, setExposureLimitHandler, deleteUserHandler, checkUserBalanceHandler, userSearchHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 const { getCardTotalProfitLossHandler, getCardDomainProfitLossHandler, getCardResultBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/cardHandler")
 const { getTotalProfitLossHandler, getDomainProfitLossHandler, getUserWiseBetProfitLossHandler, getSessionBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/matchProfitLossHandler");
 const { getCommissionReportHandler, getCommissionBetReportHandler } = require("../grpc/grpcClient/handlers/wallet/commissionHandler");
@@ -493,17 +493,22 @@ exports.setExposureLimit = async (req, res, next) => {
 
     const domainData = await getFaAdminDomain(user);
 
-    for (let url of domainData) {
-      await apiCall(apiMethod.post, url?.domain + allApiRoutes.checkExposureLimit, { id: userId, exposureLimit: amount, roleName: user.roleName }).then((data) => data).catch((err) => {
-        logger.error({
-          context: `error in ${url?.domain} exposure limit`,
-          process: `User ID : ${user.id} `,
-          error: err.message,
-          stake: err.stack,
-        });
-      });
+    await Promise.all(
+      domainData.map(url =>
+        setExposureLimitHandler(
+          { id: userId, exposureLimit: amount, roleName: user.roleName },
+          url?.domain
+        ).catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} exposure limit`,
+            process: `User ID : ${user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+        })
+      )
+    );
 
-    }
     return SuccessResponse(
       {
         statusCode: 200,
@@ -1011,24 +1016,50 @@ exports.userSearchList = async (req, res, next) => {
     }
 
     const faDomains = req.user.roleName == userRoleConstant.fairGameAdmin ? await getFaAdminDomain(req.user) : await getUserDomainWithFaId();
-    for (let usersDomain of faDomains) {
-      let data = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.getSearchList, null, {}, { id: req.user.id, roleName: req.user.roleName, userName: userName, isUser: isUser })
-        .then((data) => data)
-        .catch((err) => {
+    const domainResults = await Promise.all(
+      faDomains.map(async (usersDomain) => {
+        try {
+          const data = await userSearchHandler(
+            {
+              id: req.user.id,
+              roleName: req.user.roleName,
+              userName: userName,
+              isUser: isUser
+            },
+            usersDomain?.domain
+          );
+    
+          return {
+            success: true,
+            domain: usersDomain.domain,
+            data: data || []
+          };
+        } catch (err) {
           logger.error({
             context: `error in ${usersDomain?.domain} checking deleting user balance`,
-            process: `User ID : ${req.user.id} `,
+            process: `User ID : ${req.user.id}`,
             error: err.message,
             stake: err.stack,
           });
+    
           throw err?.response?.data;
-        });
-
-      response?.users?.push(...(data?.data?.map((item) => {
-        return { ...item, domain: usersDomain.domain };
-      }) || []));
-      response.count += (data?.data?.length || 0);
-    };
+        }
+      })
+    );
+    
+    // Merge the data
+    domainResults.forEach(result => {
+      if (result.success) {
+        response.users.push(
+          ...result.data.map(item => ({
+            ...item,
+            domain: result.domain
+          }))
+        );
+        response.count += result.data.length;
+      }
+    });
+    
 
     return SuccessResponse(
       {
@@ -2203,8 +2234,7 @@ exports.deleteUser = async (req, res) => {
 
     const faDomains = !userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? [{ domain: oldBetFairDomain }] : userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? await getUserDomainWithFaId({ userId: id }) : await getFaAdminDomain(userData);
     for (let usersDomain of faDomains) {
-      await apiCall(apiMethod.post, usersDomain?.domain + allApiRoutes.checkUserBalance, { id: userData.id, roleName: userData.roleName })
-        .then((data) => data)
+      await checkUserBalanceHandler({ id: userData.id, roleName: userData.roleName }, usersDomain?.domain)
         .catch((err) => {
           logger.error({
             context: `error in ${usersDomain?.domain} checking deleting user balance`,
@@ -2215,19 +2245,18 @@ exports.deleteUser = async (req, res) => {
           throw err?.response?.data;
         });
     };
-    for (let usersDomain of faDomains) {
-      await apiCall(apiMethod.delete, usersDomain?.domain + allApiRoutes.deleteUser + userData.id, { roleName: userData.roleName })
-        .then((data) => data)
-        .catch((err) => {
+    await Promise.all(
+      faDomains.map(usersDomain =>
+        deleteUserHandler({ roleName: userData.roleName, userId: userData.id }, usersDomain?.domain).catch((err) => {
           logger.error({
             context: `error in ${usersDomain?.domain} deleting user`,
             process: `User ID : ${req.user.id} `,
             error: err.message,
             stake: err.stack,
           });
-        });
-    };
-
+        })
+      )
+    );
 
     await softDeleteAllUsers(id);
     await updateDomain({

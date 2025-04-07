@@ -8,7 +8,7 @@ const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatc
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 const { cardGames } = require("../config/contants");
-const { matchLockHandler } = require("../grpc/grpcClient/handlers/wallet/matchHandler");
+const { matchLockHandler, userEventWiseExposureHandler, marketAnalysisHandler, virtualEventWiseExposureHandler } = require("../grpc/grpcClient/handlers/wallet/matchHandler");
 
 exports.matchDetails = async (req, res) => {
   try {
@@ -561,21 +561,11 @@ exports.userEventWiseExposure = async (req, res) => {
     const { domain } = req.query;
     let result = {};
     if (domain) {
-      let apiResponse = {};
       try {
-        apiResponse = await apiCall(
-          apiMethod.get,
-          domain + allApiRoutes.getEventWiseExposure + userId,
-          null,
-          null,
-          {
-            stopAt: "isNull"
-          }
-        );
+        result = await userEventWiseExposureHandler({userId: userId},domain);
       } catch (error) {
         throw error?.response?.data;
       }
-      result = apiResponse?.data;
     }
     else {
       const user = await getUser({ id: userId });
@@ -654,10 +644,7 @@ exports.userEventWiseExposure = async (req, res) => {
       let domainData = await getFaAdminDomain(user);
 
       for (let url of domainData) {
-        let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.virtualExposures, null, {}, {
-          roleName: user.roleName,
-          userId: user.id
-        }).then((data) => data).catch((err) => {
+        let data = await virtualEventWiseExposureHandler({roleName: user.roleName,userId: user.id}).catch((err) => {
           logger.error({
             context: `error in ${url?.domain} user wise exposure`,
             process: `User ID : ${user.id} `,
@@ -667,11 +654,11 @@ exports.userEventWiseExposure = async (req, res) => {
         });
         if (data) {
           virtualExposureData = {
-            exposure: Math.abs(virtualExposureData.exposure || 0) + Math.abs(data?.data?.exposure || 0),
+            exposure: Math.abs(virtualExposureData.exposure || 0) + Math.abs(data?.exposure || 0),
             match: virtualExposureData.match
           }
-          Object.keys(data?.data?.match || {}).forEach((curr) => {
-            virtualExposureData.match[curr] = { name: data?.data?.match[curr]?.gameName, type: data?.data?.match[curr]?.providerName, exposure: Math.abs(virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.data?.match[curr]?.totalAmount) }
+          Object.keys(data?.match || {}).forEach((curr) => {
+            virtualExposureData.match[curr] = { name: data?.match[curr]?.gameName, type: data?.match[curr]?.providerName, exposure: Math.abs(virtualExposureData?.match?.[curr]?.exposure || 0) + Math.abs(data?.match[curr]?.totalAmount) }
           })
         }
       }
@@ -698,10 +685,7 @@ exports.marketAnalysis = async (req, res) => {
     const userId = req.query.userId || req.user.id;
 
     if (domain) {
-      let data = await apiCall(apiMethod.get, domain + allApiRoutes.marketAnalysis, null, {}, {
-        matchId: matchId,
-        userId: userId
-      }).then((data) => data).catch((err) => {
+      let data = await marketAnalysisHandler({ matchId: matchId, userId: userId }, domain).catch((err) => {
         logger.error({
           context: `error in ${domain} getting market analysis`,
           process: `User ID : ${userId} `,
@@ -713,13 +697,12 @@ exports.marketAnalysis = async (req, res) => {
       return SuccessResponse(
         {
           statusCode: 200,
-          data: data?.data
+          data: data
         },
         req,
         res
       );
     }
-
 
     const user = await getUser({ id: userId });
     const [matchData, tournamentData] = await Promise.all([getUserProfitLossMatch(user, matchId), getUserProfitLossTournament(user, matchId)]);

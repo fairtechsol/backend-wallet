@@ -10,12 +10,11 @@ message GetBetsResponse {
   string data = 1; 
 }
 
-
 message GetSessionProfitLossUserWiseRequest {
   string betId = 1; 
 }
 
-message  GetSessionProfitLossUserWiseResponse {
+message GetSessionProfitLossUserWiseResponse {
   string data = 1; 
 }
 
@@ -32,7 +31,6 @@ message SessionProfitLossBetRequest {
   bool isSession = 4;
   string searchId = 5;
   string partnerShipRoleName = 6;
-
 }
 
 // Response for session profit/loss
@@ -51,9 +49,22 @@ message DeleteMultipleBetRequest {
 // Response for deleting multiple bets
 message DeleteMultipleBetResponse {}
 
+// Request for changing bet delete reason
+message ChangeBetsDeleteReasonRequest {
+  string betIds = 1;
+  string deleteReason = 2;
+  string matchId = 3;
+}
+
+// Response for changing bet delete reason
+message ChangeBetsDeleteReasonResponse {
+  string data = 1;
+}
+
 service BetsProvider {
   rpc GetBets(GetBetsRequest) returns (GetBetsResponse);
   rpc GetSessionProfitLossUserWise(GetSessionProfitLossUserWiseRequest) returns (GetSessionProfitLossUserWiseResponse);
   rpc GetSessionProfitLossBet(SessionProfitLossBetRequest) returns (SessionProfitLossBetResponse);
   rpc DeleteMultipleBet(DeleteMultipleBetRequest) returns (DeleteMultipleBetResponse);
+  rpc ChangeBetsDeleteReason(ChangeBetsDeleteReasonRequest) returns (ChangeBetsDeleteReasonResponse);
 }

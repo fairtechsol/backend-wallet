@@ -1,5 +1,6 @@
 const { expertDomain, userRoleConstant, redisKeys, socketData } = require("../config/contants");
 const { logger } = require("../config/logger");
+const { declareCardHandler } = require("../grpc/grpcClient/handlers/wallet/cardHandler");
 const { createExpertHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 const { getUserRedisData, deleteKeyFromUserRedis, incrementValuesRedis, getCasinoDomainBets, deleteHashKeysByPattern, delCardBetPlaceRedis } = require("../services/redis/commonFunctions");
 const { getUserBalanceDataByUserId, updateUserBalanceData } = require("../services/userBalanceService");
@@ -335,10 +336,7 @@ exports.declareCardMatchResult = async (req, res) => {
       const item = domainData[i];
       let response;
       try {
-        response = await apiCall(apiMethod.post, item + allApiRoutes.declareResultCardMatch, {
-          result, matchDetails: cardDetails?.data, type: type
-        });
-        response = response?.data;
+        response = await declareCardHandler({result: JSON.stringify(result), matchDetails: JSON.stringify(cardDetails?.data), type: type}, item);
         resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2));
       }
       catch (err) {

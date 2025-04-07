@@ -43,14 +43,6 @@ exports.apiCall = async (method, url, data, headers, ReqQuery) => {
 
 exports.allApiRoutes = {
   //user routes
-  declareResultCardMatch: "/fairgameWallet/declare/result/card/match",
-  cardProfitLoss: "/fairgameWallet/card/total/profitLoss",
-  cardMatchWiseProfitLoss:"/fairgameWallet/card/total/matchWise/profitLoss",
-  cardBetWiseProfitLoss:"/fairgameWallet/card/total/bet/profitLoss",
-  profitLoss: "/fairgameWallet/total/profitLoss",
-  matchWiseProfitLoss:"/fairgameWallet/total/matchWise/profitLoss",
-  userWiseProfitLoss:"/fairgameWallet/userwise/profitLoss",
-  sessionBetProfitLoss:"/fairgameWallet/total/session/profitLoss",
   isUserExist:"/fairgameWallet/user/exist",
   commissionReportsMatches:"/fairgameWallet/commissionMatch/",
   commissionReportsBetPlaced:"/fairgameWallet/commissionBetPlaced/",

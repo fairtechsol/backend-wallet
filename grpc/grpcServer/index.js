@@ -2,7 +2,8 @@ const { Server } = require("./grpcServer");
 const { getPlacedBets, getWalletLoginBetsData, getResultBetProfitLoss, getUserWiseSessionBetProfitLossExpert } = require("./handlers/betsHandler");
 const { declareTournamentMatchResult, unDeclareTournamentMatchResult, declareFinalMatchResult, unDeclareFinalMatchResult } = require("./handlers/declareMatchHandler");
 const { declareSessionResult, declareSessionNoResult, unDeclareSessionResult } = require("./handlers/declareSessionHandler");
-const { addMatch, raceAdd } = require("./handlers/matchHandler");
+const { addMatch, raceAdd, getCardResult, getCardResultDetail, declareVirtualCasinoResult } = require("./handlers/matchHandler");
+const { updateUserBalanceBySA, lockUnlockUserByUserPanel, getPartnershipId } = require("./handlers/userHandler");
 
 const { GRPC_PORT = 50500 } = process.env;
 
@@ -26,6 +27,11 @@ const protoOptionsArray = [
         path: `${__dirname}/proto/match.proto`, //path to proto file
         package: "matchProvider",//package in proto name
         service: "MatchProvider",//service name in proto file
+    },
+    {
+        path: `${__dirname}/proto/user.proto`, //path to proto file
+        package: "userProvider",//package in proto name
+        service: "UserService",//service name in proto file
     }
 ];
 
@@ -50,5 +56,13 @@ server
 
     .addService("MatchProvider", "AddMatch", addMatch)
     .addService("MatchProvider", "AddRaceMatch", raceAdd)
+    .addService("MatchProvider", "GetCardResult", getCardResult)
+    .addService("MatchProvider", "GetCardResultDetail", getCardResultDetail)
+    .addService("MatchProvider", "DeclareVirtualCasinoResult", declareVirtualCasinoResult)
+
+    .addService("UserService", "UpdateBalanceAPICall", updateUserBalanceBySA)
+    .addService("UserService", "GetPartnershipId", getPartnershipId)
+    .addService("UserService", "LockUnlockUserByUserPanel", lockUnlockUserByUserPanel)
+
 
 module.exports = server;

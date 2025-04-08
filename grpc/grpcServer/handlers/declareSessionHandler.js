@@ -10,7 +10,7 @@ const { getUserBalanceDataByUserId, updateUserBalanceData, updateUserExposure } 
 const { getUser, getUserById, getUsersWithoutCount } = require("../../../services/userService");
 const { sendMessageToUser } = require("../../../sockets/socketManager");
 const { declareSessionHandler, declareSessionNoResultHandler, unDeclareSessionHandler } = require("../../grpcClient/handlers/wallet/declareSessionHandler");
-const { mergeProfitLoss } = require("../../../services/commonService");
+const { mergeProfitLoss, updateSuperAdminData } = require("../../../services/commonService");
 
 exports.declareSessionResult = async (call) => {
   try {
@@ -273,25 +273,7 @@ const updateBulkCommission = async (response, bulkCommission) => {
   }) || []));
 }
 
-const updateSuperAdminData = async (response, type) => {
-  for (let userId in response?.superAdminData) {
-    if (response?.superAdminData?.[userId]?.role == userRoleConstant.user) {
-      response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-    } else {
-      response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-      response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
-      response.superAdminData[userId].balance = 0;
-    }
-    updateUserBalanceData(userId, response?.superAdminData?.[userId]);
-    logger.info({
-      message: `Updating user balance created by fgadmin or wallet in declare ${type}: `,
-      data: {
-        superAdminData: response?.superAdminData?.[userId],
-        userId: userId
-      },
-    });
-  }
-}
+
 
 exports.declareSessionNoResult = async (call) => {
   try {

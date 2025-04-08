@@ -915,33 +915,7 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-exports.getPartnershipId = async (req, res, next) => {
-  try {
-    // Destructure request body
-    const { userId } = req.params;
 
-    const partnershipIds = await getParentUsers(userId);
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        data: partnershipIds
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    // Log any errors that occur
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.getPlacedBets = async (req, res, next) => {
   try {
@@ -1002,38 +976,6 @@ exports.getPlacedBets = async (req, res, next) => {
   }
 }
 
-exports.updateUserBalanceBySA = async (req, res, next) => {
-  try {
-
-    const { userId, balance } = req.body;
-
-    await updateUserBalanceByUserId(userId, {
-      currentBalance: balance
-    });
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    logger.error({
-      error: `Error at update super admin balance.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.getUserProfitLoss = async (req, res, next) => {
   try {
@@ -1166,100 +1108,6 @@ exports.getUserProfitLoss = async (req, res, next) => {
   }
 }
 
-// Controller function for locking/unlocking a super admin
-exports.lockUnlockUserByUserPanel = async (req, res, next) => {
-  try {
-    // Extract relevant data from the request body and user object
-    const { userId, userBlock, parentId, autoBlock } = req.body;
-
-    await updateUser(userId, {
-      userBlock: userBlock,
-      userBlockedBy: parentId,
-      autoBlock: autoBlock
-    });
-
-    // Return success response
-    return SuccessResponse(
-      { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
-      req,
-      res
-    );
-  } catch (error) {
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-};
-
-exports.getCardResult = async (req, res) => {
-  try {
-
-    const { type } = req.params;
-    const query = req.query;
-    const currGameWinner = new CardResultTypeWin(type).getCardGameProfitLoss();
-    const select = ['cardResult.gameType as "gameType"', "cardResult.id as id", 'cardResult.createdAt as "createdAt"', currGameWinner, `"cardResult".result ->> 'mid' as mid`]
-
-    let result = await getCasinoCardResult(query, { gameType: type }, select);
-
-    SuccessResponse(
-      {
-        statusCode: 200,
-        data: result,
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    logger.error({
-      error: `Error while getting card results.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
-
-exports.getCardResultDetail = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await getCardResultData(`result ->> 'mid' = '${id}' `);
-
-    SuccessResponse(
-      {
-        statusCode: 200,
-        data: result,
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    logger.error({
-      error: `Error while getting card result detail.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.declareVirtualCasinoResult = async (req, res) => {
   try {

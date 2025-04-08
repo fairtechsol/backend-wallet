@@ -8,6 +8,7 @@ const userService = require("./userService");
 const { CardProfitLoss } = require("./cardService/cardProfitLossCalc");
 const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
 const { getTournamentBettingHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
+const { updateUserBalanceData } = require("./userBalanceService");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
@@ -1636,4 +1637,24 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
     matchResult[placedBet] = { data: tempData, betDetails: betResult?.match?.[placedBet]?.[0] };
   }
   return matchResult;
+}
+
+exports.updateSuperAdminData = async (response, type) => {
+  for (let userId in response?.superAdminData) {
+    if (response?.superAdminData?.[userId]?.role == userRoleConstant.user) {
+      response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
+    } else {
+      response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
+      response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
+      response.superAdminData[userId].balance = 0;
+    }
+    updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+    logger.info({
+      message: `Updating user balance created by fgadmin or wallet in declare ${type}: `,
+      data: {
+        superAdminData: response?.superAdminData?.[userId],
+        userId: userId
+      },
+    });
+  }
 }

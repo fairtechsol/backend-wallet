@@ -3,7 +3,7 @@ const router = express.Router();
 
 const validator = require('../middleware/joi.validator')
 const { CreateSuperAdmin, updateSuperAdminValid, setExposureLimitValid, setCreditReferValid, SetSuperAdminBalance, ChangePassword, LockUnlockUser } = require('../validators/superAdminValidator');
-const { createSuperAdmin, updateSuperAdmin, setExposureLimit, setCreditReferrence, updateUserBalance, changePassword, lockUnlockSuperAdmin, getPartnershipId, getPlacedBets, updateUserBalanceBySA, getUserProfitLoss, lockUnlockUserByUserPanel, getCardResult, getCardResultDetail, declareVirtualCasinoResult } = require('../controllers/superAdminController');
+const { createSuperAdmin, updateSuperAdmin, setExposureLimit, setCreditReferrence, updateUserBalance, changePassword, lockUnlockSuperAdmin,  getPlacedBets, getUserProfitLoss,declareVirtualCasinoResult } = require('../controllers/superAdminController');
 
 const { isAuthenticate, checkTransactionPassword } = require('../middleware/auth');
 
@@ -17,14 +17,10 @@ router.post('/lockUnlockUser', isAuthenticate, checkTransactionPassword, validat
 router.post("/update/exposurelimit", isAuthenticate, checkTransactionPassword, validator(setExposureLimitValid), setExposureLimit)
 router.post("/update/creditreferrence", isAuthenticate, checkTransactionPassword, validator(setCreditReferValid), setCreditReferrence)
 router.post("/update/balance", isAuthenticate, checkTransactionPassword, validator(SetSuperAdminBalance), updateUserBalance)
-router.get("/partnershipId/:userId", getPartnershipId);
-router.get("/bets", isAuthenticate, getPlacedBets);
-router.post("/update/balance/SA", updateUserBalanceBySA);
-router.post("/auto/lockUnlockUser", lockUnlockUserByUserPanel);
 router.get("/user/profitLossData/:matchId", isAuthenticate, getUserProfitLoss);
+router.get("/bets", isAuthenticate, getPlacedBets);
 
-router.get("/cards/result/:type", getCardResult);
-router.get("/cards/result/detail/:id", getCardResultDetail);
+
 router.post("/virtual/casino/result", declareVirtualCasinoResult);
 
 module.exports = router;

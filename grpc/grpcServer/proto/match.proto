@@ -2,8 +2,10 @@ syntax = "proto3";
 
 package matchProvider;
 
+// ============================
+// Messages for Match Creation
+// ============================
 
-// Request to add a match
 message AddMatchRequest {
   string matchType = 1;
   string competitionId = 2;
@@ -22,10 +24,7 @@ message AddMatchRequest {
   bool isBookmaker = 15;
 }
 
-// Response after adding a match
 message AddMatchResponse {}
-
-// ----------------- RaceMatch -----------------
 
 message AddRaceMatchRequest {
   string matchType = 1;
@@ -43,8 +42,48 @@ message AddRaceMatchRequest {
 
 message AddRaceMatchResponse {}
 
-// Service for managing matches
+
+// ============================
+// Messages for Card Result APIs
+// ============================
+
+// Get card results list
+message GetCardResultRequest {
+  string query = 1; // You can encode query as JSON string if needed
+}
+
+message GetCardResultResponse {
+  string data = 1; // JSON stringified result list
+}
+
+// Get card result details by ID
+message GetCardResultDetailRequest {
+  string id = 1;
+}
+
+message GetCardResultDetailResponse {
+  string data = 1; // JSON stringified result detail
+}
+
+// Declare virtual casino result
+message DeclareVirtualCasinoResultRequest {
+  string data=1;
+}
+
+message DeclareVirtualCasinoResultResponse {
+}
+
+
+// ============================
+// MatchProvider Service
+// ============================
+
 service MatchProvider {
   rpc AddMatch(AddMatchRequest) returns (AddMatchResponse);
   rpc AddRaceMatch(AddRaceMatchRequest) returns (AddRaceMatchResponse);
+
+  // New card result methods
+  rpc GetCardResult(GetCardResultRequest) returns (GetCardResultResponse);
+  rpc GetCardResultDetail(GetCardResultDetailRequest) returns (GetCardResultDetailResponse);
+  rpc DeclareVirtualCasinoResult(DeclareVirtualCasinoResultRequest) returns (DeclareVirtualCasinoResultResponse);
 }

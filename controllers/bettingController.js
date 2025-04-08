@@ -1,20 +1,16 @@
-const { expertDomain, redisKeys, socketData } = require('../config/contants.js');
+const { redisKeys, socketData } = require('../config/contants.js');
+const { deleteReasonChangeHandler, getMatchDetailsHandler } = require('../grpc/grpcClient/handlers/expert/matchHandler.js');
 const { deleteMultipleBetHandler, changeBetsDeleteReasonHandler } = require('../grpc/grpcClient/handlers/wallet/betsHandler.js');
 const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
 const { sendMessageToUser } = require('../sockets/socketManager.js');
-const { allApiRoutes, apiCall, apiMethod } = require('../utils/apiService.js');
 const { ErrorResponse, SuccessResponse } = require('../utils/response.js');
 
 exports.deleteMultipleBet = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
-        let domain = expertDomain;
         let matchExist = {};
         try {
-            matchExist = await apiCall(
-                apiMethod.get,
-                domain + allApiRoutes.MATCHES.matchDetails + matchId
-            );
+            matchExist = await getMatchDetailsHandler({ matchId: matchId });
             if (!matchExist) {
                 return ErrorResponse(
                     { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
@@ -74,10 +70,10 @@ exports.changeBetsDeleteReason = async (req, res) => {
         const domains = Object.keys(betData);
         let promiseArray = [];
         for (let domain of domains) {
-            let promise = changeBetsDeleteReasonHandler({ 
-                betIds: JSON.stringify(betData[domain]), 
-                deleteReason: deleteReason, 
-                matchId: matchId 
+            let promise = changeBetsDeleteReasonHandler({
+                betIds: JSON.stringify(betData[domain]),
+                deleteReason: deleteReason,
+                matchId: matchId
             }, domain);
             promiseArray.push(promise);
         }
@@ -109,11 +105,7 @@ exports.changeBetsDeleteReason = async (req, res) => {
         }
 
 
-        await apiCall(
-            apiMethod.post,
-            expertDomain + allApiRoutes.EXPERTS.updateDeleteReason,
-            { betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId }
-        );
+        await deleteReasonChangeHandler({ betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId });
         return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
     } catch (err) {
         return ErrorResponse(err, req, res);

@@ -1,13 +1,14 @@
-const { expertDomain, userRoleConstant, redisKeys, socketData } = require("../config/contants");
+const { userRoleConstant, redisKeys, socketData } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { declareCardHandler } = require("../grpc/grpcClient/handlers/wallet/cardHandler");
-const { createExpertHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
+const { createExpertHandler, updateExpertHandler, getExpertListHandler, getNotificationHandler, lockUnlockExpertHandler } = require("../grpc/grpcClient/handlers/expert/userHandler");
+const {  getMatchCompetitionsHandler, getMatchDatesHandler, getMatchesByDateHandler, getCardDetailsHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
 const { getUserRedisData, deleteKeyFromUserRedis, incrementValuesRedis, getCasinoDomainBets, deleteHashKeysByPattern, delCardBetPlaceRedis } = require("../services/redis/commonFunctions");
 const { getUserBalanceDataByUserId, updateUserBalanceData } = require("../services/userBalanceService");
 const { getUser } = require("../services/userService");
 const { sendMessageToUser } = require("../sockets/socketManager");
-const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
+const { changePasswordHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 
 exports.createUser = async (req, res) => {
   try {
@@ -46,7 +47,6 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    // Destructuring request body for relevant user information
     let { id, fullName, remark, phoneNumber, city, allPrivilege, addMatchPrivilege, betFairMatchPrivilege, bookmakerMatchPrivilege, sessionMatchPrivilege } = req.body;
     let reqUser = req.user;
 
@@ -63,39 +63,32 @@ exports.updateUser = async (req, res) => {
       sessionMatchPrivilege,
       remark
     };
-    let domain = expertDomain;
-    let apiResponse = {}
-    try {
-      apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.update, userData)
-    } catch (error) {
-      throw error?.response?.data
-    }
-    // Send success response with the created user data
-    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "User" } }, data: apiResponse.data }, req, res
-    );
+
+    await updateExpertHandler(userData).catch((err) => {
+      logger.error(err);
+      throw err?.response?.data;
+    });
+
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "User" } } }, req, res);
   } catch (err) {
-    // Handle any errors and return an error response
     return ErrorResponse(err, req, res);
   }
 };
+
 exports.changePassword = async (req, res) => {
   try {
     // Destructuring request body for relevant user information
     let { password, confirmPassword, id } = req.body;
     let reqUser = req.user;
-    let userData = {
-      password, confirmPassword, id,
-      createBy: reqUser.id
-    };
-    let domain = expertDomain;
-    let apiResponse = {}
-    try {
-      apiResponse = await apiCall(apiMethod.post, domain + allApiRoutes.EXPERTS.changePassword, userData)
-    } catch (error) {
-      throw error?.response?.data
-    }
+    let userData = { password: password, confirmPassword: confirmPassword, id: id, createBy: reqUser.id };
+
+    await changePasswordHandler(userData).catch((err) => {
+      logger.error(err);
+      throw err?.response?.data;
+    });
+
     // Send success response with the created user data
-    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Password" } }, data: apiResponse.data }, req, res
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Password" } } }, req, res
     );
   } catch (err) {
     // Handle any errors and return an error response
@@ -108,9 +101,6 @@ exports.expertList = async (req, res, next) => {
     let { id: loginId } = req.user;
     let { offset, limit, searchBy, keyword } = req.query;
 
-    let domain = expertDomain;
-    let apiResponse = {};
-
     const queryParams = {
       offset,
       limit,
@@ -119,30 +109,20 @@ exports.expertList = async (req, res, next) => {
       keyword
     };
 
-    // Construct the URL with query parameters
-    const url = new URL(
-      domain + allApiRoutes.EXPERTS.expertList
-    );
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (value) {
-        url.searchParams.append(key, value);
-      }
+
+    let apiResponse = await getExpertListHandler(
+      queryParams
+    ).catch((err) => {
+      logger.error(err);
+      throw err?.response?.data;
     });
 
-    try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        url
-      );
-    } catch (error) {
-      throw error?.response?.data;
-    }
 
     return SuccessResponse(
       {
         statusCode: 200,
         message: { msg: "fetched", keys: { name: "Expert list" } },
-        data: apiResponse?.data,
+        data: apiResponse,
       },
       req,
       res
@@ -154,17 +134,13 @@ exports.expertList = async (req, res, next) => {
 
 exports.getNotification = async (req, res) => {
   try {
-    let response = await apiCall(
-      apiMethod.get,
-      expertDomain + allApiRoutes.EXPERTS.notification,
-      null,
-      null,
-      req.query
+    let response = await getNotificationHandler(
+      { query: JSON.stringify(req.query) }
     );
     return SuccessResponse(
       {
         statusCode: 200,
-        data: response.data
+        data: response
       },
       req,
       res
@@ -178,15 +154,12 @@ exports.getMatchCompetitionsByType = async (req, res) => {
   try {
     const { type } = req.params;
 
-    let response = await apiCall(
-      apiMethod.get,
-      expertDomain + allApiRoutes.EXPERTS.getCompetitionList + `/${type}`
-    );
+    let response = await getMatchCompetitionsHandler({ type });
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data: response.data,
+        data: response,
       },
       req,
       res
@@ -206,15 +179,12 @@ exports.getMatchDatesByCompetitionId = async (req, res) => {
   try {
     const { competitionId } = req.params;
 
-    let response = await apiCall(
-      apiMethod.get,
-      expertDomain + allApiRoutes.EXPERTS.getDatesByCompetition + `/${competitionId}`
-    );
+    let response = await getMatchDatesHandler({ competitionId });
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data: response?.data,
+        data: response,
       },
       req,
       res
@@ -235,15 +205,12 @@ exports.getMatchDatesByCompetitionIdAndDate = async (req, res) => {
     const { competitionId, date } = req.params;
 
 
-    let response = await apiCall(
-      apiMethod.get,
-      expertDomain + allApiRoutes.EXPERTS.getMatchByCompetitionAndDate + `/${competitionId}/${new Date(date)}`
-    );
+    let response = await getMatchesByDateHandler({ competitionId, date: new Date(date) });
 
     return SuccessResponse(
       {
         statusCode: 200,
-        data: response?.data,
+        data: response,
       },
       req,
       res
@@ -270,14 +237,12 @@ exports.lockUnlockExpert = async (req, res) => {
       userBlock,
       blockBy: loginId.id,
     };
-    let domain = expertDomain;
-    let apiResponse = {}
     try {
-      apiResponse = await apiCall(apiMethod.put, domain + allApiRoutes.EXPERTS.lockUnlockUser, userData)
+      await lockUnlockExpertHandler(userData)
     } catch (error) {
       throw error?.response?.data
     }
-    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } }, data: apiResponse }, req, res
+    return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "lock unlock" } } }, req, res
     );
 
   } catch (err) {
@@ -293,7 +258,7 @@ exports.declareCardMatchResult = async (req, res) => {
 
     let domainData = await getCasinoDomainBets(result?.mid);
     domainData = Object.keys(domainData);
-    if(!domainData?.length){
+    if (!domainData?.length) {
       return SuccessResponse(
         {
           statusCode: 200,
@@ -306,17 +271,14 @@ exports.declareCardMatchResult = async (req, res) => {
 
     let cardDetails = {};
     try {
-      cardDetails = await apiCall(
-        apiMethod.get,
-        expertDomain + allApiRoutes.MATCHES.cardDetails + type
-      );
+      cardDetails = await getCardDetailsHandler({ type: type });
     } catch (error) {
       throw error?.response?.data;
     }
 
-    if(!cardDetails){
+    if (!cardDetails) {
       throw {
-        statusCode:500,
+        statusCode: 500,
         message: {
           msg: "notFound",
           keys: { name: "Match" }
@@ -336,7 +298,7 @@ exports.declareCardMatchResult = async (req, res) => {
       const item = domainData[i];
       let response;
       try {
-        response = await declareCardHandler({result: JSON.stringify(result), matchDetails: JSON.stringify(cardDetails?.data), type: type}, item);
+        response = await declareCardHandler({ result: JSON.stringify(result), matchDetails: JSON.stringify(cardDetails?.data), type: type }, item);
         resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2));
       }
       catch (err) {
@@ -514,7 +476,7 @@ exports.declareCardMatchResult = async (req, res) => {
 
     sendMessageToUser(parentUser.userId, socketData.cardResult, {
       ...parentUser,
-      matchId:cardDetails?.id,
+      matchId: cardDetails?.id,
       gameType: cardDetails?.type,
     });
 

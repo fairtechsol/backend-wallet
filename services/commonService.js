@@ -1,13 +1,13 @@
 const { __mf } = require("i18n");
-const { userRoleConstant, socketData, betType, betResultStatus, expertDomain, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, oldBetFairDomain, gameType, sessionBettingType, cardGameType } = require("../config/contants");
+const { userRoleConstant, socketData, betType, betResultStatus, matchBettingType, marketBetType, partnershipPrefixByRole, redisKeys, oldBetFairDomain, gameType, sessionBettingType, cardGameType } = require("../config/contants");
 const internalRedis = require("../config/internalRedisConnection");
 const { logger } = require("../config/logger");
 const { sendMessageToUser } = require("../sockets/socketManager");
-const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { getUserDomainWithFaId, getDomainDataByFaId } = require("./domainDataService");
 const userService = require("./userService");
 const { CardProfitLoss } = require("./cardService/cardProfitLossCalc");
 const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
+const { getTournamentBettingHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
@@ -1217,8 +1217,10 @@ exports.settingTournamentMatchBetsDataAtLogin = async (user) => {
 
     let apiResponse;
     try {
-      let url = expertDomain + allApiRoutes.MATCHES.tournamentBettingDetail + matchId + "?type=" + matchBettingType.tournament + "&id=" + placedBet;
-      apiResponse = await apiCall(apiMethod.get, url);
+      apiResponse = await getTournamentBettingHandler({
+        matchId: matchId,
+        id: placedBet
+      });
     } catch (error) {
       logger.info({
         info: `Error at get match details in login.`
@@ -1379,8 +1381,10 @@ exports.getUserExposuresTournament = async (user) => {
 
     let apiResponse;
     try {
-      let url = expertDomain + allApiRoutes.MATCHES.tournamentBettingDetail + matchId + "?type=" + matchBettingType.tournament + "&id=" + placedBet.split("_")?.[0];
-      apiResponse = await apiCall(apiMethod.get, url);
+      apiResponse = await getTournamentBettingHandler({
+        matchId: matchId,
+        id: placedBet.split("_")?.[0]
+      });
     } catch (error) {
       logger.info({
         info: `Error at get match details in login.`
@@ -1606,8 +1610,10 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
 
     let apiResponse;
     try {
-      let url = expertDomain + allApiRoutes.MATCHES.tournamentBettingDetail + matchId + "?type=" + matchBettingType.tournament + "&id=" + placedBet.split("_")?.[0];
-      apiResponse = await apiCall(apiMethod.get, url);
+      apiResponse = await getTournamentBettingHandler({
+        matchId: matchId,
+        id: placedBet.split("_")?.[0]
+      });
     } catch (error) {
       logger.info({
         info: `Error at get match details in login.`

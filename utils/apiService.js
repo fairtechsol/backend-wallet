@@ -42,32 +42,6 @@ exports.apiCall = async (method, url, data, headers, ReqQuery) => {
 };
 
 exports.allApiRoutes = {
-  //user routes
-  EXPERTS: {
-    update: "/user/update",
-    changePassword: "/user/admin/password",
-    expertList: "/user/list",
-    notification: "/general/notification",
-    getCompetitionList: "/match/competitionList",
-    getDatesByCompetition: "/match/competition/dates",
-    getMatchByCompetitionAndDate: "/match/competition/getMatch",
-    lockUnlockUser: "/user/lockUnlockUser",
-    isUserExist: "/user/exist",
-    updateDeleteReason: "/superAdmin/update/deleteReason",
-  },
-  MATCHES: {
-    matchDetails: "/superAdmin/match/",
-    raceDetails: "/superAdmin/match/racing/",
-    cardDetails: "/superAdmin/match/card/",
-    matchList: "/superAdmin/match/list",
-    raceBettingDetail : "/superAdmin/raceBetting/",
-    racingMatchList: "/superAdmin/match/racing/list",
-    racingMatchCountryCodeList: "/superAdmin/match/racing/countryCode",
-    tournamentBettingDetail : "/superAdmin/tournamentBetting/",
-  },
-  bets: {
-    betCount:"/fairgameWallet/betCounts"
-  },
   MICROSERVICE : {
     casinoData:"/getdata/"
   }

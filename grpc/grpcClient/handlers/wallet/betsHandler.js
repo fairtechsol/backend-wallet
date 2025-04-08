@@ -70,3 +70,16 @@ exports.changeBetsDeleteReasonHandler = async (requestData, address) => {
     throw error;
   }
 };
+
+exports.getBetCountHandler = async (requestData, address) => {
+  try {
+    const response = await grpcReq.user(address).callMethod(
+      "BetsProvider",
+      "GetBetCount",
+      requestData
+    );
+    return JSON.parse(response?.data || "{}");
+  } catch (error) {
+    throw error;
+  }
+};

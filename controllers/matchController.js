@@ -9,17 +9,15 @@ const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
 const { cardGames } = require("../config/contants");
 const { matchLockHandler, userEventWiseExposureHandler, marketAnalysisHandler, virtualEventWiseExposureHandler } = require("../grpc/grpcClient/handlers/wallet/matchHandler");
+const { getMatchDetailsHandler, getRaceDetailsHandler, getCardDetailsHandler, getMatchListHandler, getMatchRaceBettingHandler, getRaceListHandler, getRaceCountryCodeListHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
+const { getBetCountHandler } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
 
 exports.matchDetails = async (req, res) => {
   try {
     const userId = req.user.id;
-    let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.matchDetails + req.params.id
-      );
+      apiResponse = await getMatchDetailsHandler({ matchId: req.params.id })
     } catch (error) {
       throw error?.response?.data;
     }
@@ -96,10 +94,7 @@ exports.raceDetails = async (req, res) => {
     let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.raceDetails + req.params.id
-      );
+      apiResponse = await getRaceDetailsHandler({ matchId: req.params.id });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -142,13 +137,9 @@ exports.raceDetails = async (req, res) => {
 exports.cardDetails = async (req, res) => {
   try {
     let userId = req.user.id;
-    let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.cardDetails + req.params.type
-      );
+      apiResponse = await getCardDetailsHandler({ type: req.params.type });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -195,16 +186,9 @@ exports.cardDetails = async (req, res) => {
 exports.listMatch = async (req, res) => {
   try {
     let user = req.user;
-    let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.matchList,
-        null,
-        null,
-        req.query
-      );
+      apiResponse = await getMatchListHandler({ query: JSON.stringify(req.query) });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -217,19 +201,26 @@ exports.listMatch = async (req, res) => {
       domainData = await getUserDomainWithFaId();
     }
 
-    let bets = [];
-
-    for (let url of domainData) {
-      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.betCount, null, {}, { ...(user.roleName == userRoleConstant.fairGameAdmin ? { parentId: user.id } : {}) }).then((data) => data).catch((err) => {
+    const betPromises = domainData.map((url) => {
+      return getBetCountHandler(
+        {
+          ...(user.roleName === userRoleConstant.fairGameAdmin ? { parentId: user.id } : {})
+        },
+        url?.domain
+      ).catch((err) => {
         logger.error({
           context: `error in ${url?.domain} setting bet placed redis`,
           process: `User ID : ${user.id} `,
           error: err.message,
           stake: err.stack,
         });
+        return []; // fallback to empty array on failure
       });
-      bets.push(...(data?.data ?? []));
-    }
+    });
+    
+    const betResults = await Promise.all(betPromises);
+    const bets = betResults.flat();
+    
 
     for (let i = 0; i < apiResponse.data?.matches?.length; i++) {
       let matchDetail = apiResponse.data?.matches[i];
@@ -313,8 +304,8 @@ exports.matchLock = async (req, res) => {
         });
         throw err;
       });
-    }));    
-    
+    }));
+
 
     return SuccessResponse({
       statusCode: 200,
@@ -431,16 +422,9 @@ exports.checkChildDeactivate = async (req, res) => {
 exports.listRacingMatch = async (req, res) => {
   try {
     // let user = req.user;
-    let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.racingMatchList,
-        null,
-        null,
-        req.query
-      );
+      apiResponse = await getRaceListHandler({ query: JSON.stringify(req.query) });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -461,16 +445,9 @@ exports.listRacingMatch = async (req, res) => {
 
 exports.listRacingCountryCode = async (req, res) => {
   try {
-    let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.racingMatchCountryCodeList,
-        null,
-        null,
-        req.query
-      );
+      apiResponse = await getRaceCountryCodeListHandler({ matchType: req.query.matchType });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -496,8 +473,7 @@ exports.raceMarketAnalysis = async (req, res) => {
     const matchId = req.query.matchId;
     let apiResponse = {};
     try {
-      let url = expertDomain + allApiRoutes.MATCHES.raceBettingDetail + matchId + "?type=" + racingBettingType.matchOdd;
-      apiResponse = await apiCall(apiMethod.get, url);
+      apiResponse = await getMatchRaceBettingHandler({ matchId: matchId, name: racingBettingType.matchOdd });
     } catch (error) {
       throw error?.response?.data;
     }
@@ -510,20 +486,27 @@ exports.raceMarketAnalysis = async (req, res) => {
       domainData = await getUserDomainWithFaId();
     }
 
-    let bets = [];
-
-    for (let url of domainData) {
-      let data = await apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.betCount, null, {}, { ...(user.roleName == userRoleConstant.fairGameAdmin ? { parentId: user.id } : {}), matchId: matchId }).then((data) => data).catch((err) => {
+    const betPromises = domainData.map((url) => {
+      return getBetCountHandler(
+        {
+          ...(user.roleName === userRoleConstant.fairGameAdmin ? { parentId: user.id } : {}),
+          matchId: matchId,
+        },
+        url?.domain
+      )
+      .catch((err) => {
         logger.error({
           context: `error in ${url?.domain} setting bet placed redis`,
           process: `User ID : ${user.id} `,
           error: err.message,
           stake: err.stack,
         });
+        return []; // return empty array on error to keep structure
       });
-      bets.push(...(data?.data ?? []));
-    }
-
+    });
+    
+    const betResults = await Promise.all(betPromises);
+    const bets = betResults.flat(); // flatten array of arrays
 
     let runners = apiResponse.data?.runners;
     let totalBet = bets?.reduce((prev, curr) => { return curr?.matchId == matchId ? prev + parseInt(curr?.count) : prev }, 0);
@@ -562,7 +545,7 @@ exports.userEventWiseExposure = async (req, res) => {
     let result = {};
     if (domain) {
       try {
-        result = await userEventWiseExposureHandler({userId: userId},domain);
+        result = await userEventWiseExposureHandler({ userId: userId }, domain);
       } catch (error) {
         throw error?.response?.data;
       }
@@ -585,15 +568,7 @@ exports.userEventWiseExposure = async (req, res) => {
       const eventNameByMatchId = {};
       let apiResponse = {};
       try {
-        apiResponse = await apiCall(
-          apiMethod.get,
-          expertDomain + allApiRoutes.MATCHES.matchList,
-          null,
-          null,
-          {
-            stopAt: "isNull"
-          }
-        );
+        apiResponse = await getMatchListHandler({ query: JSON.stringify({ stopAt: "isNull" }) });
       } catch (error) {
         throw error?.response?.data;
       }
@@ -644,7 +619,7 @@ exports.userEventWiseExposure = async (req, res) => {
       let domainData = await getFaAdminDomain(user);
 
       for (let url of domainData) {
-        let data = await virtualEventWiseExposureHandler({roleName: user.roleName,userId: user.id}).catch((err) => {
+        let data = await virtualEventWiseExposureHandler({ roleName: user.roleName, userId: user.id }).catch((err) => {
           logger.error({
             context: `error in ${url?.domain} user wise exposure`,
             process: `User ID : ${user.id} `,
@@ -709,10 +684,7 @@ exports.marketAnalysis = async (req, res) => {
     let matchDetails;
 
     try {
-      matchDetails = await apiCall(
-        apiMethod.get,
-        expertDomain + allApiRoutes.MATCHES.matchDetails + matchId
-      );
+      matchDetails = await getMatchDetailsHandler({ matchId: matchId });
     } catch (error) {
       throw error?.response?.data;
     }

@@ -24,6 +24,25 @@ message CreateExpertRequest {
 
 message CreateExpertResponse {}
 
+// Message for updating an expert
+message UpdateExpertRequest {
+  string id = 1;
+  string fullName = 2;
+  string phoneNumber = 3;
+  string city = 4;
+  string remark = 5;
+  string createBy = 6;
+
+  // Privileges
+  bool allPrivilege = 7;
+  bool addMatchPrivilege = 8;
+  bool betFairMatchPrivilege = 9;
+  bool bookmakerMatchPrivilege = 10;
+  bool sessionMatchPrivilege = 11;
+}
+
+message UpdateExpertResponse {}
+
 message CreateSuperAdminRequest {
     string data = 1;
   }
@@ -148,9 +167,60 @@ message UserSearchResponse {
     string data = 1;
 }
 
+// Message for getting expert list
+message ExpertListRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+  string loginId = 3;
+  string searchBy = 4;
+  string keyword = 5;
+}
+
+message ExpertListResponse {
+  string data = 1;
+}
+
+// Message for notifications
+message NotificationRequest {
+  string query = 1;
+}
+
+message NotificationResponse {
+  string data = 1;
+}
+
+
+// Message for lock/unlock expert
+message LockUnlockExpertRequest {
+  string userId = 1;
+  bool userBlock = 2;
+  string blockBy = 3;
+}
+
+message LockUnlockExpertResponse {}
+
+message ChangePasswordExpertRequest {
+  string password = 1;
+  string userId = 2;
+}
+
+// Response after creating a user
+message ChangePasswordExpertResponse {}
+
+// Request message for checking if a user exists
+message IsUserExistRequest {
+  string userName = 1;
+}
+
+// Response message for checking if a user exists
+message IsUserExistResponse {
+  bool isExist = 1;
+}
+
 // Service for user management
 service UserService {
   rpc CreateExpert(CreateExpertRequest) returns (CreateExpertResponse);
+  rpc UpdateExpert(UpdateExpertRequest) returns (UpdateExpertResponse);
   rpc CreateSuperAdmin(CreateSuperAdminRequest) returns (CreateSuperAdminResponse);
   rpc UpdateSuperAdmin(UpdateSuperAdminRequest) returns (UpdateSuperAdminResponse);
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
@@ -165,4 +235,9 @@ service UserService {
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
   rpc CheckUserBalance(CheckUserBalanceRequest) returns (CheckUserBalanceResponse);
   rpc UserSearch(UserSearchRequest) returns (UserSearchResponse);
+  rpc GetExpertList(ExpertListRequest) returns (ExpertListResponse);
+  rpc GetNotification(NotificationRequest) returns (NotificationResponse);
+  rpc LockUnlockExpert(LockUnlockExpertRequest) returns (LockUnlockExpertResponse);
+  rpc ChangePasswordExpert(ChangePasswordExpertRequest) returns (ChangePasswordExpertResponse);
+  rpc IsUserExist(IsUserExistRequest) returns (IsUserExistResponse);
 }

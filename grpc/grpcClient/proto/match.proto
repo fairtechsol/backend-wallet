@@ -88,6 +88,88 @@ message VirtualEventWiseExposureResponse {
   string data = 1;
 }
 
+// Message for match competitions
+message MatchCompetitionsRequest {
+  string type = 1;
+}
+
+message MatchCompetitionsResponse {
+  string data = 1;
+}
+
+// Message for match dates
+message MatchDatesRequest {
+  string competitionId = 1;
+}
+
+message MatchDatesResponse {
+  string data = 1;
+}
+
+// Message for matches by date
+message MatchesByDateRequest {
+  string competitionId = 1;
+  string date = 2;
+}
+
+message MatchesByDateResponse {
+  string data = 1;
+}
+
+
+message MatchDetailRequest {
+  string matchId = 1;
+}
+
+message MatchDetailResponse {
+  string data = 1;
+}
+
+
+message CardDetailRequest {
+  string type = 1;
+}
+
+message CardDetailResponse {
+  string data = 1;
+}
+
+message MatchListRequest {
+  string query = 1;
+}
+
+message MatchListResponse {
+  string data = 1;
+}
+
+message RaceBettingRequest {
+  string matchId = 1;
+  string type = 2;
+}
+
+message RaceBettingResponse {
+  string data = 1;
+}
+
+message RaceCountryCodeListRequest {
+  string matchType = 1;
+}
+
+message RaceCountryCodeListResponse {
+  string data = 1;
+}
+
+message TournamentBettingRequest {
+  string matchId = 1;
+  string type = 2;
+  string id = 3;
+  bool isRate = 4;
+}
+
+message TournamentBettingResponse {
+  string data = 1;
+}
+
 // Service for managing matches
 service MatchProvider {
   rpc AddMatch(AddMatchRequest) returns (AddMatchResponse);
@@ -96,4 +178,15 @@ service MatchProvider {
   rpc UserEventWiseExposure(UserEventWiseExposureRequest) returns (UserEventWiseExposureResponse);
   rpc MarketAnalysis(MarketAnalysisRequest) returns (MarketAnalysisResponse);
   rpc VirtualEventWiseExposure(VirtualEventWiseExposureRequest) returns (VirtualEventWiseExposureResponse);
+  rpc GetMatchCompetitions(MatchCompetitionsRequest) returns (MatchCompetitionsResponse);
+  rpc GetMatchDates(MatchDatesRequest) returns (MatchDatesResponse);
+  rpc GetMatchesByDate(MatchesByDateRequest) returns (MatchesByDateResponse);
+  rpc MatchDetail(MatchDetailRequest) returns (MatchDetailResponse);
+  rpc RaceDetail(MatchDetailRequest) returns (MatchDetailResponse);
+  rpc CardDetail(CardDetailRequest) returns (CardDetailResponse);
+  rpc MatchList(MatchListRequest) returns (MatchListResponse);
+  rpc RaceBetting(RaceBettingRequest) returns (RaceBettingResponse);
+  rpc RaceList(MatchListRequest) returns (MatchListResponse);
+  rpc RaceCountryCodeList(RaceCountryCodeListRequest) returns (RaceCountryCodeListResponse);
+  rpc GetTournamentBetting(TournamentBettingRequest) returns (TournamentBettingResponse);
 }

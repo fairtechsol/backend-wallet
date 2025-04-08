@@ -2,10 +2,8 @@ const {
   userRoleConstant,
   transType,
   walletDescription,
-  blockType,
   lockType,
   fileType,
-  expertDomain,
   oldBetFairDomain,
   uplinePartnerShipForAllUsers,
   parmanentDeletePassType,
@@ -55,7 +53,6 @@ const {
   forceLogoutIfLogin,
 } = require("../services/commonService");
 const crypto = require('crypto');
-const { apiMethod, apiCall, allApiRoutes } = require("../utils/apiService");
 const { logger } = require("../config/logger");
 const { commissionReport, commissionMatchReport } = require("../services/commissionService");
 const { hasUserInCache, updateUserDataRedis } = require("../services/redis/commonFunctions");
@@ -64,6 +61,7 @@ const { lockUnlockSuperAdminHandler, getUserListHandler, getTotalUserListBalance
 const { getCardTotalProfitLossHandler, getCardDomainProfitLossHandler, getCardResultBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/cardHandler")
 const { getTotalProfitLossHandler, getDomainProfitLossHandler, getUserWiseBetProfitLossHandler, getSessionBetProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/matchProfitLossHandler");
 const { getCommissionReportHandler, getCommissionBetReportHandler } = require("../grpc/grpcClient/handlers/wallet/commissionHandler");
+const { isUserExistHandler } = require("../grpc/grpcClient/handlers/expert/userHandler");
 
 exports.createUser = async (req, res) => {
   try {
@@ -269,9 +267,7 @@ exports.isUserExist = async (req, res) => {
       return SuccessResponse({ statusCode: 200, data: { isUserExist: isExist } }, req, res);
     }
 
-    let data = await apiCall(apiMethod.get, expertDomain + allApiRoutes.EXPERTS.isUserExist, null, {}, {
-      userName: userName
-    }).then((data) => data).catch((err) => {
+    let data = await isUserExistHandler({userName: userName}).catch((err) => {
       logger.error({
         context: `error in expert is user exist`,
         error: err.message,
@@ -280,7 +276,7 @@ exports.isUserExist = async (req, res) => {
       throw err;
     });
 
-    if (data?.data?.isExist) {
+    if (data?.isExist) {
       isExist = true;
     }
 
@@ -1028,7 +1024,7 @@ exports.userSearchList = async (req, res, next) => {
             },
             usersDomain?.domain
           );
-    
+
           return {
             success: true,
             domain: usersDomain.domain,
@@ -1041,12 +1037,12 @@ exports.userSearchList = async (req, res, next) => {
             error: err.message,
             stake: err.stack,
           });
-    
+
           throw err?.response?.data;
         }
       })
     );
-    
+
     // Merge the data
     domainResults.forEach(result => {
       if (result.success) {
@@ -1059,7 +1055,7 @@ exports.userSearchList = async (req, res, next) => {
         response.count += result.data.length;
       }
     });
-    
+
 
     return SuccessResponse(
       {

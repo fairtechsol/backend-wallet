@@ -1,17 +1,5 @@
 const grpcReq = require("../../index");
 
-exports.createExpertHandler = async (requestData) => {
-    try {
-        await grpcReq.expert.callMethod(
-            "UserService",
-            "CreateExpert",
-            requestData
-        );
-    } catch (error) {
-        throw error;
-    }
-};
-
 exports.createSuperAdminHandler = async (requestData, address) => {
     try {
         await grpcReq.user(address).callMethod(

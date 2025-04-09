@@ -43,7 +43,7 @@ const userProtoOptionsArray = [
   }
 ];
 
-const expertServerAddress = "localhost:60600";
+const expertServerAddress = "127.0.0.1:60600";
 
 const grpcReq = {
   user: (address) => new GrpcClient(userProtoOptionsArray, address),

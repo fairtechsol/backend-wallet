@@ -32,6 +32,9 @@ exports.commissionReport = async (userId, query) => {
   // Clone base query to get count before applying pagination
   const countQuery = Commission.createQueryBuilder("commission")
     .where({ parentId: userId, matchId: Not(IsNull()) })
+    .select([
+      'commission.matchId as "matchId"',
+    ])
     .groupBy('"matchId"')
     .addGroupBy('"matchName"')
     .addGroupBy('"matchStartDate"');

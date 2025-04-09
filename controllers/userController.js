@@ -25,6 +25,8 @@ const {
   getChildUserBalanceAndData,
   softDeleteAllUsers,
   addUpdateDeleteParmanentDelete,
+  userBlockUnblock,
+  betBlockUnblock,
 
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -652,7 +654,7 @@ exports.userList = async (req, res, next) => {
               throw err;
             });
 
-          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.data?.balance[element.id] || 0);
+          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.balance[element.id] || 0);
         };
 
       }
@@ -662,6 +664,7 @@ exports.userList = async (req, res, next) => {
         }
         else {
           const userDomain = await getDomainDataByUserId(element.id, ["domain"]);
+          if(userDomain){
           let response = await userBalanceSumHandler({ roleName: element.roleName, userId: element.id }, userDomain?.domain)
             .then((data) => data)
             .catch((err) => {
@@ -674,7 +677,7 @@ exports.userList = async (req, res, next) => {
               throw err;
             });
 
-          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.data?.balance[element.id] || 0);
+          usersBalance[element.id] = (usersBalance[element.id] || 0) + parseFloat(response?.balance[element.id] || 0);}
         }
       }
     };
@@ -692,7 +695,7 @@ exports.userList = async (req, res, next) => {
           throw err;
         });
 
-      usersBalance = { ...usersBalance, ...(response?.data?.balance ?? {}) };
+      usersBalance = { ...usersBalance, ...(response?.balance ?? {}) };
     }
 
     let data = await Promise.all(
@@ -913,7 +916,6 @@ exports.getTotalUserListBalance = async (req, res, next) => {
 
       for (let usersDomain of domainData) {
         const response = await userBalanceSumHandler({ roleName: userRole, userId: where.createBy }, usersDomain?.domain)
-          .then((data) => data)
           .catch((err) => {
             logger.error({
               context: `error in ${usersDomain?.domain} getting user list`,
@@ -924,7 +926,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
             throw err;
           });
 
-        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.balance[where.createBy] || 0);
       }
 
     }
@@ -933,7 +935,6 @@ exports.getTotalUserListBalance = async (req, res, next) => {
       for (let usersDomain of faDomains) {
 
         const response = await userBalanceSumHandler({ roleName: userRole, userId: where.createBy }, usersDomain?.domain)
-          .then((data) => data)
           .catch((err) => {
             logger.error({
               context: `error in ${usersDomain?.domain} getting user list`,
@@ -944,7 +945,7 @@ exports.getTotalUserListBalance = async (req, res, next) => {
             throw err;
           });
 
-        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[where.createBy] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.balance[where.createBy] || 0);
       };
 
     }
@@ -1111,7 +1112,6 @@ exports.userBalanceDetails = async (req, res, next) => {
 
       for (let usersDomain of domainData) {
         const response = await userBalanceSumHandler({ roleName: loginUser.roleName, userId: loginUser.id }, usersDomain?.domain)
-          .then((data) => data)
           .catch((err) => {
             logger.error({
               context: `error in ${usersDomain?.domain} getting user list`,
@@ -1122,7 +1122,7 @@ exports.userBalanceDetails = async (req, res, next) => {
             throw err;
           });
 
-        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.balance[loginUser.id] || 0);
       }
 
     }
@@ -1131,7 +1131,6 @@ exports.userBalanceDetails = async (req, res, next) => {
       for (let usersDomain of faDomains) {
 
         const response = await userBalanceSumHandler({ roleName: loginUser.roleName, userId: loginUser.id }, usersDomain?.domain)
-          .then((data) => data)
           .catch((err) => {
             logger.error({
               context: `error in ${usersDomain?.domain} getting user list`,
@@ -1142,7 +1141,7 @@ exports.userBalanceDetails = async (req, res, next) => {
             throw err;
           });
 
-        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.data?.balance[loginUser.id] || 0);
+        totalCurrentBalance = (totalCurrentBalance || 0) + parseFloat(response?.balance[loginUser.id] || 0);
       };
 
     }
@@ -1520,7 +1519,7 @@ exports.getDomainProfitLoss = async (req, res) => {
           throw err;
         });
 
-      data?.result?.forEach((item) => {
+      data?.forEach((item) => {
         if (profitLoss[item?.matchId]) {
           profitLoss[item?.matchId] = {
             ...profitLoss[item?.matchId],
@@ -1838,13 +1837,12 @@ exports.getSessionBetProfitLoss = async (req, res) => {
     newUserTemp.roleName = roleName || newUserTemp.roleName;
     newUserTemp.id = userId || newUserTemp.id;
     if (url) {
-      let response = await getSessionBetProfitLossHandler({
+      data = await getSessionBetProfitLossHandler({
         user: JSON.stringify(newUserTemp),
         matchId: matchId,
         searchId: userId || id,
         partnerShipRoleName: req.user.roleName
       }, url)
-        .then((data) => data)
         .catch((err) => {
           logger.error({
             context: `error in ${url} getting profit loss for session bets.`,
@@ -1854,7 +1852,6 @@ exports.getSessionBetProfitLoss = async (req, res) => {
           });
           throw err;
         });
-      data = response?.data;
     }
     else {
       let domainData;
@@ -1874,7 +1871,6 @@ exports.getSessionBetProfitLoss = async (req, res) => {
           searchId: id,
           partnerShipRoleName: req.user.roleName
         }, domain?.domain)
-          .then((data) => data)
           .catch((err) => {
             logger.error({
               context: `error in ${domain?.domain} getting profit loss for session bets.`,
@@ -1884,7 +1880,7 @@ exports.getSessionBetProfitLoss = async (req, res) => {
             });
             throw err;
           });
-        data?.push(...(response?.data || []));
+        data?.push(...(response || []));
       }
     }
     const result = [];

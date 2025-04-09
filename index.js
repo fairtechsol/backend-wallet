@@ -15,6 +15,7 @@ const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
 const compression = require('compression');
 require("./grpc/index");
+require("./queue/consumer.js");
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
   // Check if the request comes from the specified domain or localhost

@@ -660,3 +660,5 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
     return done(null, {});
   }
 });
+
+exports.module=WalletSessionBetQueue;

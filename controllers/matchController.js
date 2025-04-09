@@ -688,7 +688,7 @@ exports.marketAnalysis = async (req, res) => {
     } catch (error) {
       throw error?.response?.data;
     }
-
+    let result = [];
     result.push({
       title: matchDetails?.data?.title,
       matchId: matchDetails?.data?.id,

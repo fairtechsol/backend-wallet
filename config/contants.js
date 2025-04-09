@@ -1,5 +1,5 @@
-module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || 'http://localhost:6060';
-module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || 'http://localhost:5001';
+module.exports.expertDomain = process.env.EXPERT_DOMAIN_URL || '127.0.0.1:60600';
+module.exports.oldBetFairDomain = process.env.OLD_BETFAIR_DOMAIN_URL || '127.0.0.1:50001';
 module.exports.casinoMicroServiceDomain = process.env.CASINOMICROSERVICEURL || "http://localhost:3201";
 
 module.exports.noResult="No Result";

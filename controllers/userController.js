@@ -2226,7 +2226,7 @@ exports.deleteUser = async (req, res) => {
 
     const faDomains = !userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? [{ domain: oldBetFairDomain }] : userData.isUrl && userData?.roleName != userRoleConstant.fairGameAdmin && userData?.roleName != userRoleConstant.fairGameWallet ? await getUserDomainWithFaId({ userId: id }) : await getFaAdminDomain(userData);
     for (let usersDomain of faDomains) {
-      await checkUserBalanceHandler({ id: userData.id, roleName: userData.roleName }, usersDomain?.domain)
+      await checkUserBalanceHandler({ userId: userData.id, roleName: userData.roleName }, usersDomain?.domain)
         .catch((err) => {
           logger.error({
             context: `error in ${usersDomain?.domain} checking deleting user balance`,
@@ -2234,7 +2234,7 @@ exports.deleteUser = async (req, res) => {
             error: err.message,
             stake: err.stack,
           });
-          throw err?.response?.data;
+          throw err;
         });
     };
     await Promise.all(
@@ -2271,8 +2271,8 @@ exports.deleteUser = async (req, res) => {
   catch (error) {
     logger.error({
       context: `error in delete user`,
-      error: error.message,
-      stake: error.stack,
+      error: error?.message,
+      stake: error?.stack,
     });
     return ErrorResponse(error, req, res);
   }

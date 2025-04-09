@@ -14,7 +14,6 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
-  getParentUsers,
   getFirstLevelChildUserWithPartnership,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
@@ -24,7 +23,6 @@ const lodash = require("lodash");
 const { getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
 const {
   getUserBalanceDataByUserId,
-  updateUserBalanceByUserId,
   addInitialUserBalance,
   updateUserBalanceData,
 } = require("../services/userBalanceService");
@@ -42,8 +40,6 @@ const {
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
 const { hasUserInCache, updateUserDataRedis, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
-const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
-const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
 const { updateSuperAdminData } = require("./expertController");
 const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
 const { createSuperAdminHandler, updateSuperAdminHandler, changePasswordHandler, setExposureLimitHandler, setCreditReferenceHandler, updateUserBalanceHandler, lockUnlockSuperAdminHandler, getUserProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
@@ -223,7 +219,7 @@ exports.createSuperAdmin = async (req, res) => {
         stake: err?.stack
       });
       await deleteUser(response?.id);
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     let updateUser = {};
@@ -398,7 +394,7 @@ exports.updateSuperAdmin = async (req, res) => {
     try {
       await updateSuperAdminHandler(response, domain.domain);
     } catch (err) {
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
     await addUser(updateUser);
     if (!isOldFairGame) {
@@ -458,7 +454,7 @@ exports.setExposureLimit = async (req, res, next) => {
     try {
       await setExposureLimitHandler(response, domain);
     } catch (err) {
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     await addUser(user);
@@ -530,7 +526,7 @@ exports.setCreditReferrence = async (req, res, next) => {
     try {
       await setCreditReferenceHandler(data, domain);
     } catch (err) {
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     let previousCreditReference = parseFloat(user.creditRefrence);
@@ -708,7 +704,7 @@ exports.updateUserBalance = async (req, res) => {
         body, domainData
       );
     } catch (err) {
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     await updateUserBalanceData(user.id, {
@@ -842,7 +838,7 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     try {
       await lockUnlockSuperAdminHandler(body, domain);
     } catch (err) {
-      return ErrorResponse({ message: err?.details }, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     // Return success response

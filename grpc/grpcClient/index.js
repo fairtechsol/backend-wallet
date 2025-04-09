@@ -1,3 +1,4 @@
+const { expertDomain } = require("../../config/contants");
 const GrpcClient = require("./grpcClient");
 
 const userProtoOptionsArray = [
@@ -43,7 +44,7 @@ const userProtoOptionsArray = [
   }
 ];
 
-const expertServerAddress = "localhost:60600";
+const expertServerAddress = expertDomain;
 
 const grpcReq = {
   user: (address) => new GrpcClient(userProtoOptionsArray, address),

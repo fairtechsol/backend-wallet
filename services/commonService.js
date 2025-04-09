@@ -1099,7 +1099,7 @@ exports.settingBetsDataAtLogin = async (user) => {
         isTeamNameAllow: false,
         marketType: `ne${matchBettingType.tournament}`
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1183,7 +1183,7 @@ exports.settingTournamentMatchBetsDataAtLogin = async (user) => {
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1301,7 +1301,7 @@ exports.getUserExposuresGameWise = async (user) => {
         eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics, gameType.football, gameType.tennis])}`,
         marketType: `ne${matchBettingType.tournament}`
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1309,7 +1309,7 @@ exports.getUserExposuresGameWise = async (user) => {
         stake: err.stack,
       });
     });
-    bets.push(...(data?.data?.rows ?? []));
+    bets.push(...(data?.rows ?? []));
   }
   for (let item of bets) {
     let itemData = {
@@ -1352,7 +1352,7 @@ exports.getUserExposuresTournament = async (user) => {
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1417,7 +1417,7 @@ exports.getCasinoMatchDetailsExposure = async (user) => {
         marketBetType: `eqCARD`,
         isTeamNameAllow: false,
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1510,7 +1510,7 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
         matchId: `eq${matchId}`,
         marketType: `ne${matchBettingType.tournament}`
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1518,7 +1518,7 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
         stake: err.stack,
       });
     });
-    bets.push(...(data?.data?.rows ?? []));
+    bets.push(...(data?.rows ?? []));
   }
   for (let item of bets) {
 
@@ -1581,7 +1581,7 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
         marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
         matchId: `eq${matchId}`,
       })
-    }, url?.domain).then((data) => data).catch((err) => {
+    }, url?.domain).catch((err) => {
       logger.error({
         context: `error in ${url?.domain} setting bet placed redis`,
         process: `User ID : ${user.id} `,
@@ -1589,7 +1589,7 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
         stake: err.stack,
       });
     });
-    bets.push(...(data?.data?.rows ?? []));
+    bets.push(...(data?.rows ?? []));
   }
 
   for (let item of bets) {

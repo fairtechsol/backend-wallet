@@ -1,5 +1,5 @@
 const Joi = require('joi')
-const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex, transType } = require('../config/contants')
+const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex, transType, maxAmount } = require('../config/contants')
 
 
 module.exports.CreateSuperAdmin = Joi.object({
@@ -16,8 +16,8 @@ module.exports.CreateSuperAdmin = Joi.object({
     remark: Joi.string().allow("").trim(),
     roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
     myPartnership: Joi.number().required(),
-    creditRefrence: Joi.number().allow(""),
-    exposureLimit: Joi.number().allow(""),
+    creditRefrence: Joi.number().max(maxAmount).allow(""),
+    exposureLimit: Joi.number().max(maxAmount).allow(""),
     maxBetLimit: Joi.number().allow(""),
     minBetLimit: Joi.number().allow(""),
     confirmPassword: Joi.string().required().valid(Joi.ref('password')).label('Confirm Password').messages({
@@ -104,14 +104,14 @@ module.exports.updateSuperAdminValid = Joi.object({
 
 module.exports.setExposureLimitValid = Joi.object({
     //matchComissionType,matchCommission,id,createBy
-    amount: Joi.number().required(),
+    amount: Joi.number().max(maxAmount).required(),
     transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.setCreditReferValid = Joi.object({
     //matchComissionType,matchCommission,id,createBy
-    amount: Joi.number().required(),
+    amount: Joi.number().max(maxAmount).required(),
     transactionPassword: Joi.string().required(),
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
     remark: Joi.string().allow("")
@@ -120,7 +120,7 @@ module.exports.setCreditReferValid = Joi.object({
 module.exports.SetSuperAdminBalance = Joi.object({
     userId: Joi.string().guid({ version: 'uuidv4' }).required(),
     transactionType: Joi.string().valid(...Object.values(transType)).required(),
-    amount: Joi.number().required(),
+    amount: Joi.number().max(maxAmount).required(),
     remark: Joi.string().trim().allow(""),
     transactionPassword: Joi.string().required(),
 })

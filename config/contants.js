@@ -6,6 +6,7 @@ module.exports.noResult="No Result";
 module.exports.unDeclare="UNDECLARE";
 module.exports.jwtSecret = process.env.JWT_SECRET || "secret";
 module.exports.parmanentDeletePassType = "parDelPassType";
+module.exports.maxAmount = 999999999;
 
 
 module.exports.userRoleConstant = {

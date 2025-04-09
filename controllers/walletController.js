@@ -85,7 +85,7 @@ exports.updateBalance = async (req, res) => {
             updatedUpdateUserBalanceData.profitLoss = parseFloat(loginUserBalanceData.profitLoss) + parseFloat(amount);
             let updateMyProfitLoss = parseFloat(amount);
             if (parseFloat(loginUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
-                updateMyProfitLoss = insertUserBalanceData.myProfitLoss
+                updateMyProfitLoss = updatedUpdateUserBalanceData.myProfitLoss
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {

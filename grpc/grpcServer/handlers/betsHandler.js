@@ -5,7 +5,7 @@ const { logger } = require("../../../config/logger");
 const { getUserDomainWithFaId } = require("../../../services/domainDataService");
 const { mergeBetsArray, settingBetsDataAtLogin, settingTournamentMatchBetsDataAtLogin } = require("../../../services/commonService");
 const { getBets, sessionProfitLossUserWiseData, sessionProfitLossBetsData } = require("../../grpcClient/handlers/wallet/betsHandler");
-const { userRoleConstant } = require("../../../config/contants");
+const { userRoleConstant, redisKeys } = require("../../../config/contants");
 const { getUser } = require("../../../services/userService");
 const { getUserRedisData } = require("../../../services/redis/commonFunctions");
 

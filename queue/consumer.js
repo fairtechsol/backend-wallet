@@ -451,7 +451,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
               let partnerExposure = (masterExposure || 0) - exposureDiff;
 
-              let oldProfitLossParent = JSON.parse(masterRedisData[redisName]);
+              let oldProfitLossParent = JSON.parse(masterRedisData[redisName]||"{}");
               let parentPLbetPlaced = oldProfitLossParent?.betPlaced || [];
               let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;
@@ -661,4 +661,4 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
   }
 });
 
-exports.module=WalletSessionBetQueue;
+module.exports = { WalletSessionBetQueue, WalletCardMatchBetQueue, walletSessionBetDeleteQueue, walletTournamentMatchBetDeleteQueue, WalletMatchTournamentBetQueue };

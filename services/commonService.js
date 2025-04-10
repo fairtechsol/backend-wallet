@@ -1096,7 +1096,6 @@ exports.settingBetsDataAtLogin = async (user) => {
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics])}`,
-        isTeamNameAllow: false,
         marketType: `ne${matchBettingType.tournament}`
       })
     }, url?.domain).catch((err) => {
@@ -1415,7 +1414,6 @@ exports.getCasinoMatchDetailsExposure = async (user) => {
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         marketBetType: `eqCARD`,
-        isTeamNameAllow: false,
       })
     }, url?.domain).catch((err) => {
       logger.error({

@@ -341,9 +341,9 @@ exports.updateSuperAdmin = async (req, res) => {
 
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
-        sessionCommission: sessionCommission || updateUser.sessionCommission,
+        sessionCommission: sessionCommission ?? updateUser.sessionCommission,
         matchComissionType: matchComissionType || updateUser.matchComissionType,
-        matchCommission: matchCommission || updateUser.matchCommission
+        matchCommission: matchCommission ?? updateUser.matchCommission
       } : {})
     }
     let domainData = {};

@@ -234,8 +234,7 @@ exports.updateUser = async (req, res) => {
 
     updateUser.sessionCommission = sessionCommission ?? updateUser.sessionCommission;
     updateUser.matchCommission = matchCommission ?? updateUser.matchCommission;
-    updateUser.matchComissionType =
-      matchComissionType || updateUser.matchComissionType;
+    updateUser.matchComissionType = matchComissionType;
     updateUser.remark = remark || updateUser.remark;
     updateUser = await addUser(updateUser);
     let response = lodash.pick(updateUser, [

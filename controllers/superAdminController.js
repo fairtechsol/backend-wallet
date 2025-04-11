@@ -342,7 +342,7 @@ exports.updateSuperAdmin = async (req, res) => {
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
         sessionCommission: sessionCommission ?? updateUser.sessionCommission,
-        matchComissionType: matchComissionType || updateUser.matchComissionType,
+        matchComissionType: matchComissionType,
         matchCommission: matchCommission ?? updateUser.matchCommission
       } : {})
     }

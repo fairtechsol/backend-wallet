@@ -716,7 +716,7 @@ exports.updateUserBalance = async (req, res) => {
     });
 
     await updateUserBalanceData(reqUser.id, { 
-      profitLoss: loginUserAmount, 
+      profitLoss: 0, 
       myProfitLoss: 0, 
       exposure: 0, 
       totalCommission: 0, 

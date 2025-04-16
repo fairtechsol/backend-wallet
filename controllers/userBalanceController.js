@@ -19,7 +19,7 @@ exports.updateUserBalance = async (req, res) => {
 
 
         amount = parseFloat(amount);
-       
+
         let user = await getUser({ id: userId, createBy: reqUser.id }, ["id", "roleName"])
         if (!user) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "User" } } }, req, res);
 
@@ -41,19 +41,20 @@ exports.updateUserBalance = async (req, res) => {
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) + parseFloat(amount);
             let updateMyProfitLoss = parseFloat(amount);
             if (parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount) > 0) {
-                updateMyProfitLoss = insertUserBalanceData.myProfitLoss;
+                updateMyProfitLoss = -insertUserBalanceData.myProfitLoss;
                 updatedUpdateUserBalanceData.myProfitLoss = 0;
             }
             else {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) + parseFloat(amount);
             }
             // updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
-            await updateUserBalanceData(user.id, { 
-                profitLoss: parseFloat(amount), 
-                myProfitLoss: updateMyProfitLoss, 
-                exposure: 0, 
-                totalCommission: 0, 
-                balance: parseFloat(amount)});
+            await updateUserBalanceData(user.id, {
+                profitLoss: parseFloat(amount),
+                myProfitLoss: updateMyProfitLoss,
+                exposure: 0,
+                totalCommission: 0,
+                balance: parseFloat(amount)
+            });
 
             if (userExistRedis) {
                 await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
@@ -63,7 +64,7 @@ exports.updateUserBalance = async (req, res) => {
             loginUserBalanceChange = -parseFloat(amount);
         } else if (transactionType == transType.withDraw) {
             insertUserBalanceData = usersBalanceData[1]
-            if (amount > insertUserBalanceData.currentBalance- (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
+            if (amount > insertUserBalanceData.currentBalance - (user.roleName == userRoleConstant.user ? insertUserBalanceData.exposure : 0))
                 return ErrorResponse({ statusCode: 400, message: { msg: "userBalance.insufficientBalance" } }, req, res);
             updatedUpdateUserBalanceData.currentBalance = parseFloat(insertUserBalanceData.currentBalance) - parseFloat(amount);
             updatedUpdateUserBalanceData.profitLoss = parseFloat(insertUserBalanceData.profitLoss) - parseFloat(amount);
@@ -76,12 +77,13 @@ exports.updateUserBalance = async (req, res) => {
                 updatedUpdateUserBalanceData.myProfitLoss = parseFloat(insertUserBalanceData.myProfitLoss) - parseFloat(amount);
             }
             // updateUserBalanceByUserId(user.id, updatedUpdateUserBalanceData);
-            await updateUserBalanceData(user.id, { 
-                profitLoss: -parseFloat(amount), 
-                myProfitLoss: updateMyProfitLoss, 
-                exposure: 0, 
-                totalCommission: 0, 
-                balance: -parseFloat(amount)});
+            await updateUserBalanceData(user.id, {
+                profitLoss: -parseFloat(amount),
+                myProfitLoss: updateMyProfitLoss,
+                exposure: 0,
+                totalCommission: 0,
+                balance: -parseFloat(amount)
+            });
 
             if (userExistRedis) {
                 await updateUserDataRedis(userId, updatedUpdateUserBalanceData);
@@ -94,12 +96,13 @@ exports.updateUserBalance = async (req, res) => {
         }
 
         // updateUserBalanceByUserId(reqUser.id, updatedLoginUserBalanceData)
-        await updateUserBalanceData(reqUser.id, { 
-            profitLoss: 0, 
-            myProfitLoss: 0, 
-            exposure: 0, 
-            totalCommission: 0, 
-            balance: loginUserBalanceChange});
+        await updateUserBalanceData(reqUser.id, {
+            profitLoss: 0,
+            myProfitLoss: 0,
+            exposure: 0,
+            totalCommission: 0,
+            balance: loginUserBalanceChange
+        });
         const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
         if (parentUserExistRedis) {
@@ -155,7 +158,7 @@ exports.settleCommissions = async (req, res) => {
             })
                 .then((data) => data)
                 .catch((err) => {
-                    if(err.response.data.message == __mf("userBalance.commissionAlreadySettled")){
+                    if (err.response.data.message == __mf("userBalance.commissionAlreadySettled")) {
                         return null;
                     }
                     logger.error({
@@ -182,7 +185,7 @@ exports.settleCommissions = async (req, res) => {
             await updateUserBalanceData(userId, {
                 balance: 0,
                 totalCommission: -userData.userBal.totalCommission
-              });
+            });
             // await addInitialUserBalance(userData.userBal);
 
         }

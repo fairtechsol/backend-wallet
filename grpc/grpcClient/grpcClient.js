@@ -39,10 +39,7 @@ class GrpcClient {
       const grpcObject = grpc.loadPackageDefinition(packageDefinition);
       clients[protoOptions.service] = new grpcObject[protoOptions.package][
         protoOptions.service
-      ](this.serverAddress, grpc.credentials.createSsl(null, [{
-        cert_chain: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/fullchain.pem`),
-        private_key: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/privkey.pem`)
-      }], false));
+      ](this.serverAddress, grpc.credentials.createSsl(fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/fullchain.pem`)));
     });
     return clients;
   }

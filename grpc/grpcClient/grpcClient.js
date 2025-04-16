@@ -1,5 +1,6 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const fs = require("fs");
 
 /**
  * GrpcClient class for managing gRPC clients and making RPC calls.
@@ -38,7 +39,10 @@ class GrpcClient {
       const grpcObject = grpc.loadPackageDefinition(packageDefinition);
       clients[protoOptions.service] = new grpcObject[protoOptions.package][
         protoOptions.service
-      ](this.serverAddress, grpc.credentials.createInsecure());
+      ](this.serverAddress, grpc.credentials.createSsl(null, [{
+        cert_chain: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/fullchain.pem`),
+        private_key: fs.readFileSync(`/etc/letsencrypt/live/${process.env.SSL_PATH}/privkey.pem`)
+      }], false));
     });
     return clients;
   }

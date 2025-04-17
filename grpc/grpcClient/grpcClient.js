@@ -36,11 +36,11 @@ class GrpcClient {
         protoOptions.path,
         options
       );
-      console.log(fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/fullchain.pem`))
+      console.log(fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/fullchain.pem`, 'utf8'))
       const grpcObject = grpc.loadPackageDefinition(packageDefinition);
       clients[protoOptions.service] = new grpcObject[protoOptions.package][
         protoOptions.service
-      ](this.serverAddress, fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/fullchain.pem`));
+      ](this.serverAddress, fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/fullchain.pem`, 'utf8'));
     });
     return clients;
   }

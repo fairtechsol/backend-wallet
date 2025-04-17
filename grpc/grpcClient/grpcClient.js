@@ -39,7 +39,7 @@ class GrpcClient {
       const grpcObject = grpc.loadPackageDefinition(packageDefinition);
       clients[protoOptions.service] = new grpcObject[protoOptions.package][
         protoOptions.service
-      ](this.serverAddress, ...(process.env.NODE_ENV == "production" || process.env.NODE_ENV == "dev" ? [grpc.credentials.createSsl(fs.readFileSync(`/etc/letsencrypt/live/devwalletapi.fairgame.club/fullchain.pem`))] : [grpc.credentials.createInsecure()]))
+      ](this.serverAddress, ...(process.env.NODE_ENV == "production" || process.env.NODE_ENV == "dev" ? [grpc.credentials.createSsl()] : [grpc.credentials.createInsecure()]))
     });
     return clients;
   }

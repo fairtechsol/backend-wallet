@@ -39,7 +39,7 @@ class GrpcClient {
       const grpcObject = grpc.loadPackageDefinition(packageDefinition);
       clients[protoOptions.service] = new grpcObject[protoOptions.package][
         protoOptions.service
-      ](this.serverAddress, grpc.credentials.createSsl(fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/fullchain.pem`), fs.readFileSync("/etc/letsencrypt/live/betfair.fairgame.club/privkey.pem"),fs.readFileSync(`/etc/letsencrypt/live/betfair.fairgame.club/cert.pem`)))
+      ](this.serverAddress, grpc.credentials.createSsl(fs.readFileSync(`/etc/letsencrypt/live/devexpertapi.fairgame.club/fullchain.pem`), fs.readFileSync("/etc/letsencrypt/live/devexpertapi.fairgame.club/privkey.pem"),fs.readFileSync(`/etc/letsencrypt/live/devexpertapi.fairgame.club/cert.pem`)))
     });
     return clients;
   }

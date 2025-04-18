@@ -1,7 +1,7 @@
 const { Not } = require("typeorm");
 const { expertDomain, redisKeys, userRoleConstant, redisKeysMatchWise, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, redisKeysMarketWise, tieCompleteBetType, matchBettingType, betResultStatus, marketBetType } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament, getRedisKeys } = require("../services/commonService");
+const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament, getRedisKeys, commonGetMatchDetailsFromRedis } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getUserRedisData } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
@@ -15,10 +15,16 @@ exports.matchDetails = async (req, res) => {
     let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.matchDetails + req.params.id
-      );
+      const redisMatch = await commonGetMatchDetailsFromRedis(req.params.id);
+      if (redisMatch?.data) {
+        apiResponse = redisMatch;
+      }
+      else {
+        apiResponse = await apiCall(
+          apiMethod.get,
+          domain + allApiRoutes.MATCHES.matchDetails + req.params.id
+        );
+      }
     } catch (error) {
       throw error?.response?.data;
     }
@@ -198,10 +204,16 @@ exports.otherMatchDetails = async (req, res) => {
     let domain = expertDomain;
     let apiResponse = {};
     try {
-      apiResponse = await apiCall(
-        apiMethod.get,
-        domain + allApiRoutes.MATCHES.otherMatchDetails + req.params.id
-      );
+      const redisMatch = await commonGetMatchDetailsFromRedis(req.params.id);
+      if (redisMatch?.data) {
+        apiResponse = redisMatch;
+      }
+      else {
+        apiResponse = await apiCall(
+          apiMethod.get,
+          domain + allApiRoutes.MATCHES.otherMatchDetails + req.params.id
+        );
+      }
     } catch (error) {
       throw error?.response?.data;
     }
@@ -990,10 +1002,16 @@ exports.marketAnalysis = async (req, res) => {
       let matchDetails;
 
       try {
+        const redisMatch = await commonGetMatchDetailsFromRedis(matchId);
+        if (redisMatch?.data) {
+          matchDetails = redisMatch;
+        }
+        else {
         matchDetails = await apiCall(
           apiMethod.get,
           expertDomain + allApiRoutes.MATCHES.matchDetails + matchId
         );
+      }
       } catch (error) {
         throw error?.response?.data;
       }

@@ -1,6 +1,6 @@
 const internalRedis = require("../../config/internalRedisConnection");
 const externalRedis = require("../../config/externalRedisConnection");
-const { redisKeys } = require("../../config/contants");
+const { redisKeys, matchBettingType } = require("../../config/contants");
 
 exports.getUserRedisData = async (userId) => {
 
@@ -88,3 +88,31 @@ exports.getHashKeysByPattern = async (key, pattern) => {
   } while (cursor !== '0');
   return resultObj;
 }
+
+
+exports.getMatchFromCache = async (matchId) => {
+  let matchKey = `${matchId}_match`;
+  let matchData = await externalRedis.hgetall(matchKey);
+  if (Object.keys(matchData)?.length) {
+    if (matchData?.sessionMaxBets) {
+      matchData.sessionMaxBets = JSON.parse(matchData.sessionMaxBets)
+    }
+
+    Object.values(matchBettingType)?.forEach((item) => {
+      if (matchData?.[item]) {
+        matchData[item] = JSON.parse(matchData[item]);
+      }
+    });
+
+    return matchData;
+  }
+  return null;
+}
+
+exports.getAllSessionRedis = async (matchId) => {
+  // Retrieve all session data for the match from Redis
+  const sessionData = await externalRedis.hgetall(`${matchId}_session`);
+
+  // Return the session data as an object or null if no data is found
+  return Object.keys(sessionData)?.length == 0 ? null : sessionData;
+};

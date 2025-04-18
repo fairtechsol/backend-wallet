@@ -7,6 +7,7 @@ const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { getUserDomainWithFaId, getDomainDataByFaId } = require("./domainDataService");
 const userService = require("./userService");
 const { CardProfitLoss } = require("./cardService/cardProfitLossCalc");
+const { getMatchFromCache, getAllSessionRedis } = require("./redis/commonFunctions");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
@@ -2109,3 +2110,44 @@ exports.getRedisKeys = (matchBetType, matchId, redisKeys, betId) => {
 
   return { teamArateRedisKey, teamBrateRedisKey, teamCrateRedisKey };
 }
+
+exports.commonGetMatchDetailsFromRedis = async (matchId) => {
+  if (!matchId) return null;
+
+  const ids = matchId.split(",");
+  const isMultiple = ids.length > 1;
+
+  const result = [];
+  const matchNotPresent = [];
+
+  for (const id of ids) {
+    const match = await getMatchFromCache(id);
+    if (!match) {
+      matchNotPresent.push(id);
+      continue;
+    }
+
+    const sessions = Object.values(await getAllSessionRedis(id) || {});
+    match.sessionBettings = sessions;
+
+    if (match.tournament) {
+      match[matchBettingType.tournament] = match.tournament;
+    }
+
+    result.push(match);
+  }
+
+  if (matchNotPresent.length) {
+    try {
+      const apiResponse = await apiCall(
+        apiMethod.get,
+        `${expertDomain}${allApiRoutes.MATCHES.matchDetails}${matchNotPresent?.join(",")}`
+      );
+      result.push(...((Array.isArray(apiResponse?.data) ? apiResponse?.data : [apiResponse?.data]) || []));
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  return { data: isMultiple ? result : result[0] || null };
+};

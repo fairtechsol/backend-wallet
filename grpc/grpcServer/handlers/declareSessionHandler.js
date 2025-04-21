@@ -11,6 +11,7 @@ const { getUser, getUserById, getUsersWithoutCount } = require("../../../service
 const { sendMessageToUser } = require("../../../sockets/socketManager");
 const { declareSessionHandler, declareSessionNoResultHandler, unDeclareSessionHandler } = require("../../grpcClient/handlers/wallet/declareSessionHandler");
 const { mergeProfitLoss, updateSuperAdminData } = require("../../../services/commonService");
+const { notifyTelegram } = require("../../../utils/telegramMessage");
 
 exports.declareSessionResult = async (call) => {
   try {
@@ -153,6 +154,9 @@ exports.declareSessionResult = async (call) => {
           result: score,
           createBy: userIds,
         });
+
+        notifyTelegram(`Error at result declare session wallet side for domain ${item?.domain} on tournament ${betId} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
       }
     });
 
@@ -290,7 +294,7 @@ exports.declareSessionNoResult = async (call) => {
 
     let exposure = 0;
 
-    const promises =domainData.map(async (item) => {
+    const promises = domainData.map(async (item) => {
       try {
         let response = await declareSessionNoResultHandler(
           {
@@ -386,6 +390,9 @@ exports.declareSessionNoResult = async (call) => {
           result: score,
           createBy: userId,
         });
+
+        notifyTelegram(`Error at result declare session no result wallet side for domain ${item?.domain} on tournament ${betId} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
       }
     });
 
@@ -489,6 +496,8 @@ exports.unDeclareSessionResult = async (call) => {
           result: unDeclare,
           createBy: userId
         })
+        notifyTelegram(`Error at result undeclare session wallet side for domain ${item?.domain} on tournament ${betId} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
         return;
       });
       resultProfitLoss += parseFloat(parseFloat((response?.fwProfitLoss || 0)).toFixed(2))
@@ -594,7 +603,7 @@ exports.unDeclareSessionResult = async (call) => {
                   profitLossDataAdmin[parentUser.userId]?.betPlaced,
                   sessionDetails?.type
                 );
-                
+
 
                 if ([sessionBettingType.cricketCasino, sessionBettingType.fancy1, sessionBettingType.oddEven]?.includes(sessionDetails?.type)) {
                   profitLossDataAdmin = {
@@ -778,7 +787,7 @@ exports.unDeclareSessionResult = async (call) => {
     });
 
     deleteCommission(betId);
-    
+
     return { data: { profitLoss: resultProfitLoss, profitLossObj: JSON.stringify(profitLossDataWallet) } };
 
   } catch (error) {

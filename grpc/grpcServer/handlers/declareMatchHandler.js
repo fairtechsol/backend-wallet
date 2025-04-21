@@ -11,6 +11,7 @@ const grpc = require("@grpc/grpc-js");
 const { __mf } = require("i18n");
 const { declareMatchHandler, unDeclareMatchHandler, unDeclareFinalMatchHandler, declareFinalMatchHandler } = require("../../grpcClient/handlers/wallet/declareMatchHandler");
 const _ = require("lodash");
+const { notifyTelegram } = require("../../../utils/telegramMessage");
 
 exports.declareTournamentMatchResult = async (call) => {
   try {
@@ -75,6 +76,8 @@ exports.declareTournamentMatchResult = async (call) => {
           result: result,
           createBy: userId
         });
+        notifyTelegram(`Error at result declare tournament wallet side for domain ${item?.domain} on tournament ${matchBettingDetails?.id} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
         return {};
       }
     })
@@ -398,6 +401,8 @@ exports.unDeclareTournamentMatchResult = async (call) => {
           result: unDeclare,
           createBy: userId
         })
+        notifyTelegram(`Error at result undeclare tournament wallet side for domain ${item?.domain} on tournament ${matchBetting?.id} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
         return {};
       });
     });
@@ -685,6 +690,8 @@ exports.declareFinalMatchResult = async (call) => {
             stack: err.stack,
             message: err.message,
           });
+          notifyTelegram(`Error at result declare final match wallet side for domain ${item?.domain} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
           // Error caught so that Promise.all continues
         }
       }) || []
@@ -726,6 +733,8 @@ exports.unDeclareFinalMatchResult = async (call) => {
             stack: err.stack,
             message: err.message,
           });
+          notifyTelegram(`Error at result undeclare final match wallet side for domain ${item?.domain} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+
           // Error caught so that Promise.all continues
         }
       }) || []

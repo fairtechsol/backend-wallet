@@ -1299,7 +1299,6 @@ exports.getUserExposuresGameWise = async (user) => {
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics, gameType.football, gameType.tennis])}`,
-        marketType: `ne${matchBettingType.tournament}`
       })
     }, url?.domain).catch((err) => {
       logger.error({
@@ -1319,13 +1318,18 @@ exports.getUserExposuresGameWise = async (user) => {
     };
     if (betResult.session[item.betId + '_' + item.user?.id] || betResult.match[item.betId + '_' + item.user?.id]) {
       if (item.marketBetType == marketBetType.SESSION) {
-
         betResult.session[item.betId + '_' + item.user?.id].push(itemData);
+      }
+      else if(item.marketBetType == marketBetType.MATCHBETTING){
+      betResult.match[item.betId + '_' + item.user?.id].push(itemData);
       }
     }
     else {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId + '_' + item.user?.id] = [itemData];
+      }
+      else if(item.marketBetType == marketBetType.MATCHBETTING){
+        betResult.match[item.betId + '_' + item.user?.id] = [itemData];
       }
     }
   }
@@ -1333,50 +1337,6 @@ exports.getUserExposuresGameWise = async (user) => {
     const betPlaceProfitLoss = await this.calculatePLAllBet(betResult.session[placedBet], betResult?.session?.[placedBet]?.[0]?.marketType, 100, null, null);
     exposures[betResult.session[placedBet]?.[0]?.matchId] = parseFloat((parseFloat(exposures[betResult.session[placedBet]?.[0]?.matchId] || 0) + betPlaceProfitLoss.maxLoss).toFixed(2));
   }
-
-  return exposures;
-}
-
-exports.getUserExposuresTournament = async (user) => {
-  let betResult = { match: {} };
-  let exposures = {};
-  let domainData = await this.getFaAdminDomain(user);
-
-  let bets = [];
-
-  for (let url of domainData) {
-    let data = await getBets({
-      query: JSON.stringify({
-        deleteReason: "isNull",
-        result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-        ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-        marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
-      })
-    }, url?.domain).catch((err) => {
-      logger.error({
-        context: `error in ${url?.domain} setting bet placed redis`,
-        process: `User ID : ${user.id} `,
-        error: err.message,
-        stake: err.stack,
-      });
-    });
-    bets.push(...(data?.rows ?? []));
-  }
-
-  for (let item of bets) {
-    let itemData = {
-      ...item,
-      winAmount: parseFloat((parseFloat(item.winAmount)).toFixed(2)),
-      lossAmount: parseFloat((parseFloat(item.lossAmount)).toFixed(2))
-    };
-    if (betResult.match[item.betId + '_' + item.user?.id]) {
-      betResult.match[item.betId + '_' + item.user?.id].push(itemData);
-    }
-    else {
-      betResult.match[item.betId + '_' + item.user?.id] = [itemData];
-    }
-  }
-
   for (const placedBet of Object.keys(betResult.match)) {
     const matchId = betResult.match[placedBet]?.[0]?.matchId;
 
@@ -1402,6 +1362,7 @@ exports.getUserExposuresTournament = async (user) => {
   }
   return exposures;
 }
+
 
 exports.getCasinoMatchDetailsExposure = async (user) => {
   let domainData = await this.getFaAdminDomain(user);

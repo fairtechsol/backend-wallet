@@ -1,7 +1,7 @@
 const { Not } = require("typeorm");
 const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getFaAdminDomain, getUserExposuresGameWise, getUserExposuresTournament, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament } = require("../services/commonService");
+const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
@@ -580,17 +580,9 @@ exports.userEventWiseExposure = async (req, res) => {
       }
 
       let gamesExposure = await getUserExposuresGameWise(user);
-      let tournamentExposure = await getUserExposuresTournament(user);
 
-      const allMatchBetData = { ...(gamesExposure || {}) };
-      Object.keys(tournamentExposure).forEach((item) => {
-        if (allMatchBetData[item]) {
-          allMatchBetData[item] += tournamentExposure[item];
-        }
-        else {
-          allMatchBetData[item] = tournamentExposure[item];
-        }
-      });
+      const allMatchBetData = gamesExposure || {};
+      
       if (Object.keys(allMatchBetData || {}).length) {
         for (let item of Object.keys(allMatchBetData)) {
           if (eventNameByMatchId[item]) {
@@ -652,7 +644,6 @@ exports.userEventWiseExposure = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
-
 
 exports.marketAnalysis = async (req, res) => {
   try {

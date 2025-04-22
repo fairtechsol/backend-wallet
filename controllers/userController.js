@@ -1347,12 +1347,12 @@ exports.lockUnlockUser = async (req, res, next) => {
 
     // Check if the user is already blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.userBlock != userBlock) {
-      await performBlockOperation(lockType.user, userId, loginId, userBlock)
+      await performBlockOperation(lockType.user, userId, loginId, userBlock,betBlock)
     }
 
     // Check if the user is already bet-blocked or unblocked (prevent redundant operations)
     if (blockingUserDetail?.betBlock != betBlock) {
-      await performBlockOperation(lockType.bet, userId, loginId, betBlock)
+      await performBlockOperation(lockType.bet, userId, loginId, betBlock,userBlock)
 
     }
 
@@ -2300,7 +2300,7 @@ const updateNewUserTemp = async (newUserTemp, id) => {
   return id
 }
 
-const performBlockOperation = async (type, userId, loginId, blockStatus) => {
+const performBlockOperation = async (type, userId, loginId, blockStatus,secondStatus) => {
   let blockedItems;
 
   // Perform the block/unblock operation based on the type
@@ -2316,8 +2316,8 @@ const performBlockOperation = async (type, userId, loginId, blockStatus) => {
       const body = {
         userId: item?.id,
         loginId,
-        betBlock: type === lockType.bet ? blockStatus : null,
-        userBlock: type === lockType.user ? blockStatus : null,
+        betBlock: type === lockType.bet ? blockStatus : secondStatus,
+        userBlock: type === lockType.user ? blockStatus : secondStatus,
       };
 
       // Fetch domain details of user

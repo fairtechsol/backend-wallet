@@ -1,7 +1,7 @@
 const { Not } = require("typeorm");
 const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, } = require("../config/contants");
 const { logger } = require("../config/logger");
-const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch, getUserProfitLossTournament } = require("../services/commonService");
+const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
 const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
@@ -671,7 +671,7 @@ exports.marketAnalysis = async (req, res) => {
     }
 
     const user = await getUser({ id: userId });
-    const [matchData, tournamentData] = await Promise.all([getUserProfitLossMatch(user, matchId), getUserProfitLossTournament(user, matchId)]);
+    const matchData = await getUserProfitLossMatch(user, matchId);
     let matchDetails;
 
     try {
@@ -702,7 +702,7 @@ exports.marketAnalysis = async (req, res) => {
       }
     }
 
-    for (let item of Object.values(tournamentData)) {
+    for (let item of Object.values(matchData.match)) {
       let { betDetails, data } = item;
       let currRedisData = {}, teams;
       let currBetPL = data[betDetails?.betId + redisKeys.profitLoss + "_" + betDetails?.matchId];

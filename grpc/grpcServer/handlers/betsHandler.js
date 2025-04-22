@@ -3,7 +3,7 @@ const { __mf } = require("i18n");
 const _ = require("lodash");
 const { logger } = require("../../../config/logger");
 const { getUserDomainWithFaId } = require("../../../services/domainDataService");
-const { mergeBetsArray, settingBetsDataAtLogin, settingTournamentMatchBetsDataAtLogin } = require("../../../services/commonService");
+const { mergeBetsArray, settingBetsDataAtLogin } = require("../../../services/commonService");
 const { getBets, sessionProfitLossUserWiseData, sessionProfitLossBetsData } = require("../../grpcClient/handlers/wallet/betsHandler");
 const { userRoleConstant, redisKeys } = require("../../../config/contants");
 const { getUser } = require("../../../services/userService");
@@ -76,8 +76,7 @@ exports.getWalletLoginBetsData = async () => {
     }
     else {
       result = await settingBetsDataAtLogin(user);
-      let tournamentMatchBetData = await settingTournamentMatchBetsDataAtLogin(user);
-      result = { ...result, ...tournamentMatchBetData }
+     
     }
 
     return { data: JSON.stringify(result) };

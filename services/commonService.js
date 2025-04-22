@@ -1069,14 +1069,6 @@ exports.getFaAdminDomain = async (user, select, where = {}) => {
   return domainData;
 }
 
-/**
- * Retrieves and calculates various betting data for a user at login.
- * @param {Object} user - The user object.
- * @param {string} user.roleName - The role name of the user.
- * @param {string} user.id - The unique identifier of the user.
- * @returns {Object} - An object containing calculated betting data.
- * @throws {Error} - Throws an error if there is an issue fetching data.
- */
 exports.settingBetsDataAtLogin = async (user) => {
 
   let domainData;
@@ -1096,7 +1088,6 @@ exports.settingBetsDataAtLogin = async (user) => {
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics])}`,
-        marketType: `ne${matchBettingType.tournament}`
       })
     }, url?.domain).catch((err) => {
       logger.error({
@@ -1111,6 +1102,10 @@ exports.settingBetsDataAtLogin = async (user) => {
 
   let sessionResult = {};
   let sessionExp = {};
+
+  let matchResult = {};
+  let matchExposure = {};
+
   let betResult = { session: {}, match: {} };
 
   for (let item of bets) {
@@ -1125,10 +1120,16 @@ exports.settingBetsDataAtLogin = async (user) => {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId].push(itemData);
       }
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
+        betResult.match[item.betId].push(itemData);
+      }
     }
     else {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId] = [itemData];
+      }
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
+        betResult.match[item.betId] = [itemData];
       }
     }
   };
@@ -1149,68 +1150,7 @@ exports.settingBetsDataAtLogin = async (user) => {
   Object.keys(sessionResult)?.forEach((item) => {
     sessionResult[item] = JSON.stringify(sessionResult[item]);
   });
-  return {
-    ...sessionExp, ...sessionResult
-  }
-}
 
-/**
- * Retrieves and calculates various betting data for a user at login.
- * @param {Object} user - The user object.
- * @param {string} user.roleName - The role name of the user.
- * @param {string} user.id - The unique identifier of the user.
- * @returns {Object} - An object containing calculated betting data.
- * @throws {Error} - Throws an error if there is an issue fetching data.
- */
-exports.settingTournamentMatchBetsDataAtLogin = async (user) => {
-
-  let domainData;
-  if (user.roleName == userRoleConstant.fairGameAdmin) {
-    domainData = await this.getFaAdminDomain(user);
-  }
-  else {
-    domainData = await getUserDomainWithFaId();
-  }
-
-  let bets = [];
-
-  for (let url of domainData) {
-    let data = await getBets({
-      query: JSON.stringify({
-        deleteReason: "isNull",
-        result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-        ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-        marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
-      })
-    }, url?.domain).catch((err) => {
-      logger.error({
-        context: `error in ${url?.domain} setting bet placed redis`,
-        process: `User ID : ${user.id} `,
-        error: err.message,
-        stake: err.stack,
-      });
-    });
-    bets.push(...(data?.rows ?? []));
-  }
-  let betResult = { match: {} };
-
-  let matchResult = {};
-  let matchExposure = {};
-
-
-  for (let item of bets) {
-    let itemData = {
-      ...item,
-      winAmount: -parseFloat((parseFloat(item.winAmount) * parseFloat(item?.user?.[`${partnershipPrefixByRole[user.roleName]}Partnership`]) / 100).toFixed(2)),
-      lossAmount: -parseFloat((parseFloat(item.lossAmount) * parseFloat(item?.user?.[`${partnershipPrefixByRole[user.roleName]}Partnership`]) / 100).toFixed(2))
-    };
-    if (betResult.match[item.betId]) {
-      betResult.match[item.betId].push(itemData);
-    }
-    else {
-      betResult.match[item.betId] = [itemData];
-    }
-  };
 
   for (const placedBet of Object.keys(betResult.match)) {
     const matchId = betResult.match[placedBet]?.[0]?.matchId;
@@ -1241,10 +1181,7 @@ exports.settingTournamentMatchBetsDataAtLogin = async (user) => {
     matchExposure[`${redisKeys.userMatchExposure}${matchId}`] = parseFloat((parseFloat(matchExposure[`${redisKeys.userMatchExposure}${matchId}`] || 0) + maxLoss).toFixed(2));
 
   }
-
-  return {
-    ...matchExposure, ...matchResult
-  }
+  return { ...sessionExp, ...sessionResult, ...matchExposure, ...matchResult }
 }
 
 exports.parseRedisData = (redisKey, userRedisData) => {
@@ -1362,7 +1299,6 @@ exports.getUserExposuresGameWise = async (user) => {
   return exposures;
 }
 
-
 exports.getCasinoMatchDetailsExposure = async (user) => {
   let domainData = await this.getFaAdminDomain(user);
 
@@ -1454,6 +1390,8 @@ exports.getCasinoMatchDetailsExposure = async (user) => {
 
 exports.getUserProfitLossMatch = async (user, matchId) => {
   let sessionResult = {};
+  let matchResult = {};
+
   let domainData = await this.getFaAdminDomain(user);
   let bets = [];
   let betResult = {
@@ -1467,7 +1405,6 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
         matchId: `eq${matchId}`,
-        marketType: `ne${matchBettingType.tournament}`
       })
     }, url?.domain).catch((err) => {
       logger.error({
@@ -1488,19 +1425,19 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
     };
     if (betResult.session[item.betId + '_' + item?.user?.id] || betResult.match[item.betId + '_' + item?.user?.id]) {
       if (item.marketBetType == marketBetType.SESSION) {
-
         betResult.session[item.betId + '_' + item?.user?.id].push(itemData);
       }
-      else {
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
         betResult.match[item.betId + '_' + item?.user?.id].push(itemData);
-
       }
     }
     else {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId + '_' + item?.user?.id] = [itemData];
       }
-
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
+        betResult.match[item.betId + '_' + item?.user?.id] = [itemData];
+      }
     }
   }
   for (const placedBet of Object.keys(betResult.session)) {
@@ -1516,55 +1453,6 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
       betDetails: betResult?.session?.[placedBet]?.[0]
     };
   }
-
-  return { session: sessionResult };
-
-}
-
-exports.getUserProfitLossTournament = async (user, matchId) => {
-  let matchResult = {};
-
-  let domainData = await this.getFaAdminDomain(user);
-
-  let bets = [];
-  let betResult = {
-    session: {},
-    match: {}
-  };
-  for (let url of domainData) {
-    let data = await getBets({
-      query: JSON.stringify({
-        deleteReason: "isNull",
-        result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
-        ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-        marketType: `inArr${JSON.stringify([matchBettingType.tournament])}`,
-        matchId: `eq${matchId}`,
-      })
-    }, url?.domain).catch((err) => {
-      logger.error({
-        context: `error in ${url?.domain} setting bet placed redis`,
-        process: `User ID : ${user.id} `,
-        error: err.message,
-        stake: err.stack,
-      });
-    });
-    bets.push(...(data?.rows ?? []));
-  }
-
-  for (let item of bets) {
-    let itemData = {
-      ...item,
-      winAmount: parseFloat((parseFloat(item.winAmount)).toFixed(2)),
-      lossAmount: parseFloat((parseFloat(item.lossAmount)).toFixed(2))
-    };
-    if (betResult.match[item.betId + '_' + item?.user?.id]) {
-      betResult.match[item.betId + '_' + item?.user?.id].push(itemData);
-    }
-    else {
-      betResult.match[item.betId + '_' + item?.user?.id] = [itemData];
-    }
-  }
-
   for (const placedBet of Object.keys(betResult.match)) {
     const matchId = betResult.match[placedBet]?.[0]?.matchId;
 
@@ -1595,7 +1483,9 @@ exports.getUserProfitLossTournament = async (user, matchId) => {
 
     matchResult[placedBet] = { data: tempData, betDetails: betResult?.match?.[placedBet]?.[0] };
   }
-  return matchResult;
+
+  return { session: sessionResult, match: matchResult };
+
 }
 
 exports.updateSuperAdminData = async (response, type) => {

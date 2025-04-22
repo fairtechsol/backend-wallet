@@ -749,7 +749,6 @@ exports.calculateProfitLossSessionFancy1 = async (redisProfitLoss, betData, part
   };
 };
 
-
 /**
 * Calculates the profit or loss for a betting session.
 * @param {object} redisProfitLoss - Redis data for profit and loss.

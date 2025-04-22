@@ -7,9 +7,8 @@ const { getUserDomainWithFaId, getDomainDataByFaId } = require("./domainDataServ
 const userService = require("./userService");
 const { CardProfitLoss } = require("./cardService/cardProfitLossCalc");
 const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
-const { getTournamentBettingHandler, getMatchDetailsHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
+const { getTournamentBettingHandler } = require("../grpc/grpcClient/handlers/expert/matchHandler");
 const { updateUserBalanceData } = require("./userBalanceService");
-const { getMatchFromCache, getAllSessionRedis } = require("./redis/commonFunctions");
 
 exports.forceLogoutIfLogin = async (userId) => {
   let token = await internalRedis.hget(userId, "token");
@@ -1320,15 +1319,15 @@ exports.getUserExposuresGameWise = async (user) => {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId + '_' + item.user?.id].push(itemData);
       }
-      else if(item.marketBetType == marketBetType.MATCHBETTING){
-      betResult.match[item.betId + '_' + item.user?.id].push(itemData);
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
+        betResult.match[item.betId + '_' + item.user?.id].push(itemData);
       }
     }
     else {
       if (item.marketBetType == marketBetType.SESSION) {
         betResult.session[item.betId + '_' + item.user?.id] = [itemData];
       }
-      else if(item.marketBetType == marketBetType.MATCHBETTING){
+      else if (item.marketBetType == marketBetType.MATCHBETTING) {
         betResult.match[item.betId + '_' + item.user?.id] = [itemData];
       }
     }
@@ -1618,41 +1617,3 @@ exports.updateSuperAdminData = async (response, type) => {
     });
   }
 }
-
-exports.commonGetMatchDetailsFromRedis = async (matchId) => {
-  if (!matchId) return null;
-
-  const ids = matchId.split(",");
-  const isMultiple = ids.length > 1;
-
-  const result = [];
-  const matchNotPresent = [];
-
-  for(const id of ids) {
-    const match = await getMatchFromCache(id);
-    if (!match) {
-      matchNotPresent.push(id);
-      continue;
-    }
-
-    const sessions = Object.values(await getAllSessionRedis(id) || {});
-    match.sessionBettings = sessions;
-
-    if (match.tournament) {
-      match[matchBettingType.tournament] = match.tournament;
-    }
-
-    result.push(match);
-  }
-
-  if (matchNotPresent.length) {
-    try {
-      const apiResponse = await getMatchDetailsHandler({ matchId: matchNotPresent?.join(",") });
-      result.push(...((Array.isArray(apiResponse?.data) ? apiResponse?.data : [apiResponse?.data]) || []));
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  return { data: isMultiple ? result : result[0] || null };
-};

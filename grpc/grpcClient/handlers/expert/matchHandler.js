@@ -1,4 +1,4 @@
-const { commonGetMatchDetailsFromRedis } = require("../../../../services/commonService");
+const { commonGetMatchDetailsFromRedis } = require("../../../../services/matchCacheService");
 const { getTournamentBettingDetailsFromCache } = require("../../../../services/matchCacheService");
 const grpcReq = require("../../index");
 

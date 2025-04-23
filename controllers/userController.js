@@ -159,7 +159,7 @@ exports.createUser = async (req, res) => {
     userData = { ...userData, ...partnerships };
     let insertUser = await addUser(userData);
     if (creditRefrence) {
-      updateUser = await addUser({
+      await addUser({
         id: creator.id,
         downLevelCreditRefrence:
           creditRefrence + parseInt(creator.downLevelCreditRefrence),
@@ -188,7 +188,7 @@ exports.createUser = async (req, res) => {
       });
     }
 
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
     let insertUserBalanceData = {
       currentBalance: 0,
       userId: insertUser.id,

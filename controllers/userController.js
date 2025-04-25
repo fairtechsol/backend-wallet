@@ -7,6 +7,7 @@ const {
   oldBetFairDomain,
   uplinePartnerShipForAllUsers,
   parmanentDeletePassType,
+  partnershipPrefixByRole,
 } = require("../config/contants");
 const FileGenerate = require("../utils/generateFile");
 const {
@@ -580,57 +581,11 @@ exports.userList = async (req, res, next) => {
       );
     }
     response.count = users[1];
-    let partnershipCol = [];
-    if (userRole == userRoleConstant.agent) {
-      partnershipCol = [
-        "agPartnership",
-        "mPartnership",
-        "smPartnership",
-        "aPartnership",
-        "saPartnership",
-        "faPartnership",
-        "fwPartnership",
-      ];
-    }
-    if (userRole == userRoleConstant.master) {
-      partnershipCol = [
-        "mPartnership",
-        "smPartnership",
-        "aPartnership",
-        "saPartnership",
-        "faPartnership",
-        "fwPartnership",
-      ];
-    }
-    if (userRole == userRoleConstant.superMaster) {
-      partnershipCol = [
-        "smPartnership",
-        "aPartnership",
-        "saPartnership",
-        "faPartnership",
-        "fwPartnership",
-      ];
-    }
-    if (userRole == userRoleConstant.admin) {
-      partnershipCol = [
-        "aPartnership",
-        "saPartnership",
-        "faPartnership",
-        "fwPartnership",
-      ];
-    }
-    if (userRole == userRoleConstant.superAdmin) {
-      partnershipCol = ["saPartnership", "faPartnership", "fwPartnership"];
-    }
-    if (userRole == userRoleConstant.fairGameAdmin) {
-      partnershipCol = ["faPartnership", "fwPartnership"];
-    }
-    if (
-      userRole == userRoleConstant.fairGameWallet ||
-      userRole == userRoleConstant.expert
-    ) {
-      partnershipCol = ["fwPartnership"];
-    }
+
+    const partnershipCol = [...uplinePartnerShipForAllUsers[userRole], partnershipPrefixByRole[userRole]].map((item) => {
+      return item + "Partnership";
+    });
+    
     let usersBalance = {};
 
     let oldBetFairUserIds = [];

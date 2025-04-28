@@ -242,7 +242,7 @@ exports.setCreditReferrence = async (req, res, next) => {
         }
 
         let profitLoss = userBalance.profitLoss + previousCreditReference - amount;
-        let newUserBalanceData = await updateUserBalanceByUserId(loginUser.id, { profitLoss })
+        await updateUserBalanceByUserId(loginUser.id, { profitLoss })
 
         const userExistRedis = await hasUserInCache(loginUser.id);
 

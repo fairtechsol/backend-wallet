@@ -1,6 +1,6 @@
 const grpc = require("@grpc/grpc-js");
 const { __mf } = require("i18n");
-const { userRoleConstant, redisKeys, socketData, oldBetFairDomain, marketBetType, unDeclare } = require("../../../config/contants");
+const { userRoleConstant, redisKeys, socketData, oldBetFairDomain, marketBetType, unDeclare, sessionBettingType } = require("../../../config/contants");
 const { logger } = require("../../../config/logger");
 const { addResultFailed } = require("../../../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission } = require("../../../services/commissionService");

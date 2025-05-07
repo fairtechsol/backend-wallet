@@ -277,8 +277,6 @@ const updateBulkCommission = async (response, bulkCommission) => {
   }) || []));
 }
 
-
-
 exports.declareSessionNoResult = async (call) => {
   try {
     const { betId, score, userId, matchId } = call.request;

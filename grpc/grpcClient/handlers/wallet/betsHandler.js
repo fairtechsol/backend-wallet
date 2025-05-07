@@ -8,7 +8,6 @@ exports.getBets = async (requestData, address) => {
       "GetBets",
       requestData
     );
-
     return JSON.parse(response?.data||"{}");
   } catch (error) {
     throw error;

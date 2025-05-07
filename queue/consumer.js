@@ -4,7 +4,7 @@ const { getUserRedisData, incrementValuesRedis } = require('../services/redis/co
 const { updateUserBalanceExposure } = require('../services/userBalanceService');
 const { calculateProfitLossSession, mergeProfitLoss, calculateRacingExpertRate, parseRedisData, calculateProfitLossSessionOddEven, calculateProfitLossSessionCasinoCricket, calculateProfitLossSessionFancy1, calculateProfitLossKhado, calculateProfitLossMeter } = require('../services/commonService');
 const { logger } = require('../config/logger');
-const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData, sessionBettingType } = require('../config/contants');
+const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData, sessionBettingType, jobQueueConcurrent } = require('../config/contants');
 const { sendMessageToUser } = require('../sockets/socketManager');
 const { getUsersWithoutCount } = require('../services/userService');
 const { In } = require('typeorm');
@@ -23,7 +23,7 @@ const walletSessionBetDeleteQueue = new Queue('walletSessionBetDeleteQueue', wal
 const walletTournamentMatchBetDeleteQueue = new Queue('walletTournamentMatchBetDeleteQueue', walletRedisOption);
 const WalletMatchTournamentBetQueue = new Queue('walletMatchTournamentBetQueue', walletRedisOption);
 
-WalletMatchTournamentBetQueue.process(async function (job, done) {
+WalletMatchTournamentBetQueue.process(jobQueueConcurrent, async function (job, done) {
   let jobData = job.data;
   let userId = jobData.userId;
   try {
@@ -134,7 +134,7 @@ let calculateTournamentRateAmount = async (jobData, userId) => {
     );
 }
 
-WalletCardMatchBetQueue.process(async function (job, done) {
+WalletCardMatchBetQueue.process(jobQueueConcurrent, async function (job, done) {
   let jobData = job.data;
   let userId = jobData.userId;
   try {
@@ -225,7 +225,7 @@ let calculateCardMatchRateAmount = async (jobData, userId) => {
 
 
 
-WalletSessionBetQueue.process(async function (job, done) {
+WalletSessionBetQueue.process(jobQueueConcurrent, async function (job, done) {
   let jobData = job.data;
   let userId = jobData.userId;
   try {
@@ -451,7 +451,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
               let partnerExposure = (masterExposure || 0) - exposureDiff;
 
-              let oldProfitLossParent = JSON.parse(masterRedisData[redisName]||"{}");
+              let oldProfitLossParent = JSON.parse(masterRedisData[redisName] || "{}");
               let parentPLbetPlaced = oldProfitLossParent?.betPlaced || [];
               let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;

@@ -7,6 +7,7 @@ module.exports.unDeclare="UNDECLARE";
 module.exports.jwtSecret = process.env.JWT_SECRET || "secret";
 module.exports.parmanentDeletePassType = "parDelPassType";
 module.exports.maxAmount = 999999999;
+module.exports.jobQueueConcurrent = process.env.JOB_QUEUE_CONCURRENT || 5;
 
 
 module.exports.userRoleConstant = {

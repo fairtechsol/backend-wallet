@@ -1506,3 +1506,8 @@ exports.updateSuperAdminData = async (response, type) => {
     });
   }
 }
+
+exports.convertToBatches = (n, obj) => Array.from(
+  { length: Math.ceil(Object.keys(obj).length / n) },
+  (_, i) => Object.fromEntries(Object.entries(obj).slice(i * n, i * n + n))
+);

@@ -12,9 +12,9 @@ exports.declareMatchHandler = async (requestData, address) => {
 
     const responseData = {
       fwProfitLoss: response?.data?.fwProfitLoss,
-      faAdminCal: JSON.parse(response?.data?.faAdminCal),
-      superAdminData: JSON.parse(response?.data?.superAdminData),
-      bulkCommission: JSON.parse(response?.data?.bulkCommission),
+      faAdminCal: JSON.parse(response?.data?.faAdminCal || "{}"),
+      superAdminData: JSON.parse(response?.data?.superAdminData || "{}"),
+      bulkCommission: JSON.parse(response?.data?.bulkCommission || "{}"),
     };
 
     return responseData;
@@ -36,8 +36,8 @@ exports.unDeclareMatchHandler = async (requestData, address) => {
 
     const responseData = {
       fwProfitLoss: response?.data?.fwProfitLoss,
-      faAdminCal: JSON.parse(response?.data?.faAdminCal),
-      superAdminData: JSON.parse(response?.data?.superAdminData),
+      faAdminCal: JSON.parse(response?.data?.faAdminCal || "{}"),
+      superAdminData: JSON.parse(response?.data?.superAdminData || "{}"),
     };
 
     return responseData;

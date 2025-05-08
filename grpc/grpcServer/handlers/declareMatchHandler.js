@@ -75,7 +75,7 @@ exports.declareTournamentMatchResult = async (call) => {
         fwWalletDeduction: roundToTwoDecimals((acc?.faAdminCal?.fwWalletDeduction || 0) + parseFloat(curr?.faAdminCal?.fwWalletDeduction || 0)),
         commission: [...(acc?.faAdminCal?.commission || []), ...(curr?.faAdminCal?.commission || [])],
         userData: {
-          userData: Object.keys({ ...acc?.faAdminCal?.userData, ...curr?.faAdminCal?.userData }).reduce((res, key) => {
+          ...Object.keys({ ...acc?.faAdminCal?.userData, ...curr?.faAdminCal?.userData }).reduce((res, key) => {
             const currUser = curr?.faAdminCal?.userData?.[key] || {};
             const prevUser = acc?.faAdminCal?.userData?.[key] || {};
             const calc = (field) => roundToTwoDecimals(parseFloat(prevUser[field] || 0) + parseFloat(currUser[field] || 0));
@@ -117,7 +117,7 @@ exports.declareTournamentMatchResult = async (call) => {
     const userUpdateDBData = response?.superAdminData;
     bulkCommission.push(...(response?.faAdminCal?.commission || []));
 
-    const userData = response?.faAdminCal?.userData?.userData || {};
+    const userData = response?.faAdminCal?.userData || {};
 
     const userIds = Object.keys(userData);
     userIds.push(fgWallet.id);

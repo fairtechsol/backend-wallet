@@ -1487,7 +1487,7 @@ exports.getUserProfitLossMatch = async (user, matchId) => {
 
 }
 
-exports.updateSuperAdminData = async (response, type) => {
+exports.updateSuperAdminData = async (response, type, userData) => {
   for (let userId in response?.superAdminData) {
     if (response?.superAdminData?.[userId]?.role == userRoleConstant.user) {
       response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
@@ -1496,7 +1496,7 @@ exports.updateSuperAdminData = async (response, type) => {
       response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
       response.superAdminData[userId].balance = 0;
     }
-    updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+    userData[userId] = response?.superAdminData?.[userId];
     logger.info({
       message: `Updating user balance created by fgadmin or wallet in declare ${type}: `,
       data: {

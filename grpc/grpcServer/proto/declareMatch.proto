@@ -32,8 +32,8 @@ message DeclareTournamentRequest {
 
 message DeclareTournamentResponse {
   message Data{
-   int64 profitLoss=1;
-   int64 totalCommission=2;
+    float profitLoss=1;
+   float totalCommission=2;
   }
  
   Data data = 2;
@@ -68,7 +68,7 @@ message UnDeclareTournamentRequest {
 
 message UnDeclareTournamentResponse {
   message Data{
-   int64 profitLoss=1;
+    float profitLoss=1;
    string profitLossWallet=2;
   }
  

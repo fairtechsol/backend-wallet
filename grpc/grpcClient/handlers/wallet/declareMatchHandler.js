@@ -47,10 +47,10 @@ exports.unDeclareMatchHandler = async (requestData, address) => {
 };
 
 
-exports.declareFinalMatchHandler = async (requestData) => {
+exports.declareFinalMatchHandler = async (requestData, address) => {
   try {
     // Call the gRPC method and await the response
-    await grpcReq.wallet.callMethod(
+    await grpcReq.user(address).callMethod(
       "DeclareMatchProvider",
       "DeclareFinalMatch",
       requestData
@@ -62,10 +62,10 @@ exports.declareFinalMatchHandler = async (requestData) => {
   }
 };
 
-exports.unDeclareFinalMatchHandler = async (requestData) => {
+exports.unDeclareFinalMatchHandler = async (requestData, address) => {
   try {
     // Call the gRPC method and await the response
-    await grpcReq.wallet.callMethod(
+    await grpcReq.user(address).callMethod(
       "DeclareMatchProvider",
       "UnDeclareFinalMatch",
       requestData

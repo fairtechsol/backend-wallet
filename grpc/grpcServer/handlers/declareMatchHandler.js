@@ -144,8 +144,8 @@ exports.declareTournamentMatchResult = async (call) => {
       const parentUserRedisData = usersRedisData[parentUserId];
 
       const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-      const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-      const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+      const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+      const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
       parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + parseFloat(adminBalanceData?.profitLoss));
       parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - parseFloat(adminBalanceData?.myProfitLoss));
@@ -255,8 +255,8 @@ exports.declareTournamentMatchResult = async (call) => {
     const parentUserRedisData = usersRedisData[fgWallet.id];
 
     const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-    const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-    const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
     parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + fwProfitLoss);
     parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - fwProfitLoss);
@@ -314,7 +314,7 @@ exports.declareTournamentMatchResult = async (call) => {
       await updateUserDeclareBalanceData(updateUserBatch[i]);
     }
 
-    
+
     broadcastEvent(socketData.matchResult, {
       matchId,
       betId: matchBettingDetails?.id,
@@ -440,8 +440,8 @@ exports.unDeclareTournamentMatchResult = async (call) => {
       const parentUserRedisData = usersRedisData[parentUserId];
 
       const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-      const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-      const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+      const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+      const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
       parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss - parseFloat(adminBalanceData?.profitLoss));
       parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss + parseFloat(adminBalanceData?.myProfitLoss));
@@ -560,8 +560,8 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     const parentUserRedisData = usersRedisData[fgWallet.id];
 
     const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-    const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-    const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
     parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss - fwProfitLoss);
     parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss + fwProfitLoss);

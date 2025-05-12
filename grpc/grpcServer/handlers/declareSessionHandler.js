@@ -78,8 +78,8 @@ exports.declareSessionResult = async (call) => {
           const parentUserRedisData = usersRedisData[userId];
 
           const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-          const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-          const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+          const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+          const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
           parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + parseFloat(adminBalanceData?.profitLoss));
           parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - parseFloat(adminBalanceData?.myProfitLoss));
@@ -166,8 +166,8 @@ exports.declareSessionResult = async (call) => {
     const parentUserRedisData = await getUserRedisData(fgWallet.id);
 
     const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-    const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-    const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
     parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + fwProfitLoss);
     parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - fwProfitLoss);
@@ -312,7 +312,7 @@ exports.declareSessionNoResult = async (call) => {
           const parentUser = userBalances[userId];
           const parentUserRedisData = usersRedisData[userId];
 
-          const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+          const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
           parentUser.exposure = roundToTwoDecimals(parentExposure - adminBalanceData?.exposure);
 
@@ -375,7 +375,7 @@ exports.declareSessionNoResult = async (call) => {
     const parentUser = await getUserBalanceDataByUserId(fgWallet.id);
     const parentUserRedisData = await getUserRedisData(parentUser?.userId);
 
-    const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
     parentUser.exposure = parentExposure - exposure;
     if (parentUser.exposure < 0) {
@@ -529,8 +529,8 @@ exports.unDeclareSessionResult = async (call) => {
         const parentUserRedisData = usersRedisData[parentUser?.userId];
 
         const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-        const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-        const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+        const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+        const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
         parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss - parseFloat(adminBalanceData?.profitLoss));
         parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss + parseFloat(adminBalanceData?.myProfitLoss));
@@ -688,8 +688,8 @@ exports.unDeclareSessionResult = async (call) => {
     const parentUserRedisData = await getUserRedisData(parentUser?.userId);
 
     const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-    const parentMyProfitLoss = roundToTwoDecimals(parentUser?.myProfitLoss || parentUserRedisData.myProfitLoss);
-    const parentExposure = roundToTwoDecimals(parentUser?.exposure || parentUserRedisData?.exposure);
+    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
 
     parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss - fwProfitLoss);
     parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss + fwProfitLoss);

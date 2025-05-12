@@ -1,5 +1,5 @@
 const { Not } = require("typeorm");
-const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
@@ -465,7 +465,6 @@ exports.listRacingCountryCode = async (req, res) => {
     return ErrorResponse(err, req, res);
   }
 };
-
 
 exports.raceMarketAnalysis = async (req, res) => {
   try {

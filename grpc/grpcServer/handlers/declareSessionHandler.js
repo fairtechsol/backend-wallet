@@ -36,7 +36,7 @@ exports.declareSessionResult = async (call) => {
     const userUpdateDBData = {};
     const updatePipeline = internalRedis.pipeline();
 
-    const promises = domainData.map(async (item) => {
+    for (let item of domainData) {
       try {
         const response = await declareSessionHandler(
           {
@@ -121,10 +121,10 @@ exports.declareSessionResult = async (call) => {
           }
 
           userUpdateDBData[parentUser.userId] = {
-            profitLoss: roundToTwoDecimals(adminBalanceData?.profitLoss),
-            myProfitLoss: -roundToTwoDecimals(adminBalanceData?.myProfitLoss),
-            exposure: -adminBalanceData?.exposure,
-            totalCommission: roundToTwoDecimals(tempCommission),
+            profitLoss: roundToTwoDecimals((userUpdateDBData[parentUser.userId]?.profitLoss || 0) + parseFloat(adminBalanceData?.profitLoss)),
+            myProfitLoss: -roundToTwoDecimals(parseFloat(adminBalanceData?.myProfitLoss) + (userUpdateDBData[parentUser.userId]?.myProfitLoss || 0)),
+            exposure: -(parseFloat(adminBalanceData?.exposure) + (userUpdateDBData[parentUser.userId]?.exposure || 0)),
+            totalCommission: roundToTwoDecimals(parseFloat(tempCommission) + (userUpdateDBData[parentUser.userId]?.totalCommission || 0)),
             balance: 0
           }
 
@@ -158,9 +158,8 @@ exports.declareSessionResult = async (call) => {
         notifyTelegram(`Error at result declare session wallet side for domain ${item?.domain} on tournament ${betId} for match ${matchId} ${JSON.stringify(err || "{}")}`);
 
       }
-    });
+    }
 
-    await Promise.all(promises);
 
     const parentUser = await getUserBalanceDataByUserId(fgWallet.id);
     const parentUserRedisData = await getUserRedisData(fgWallet.id);
@@ -270,7 +269,7 @@ exports.declareSessionNoResult = async (call) => {
     const userUpdateDBData = {};
     const updatePipeline = internalRedis.pipeline();
 
-    const promises = domainData.map(async (item) => {
+    for (let item of domainData) {
       try {
         let response = await declareSessionNoResultHandler(
           {
@@ -329,7 +328,7 @@ exports.declareSessionNoResult = async (call) => {
             parentUser.exposure = 0;
           }
 
-          userUpdateDBData[parentUser.userId] = { exposure: -adminBalanceData?.exposure }
+          userUpdateDBData[parentUser.userId] = { exposure: -((userUpdateDBData[parentUser.userId]?.exposure || 0) + parseFloat(adminBalanceData?.exposure)) }
 
           logger.info({
             message: "Declare result db update for parent ",
@@ -368,9 +367,8 @@ exports.declareSessionNoResult = async (call) => {
         notifyTelegram(`Error at result declare session no result wallet side for domain ${item?.domain} on tournament ${betId} for match ${matchId} ${JSON.stringify(err || "{}")}`);
 
       }
-    });
+    };
 
-    await Promise.all(promises);
 
     const parentUser = await getUserBalanceDataByUserId(fgWallet.id);
     const parentUserRedisData = await getUserRedisData(parentUser?.userId);
@@ -561,10 +559,10 @@ exports.unDeclareSessionResult = async (call) => {
         }
 
         userUpdateDBData[parentUser.userId] = {
-          profitLoss: -roundToTwoDecimals(adminBalanceData?.profitLoss),
-          myProfitLoss: roundToTwoDecimals(adminBalanceData?.myProfitLoss),
-          exposure: adminBalanceData?.exposure,
-          totalCommission: -roundToTwoDecimals(parentCommissionData),
+          profitLoss: -roundToTwoDecimals((userUpdateDBData[parentUser.userId]?.profitLoss || 0) + parseFloat(adminBalanceData?.profitLoss)),
+          myProfitLoss: roundToTwoDecimals(parseFloat(adminBalanceData?.myProfitLoss) + (userUpdateDBData[parentUser.userId]?.myProfitLoss || 0)),
+          exposure: (parseFloat(adminBalanceData?.exposure) + (userUpdateDBData[parentUser.userId]?.exposure || 0)),
+          totalCommission: -roundToTwoDecimals(parseFloat(tempCommission) + (userUpdateDBData[parentUser.userId]?.totalCommission || 0)),
           balance: 0
         }
 

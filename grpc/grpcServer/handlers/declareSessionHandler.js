@@ -562,7 +562,7 @@ exports.unDeclareSessionResult = async (call) => {
           profitLoss: -roundToTwoDecimals((userUpdateDBData[parentUser.userId]?.profitLoss || 0) + parseFloat(adminBalanceData?.profitLoss)),
           myProfitLoss: roundToTwoDecimals(parseFloat(adminBalanceData?.myProfitLoss) + (userUpdateDBData[parentUser.userId]?.myProfitLoss || 0)),
           exposure: (parseFloat(adminBalanceData?.exposure) + (userUpdateDBData[parentUser.userId]?.exposure || 0)),
-          totalCommission: -roundToTwoDecimals(parseFloat(tempCommission) + (userUpdateDBData[parentUser.userId]?.totalCommission || 0)),
+          totalCommission: -roundToTwoDecimals(parseFloat(parentCommissionData) + (userUpdateDBData[parentUser.userId]?.totalCommission || 0)),
           balance: 0
         }
 

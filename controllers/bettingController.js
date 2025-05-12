@@ -1,4 +1,5 @@
 const { expertDomain, redisKeys, socketData } = require('../config/contants.js');
+const { commonGetMatchDetailsFromRedis } = require('../services/commonService.js');
 const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
 const { sendMessageToUser } = require('../sockets/socketManager.js');
 const { allApiRoutes, apiCall, apiMethod } = require('../utils/apiService.js');
@@ -10,10 +11,16 @@ exports.deleteMultipleBet = async (req, res) => {
         let domain = expertDomain;
         let matchExist = {};
         try {
-            matchExist = await apiCall(
-                apiMethod.get,
-                domain + allApiRoutes.MATCHES.matchDetails + matchId
-            );
+            const redisMatch = await commonGetMatchDetailsFromRedis(matchId);
+            if (redisMatch?.data) {
+                matchExist = redisMatch;
+            }
+            else {
+                matchExist = await apiCall(
+                    apiMethod.get,
+                    domain + allApiRoutes.MATCHES.matchDetails + matchId
+                );
+            }
             if (!matchExist) {
                 return ErrorResponse(
                     { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
@@ -77,10 +84,16 @@ exports.deleteMultipleBetForOther = async (req, res) => {
         let domain = expertDomain;
         let matchExist = {};
         try {
-            matchExist = await apiCall(
-                apiMethod.get,
-                domain + allApiRoutes.MATCHES.otherMatchDetails + matchId
-            );
+            const redisMatch = await commonGetMatchDetailsFromRedis(matchId);
+            if (redisMatch?.data) {
+                matchExist = redisMatch;
+            }
+            else {
+                matchExist = await apiCall(
+                    apiMethod.get,
+                    domain + allApiRoutes.MATCHES.otherMatchDetails + matchId
+                );
+            }
         } catch (error) {
             throw error?.response?.data;
         }

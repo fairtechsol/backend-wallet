@@ -123,7 +123,7 @@ exports.declareTournamentMatchResult = async (call) => {
     userIds.push(fgWallet.id);
 
     const [users, userBalances, usersRedisData] = await Promise.all([
-      getUsersWithoutCount({ id: In(userIds) }, ["matchComissionType", "matchCommission", "fwPartnership"])
+      getUsersWithoutCount({ id: In(userIds) }, ["matchComissionType", "matchCommission", "fwPartnership","id"])
         .then(arr => arr.reduce((m, u) => (m[u.id] = u, m), {})),
       getUserBalanceDataByUserIds(userIds)
         .then(arr => arr.reduce((m, b) => (m[b.userId] = b, m), {})),
@@ -156,7 +156,7 @@ exports.declareTournamentMatchResult = async (call) => {
 
 
       bulkCommissionEntries?.forEach(([key, item]) => {
-        if (userCommission.matchComissionType == matchComissionTypeConstant.entryWise) {
+        if (userCommission?.matchComissionType == matchComissionTypeConstant.entryWise) {
           item?.filter((items) => items?.superParent == parentUserId)?.forEach((items) => {
 
             const commissionAmount = Math.abs(roundToTwoDecimals((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100) * (parseFloat(userCommission.fwPartnership) / 100)));

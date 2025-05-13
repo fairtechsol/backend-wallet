@@ -1,5 +1,5 @@
 const Joi = require('joi')
-const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex } = require('../config/contants')
+const { userRoleConstant, blockType, matchComissionTypeConstant, passwordRegex, maxAmount } = require('../config/contants')
 
 
 module.exports.CreateUser = Joi.object({
@@ -14,8 +14,8 @@ module.exports.CreateUser = Joi.object({
   city: Joi.string().max(255).trim().allow(""),
   roleName: Joi.string().valid(...Object.values(userRoleConstant)).required(),
   myPartnership: Joi.number().required(),
-  creditRefrence: Joi.number(),
-  exposureLimit: Joi.number(),
+  creditRefrence: Joi.number().max(maxAmount),
+  exposureLimit: Joi.number().max(maxAmount),
   maxBetLimit: Joi.number(),
   minBetLimit: Joi.number(),
   confirmPassword: Joi.string().required().valid(Joi.ref('password')).label('Confirm Password').messages({
@@ -88,14 +88,14 @@ module.exports.updateUserValid = Joi.object({
 
 module.exports.SetExposureLimitValid = Joi.object({
   //matchComissionType,matchCommission,id,createBy
-  amount: Joi.number().required(),
+  amount: Joi.number().max(maxAmount).required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
 })
 
 module.exports.SetCreditReference = Joi.object({
   //matchComissionType,matchCommission,id,createBy
-  amount: Joi.number().required(),
+  amount: Joi.number().max(maxAmount).required(),
   transactionPassword: Joi.string().required(),
   userId: Joi.string().guid({ version: 'uuidv4' }).required(),
   remark: Joi.string().trim().allow("")

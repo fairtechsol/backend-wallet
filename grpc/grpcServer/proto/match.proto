@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package grpc.matchProvider;
+
+// ============================
+// Messages for Match Creation
+// ============================
+
+message AddMatchRequest {
+  string matchType = 1;
+  string competitionId = 2;
+  string competitionName = 3;
+  string title = 4;
+  string marketId = 5;
+  string eventId = 6;
+  string teamA = 7;
+  string teamB = 8;
+  string teamC = 9;
+  string startAt = 10;
+  string id = 11;
+  string createdAt = 12;
+  bool isTv = 13;
+  bool isFancy = 14;
+  bool isBookmaker = 15;
+}
+
+message AddMatchResponse {}
+
+message AddRaceMatchRequest {
+  string matchType = 1;
+  string title = 2;
+  string marketId = 3;
+  string createBy = 4;
+  string eventId = 5;
+  string startAt = 6;
+  string id = 7;
+  string venue = 8;
+  string raceType = 9;
+  string countryCode = 10;
+  string createdAt = 11;
+}
+
+message AddRaceMatchResponse {}
+
+
+// ============================
+// Messages for Card Result APIs
+// ============================
+
+// Get card results list
+message GetCardResultRequest {
+  string query = 1; // You can encode query as JSON string if needed
+}
+
+message GetCardResultResponse {
+  string data = 1; // JSON stringified result list
+}
+
+// Get card result details by ID
+message GetCardResultDetailRequest {
+  string id = 1;
+}
+
+message GetCardResultDetailResponse {
+  string data = 1; // JSON stringified result detail
+}
+
+// Declare virtual casino result
+message DeclareVirtualCasinoResultRequest {
+  string data=1;
+}
+
+message DeclareVirtualCasinoResultResponse {
+}
+
+
+// ============================
+// MatchProvider Service
+// ============================
+
+service MatchProvider {
+  rpc AddMatch(AddMatchRequest) returns (AddMatchResponse);
+  rpc AddRaceMatch(AddRaceMatchRequest) returns (AddRaceMatchResponse);
+
+  // New card result methods
+  rpc GetCardResult(GetCardResultRequest) returns (GetCardResultResponse);
+  rpc GetCardResultDetail(GetCardResultDetailRequest) returns (GetCardResultDetailResponse);
+  rpc DeclareVirtualCasinoResult(DeclareVirtualCasinoResultRequest) returns (DeclareVirtualCasinoResultResponse);
+}

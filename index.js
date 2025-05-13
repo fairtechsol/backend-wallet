@@ -13,9 +13,9 @@ const i18n = require("./config/i18n");
 const setI18Language = require("./middleware/setI18Language.js");
 const { logger } = require("./config/logger.js");
 const helmet = require('helmet');
-const { WalletMatchBetQueue } = require("./queue/consumer.js");
-const encryptDecryptData = require("./middleware/encryptDecryptData.js");
 const compression = require('compression');
+require("./grpc/index");
+require("./queue/consumer.js");
 
 const allowSubdomainsAndLocalhost = (origin, callback) => {
   // Check if the request comes from the specified domain or localhost

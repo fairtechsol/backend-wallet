@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package grpc.declareSessionProvider;
+
+message DeclareSessionRequest {
+  string betId = 1; 
+  string score = 2;
+  
+  message SessionDetail {
+    string activeStatus = 1;
+    string id = 2;
+    string matchId = 3;
+    string selectionId = 4;
+    string type = 5;
+  }
+  SessionDetail sessionDetails = 4;
+  string userId = 5;
+  string matchId = 6;
+  
+  message Match{
+    string stopAt = 1;
+    string id = 2;
+    string title = 3;
+    string startAt = 4;
+  }
+  Match match = 8;
+}
+
+message DeclareSessionResponse {
+ message Data{
+  float profitLoss=1;
+  float totalCommission=2;
+ }
+
+ Data data = 2;
+}
+
+message DeclareSessionNoResultRequest {
+  string betId = 1; 
+  string score = 2;
+  string userId = 3;
+  string matchId = 4;
+}
+
+message DeclareSessionNoResultResponse {}
+
+message UnDeclareSessionRequest {
+  string betId = 1;   
+  message SessionDetail {
+    string activeStatus = 1;
+    string id = 2;
+    string matchId = 3;
+    string selectionId = 4;
+    string type = 5;
+  }
+  SessionDetail sessionDetails = 3;
+  string userId = 4;
+  string matchId = 5;
+}
+
+message UnDeclareSessionResponse {
+  message Data{
+    float profitLoss=1;
+   string profitLossObj=2;
+  }
+ 
+  Data data = 2;
+}
+
+service DeclareSessionProvider {
+  rpc DeclareSession(DeclareSessionRequest) returns (DeclareSessionResponse);
+  rpc DeclareSessionNoResult(DeclareSessionNoResultRequest) returns (DeclareSessionNoResultResponse);
+  rpc UnDeclareSession(UnDeclareSessionRequest) returns (UnDeclareSessionResponse);
+}

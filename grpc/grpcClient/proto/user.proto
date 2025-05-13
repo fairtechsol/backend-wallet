@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package grpc.userProvider;
+
+// Message for creating a new user
+message CreateExpertRequest {
+  string userName = 1;
+  string fullName = 2;
+  string password = 3;
+  string confirmPassword = 4;
+  string phoneNumber = 5;
+  string city = 6;
+  string remark = 7;
+
+  string createBy = 8; // ID of the admin/user who created this user
+
+  // Privileges
+  bool allPrivilege = 9;
+  bool addMatchPrivilege = 10;
+  bool betFairMatchPrivilege = 11;
+  bool bookmakerMatchPrivilege = 12;
+  bool sessionMatchPrivilege = 13;
+}
+
+message CreateExpertResponse {}
+
+// Message for updating an expert
+message UpdateExpertRequest {
+  string id = 1;
+  string fullName = 2;
+  string phoneNumber = 3;
+  string city = 4;
+  string remark = 5;
+  string createBy = 6;
+
+  // Privileges
+  bool allPrivilege = 7;
+  bool addMatchPrivilege = 8;
+  bool betFairMatchPrivilege = 9;
+  bool bookmakerMatchPrivilege = 10;
+  bool sessionMatchPrivilege = 11;
+}
+
+message UpdateExpertResponse {}
+
+message CreateSuperAdminRequest {
+    string data = 1;
+  }
+  
+message CreateSuperAdminResponse {}
+
+message UpdateSuperAdminRequest {
+    string data = 1;
+  }
+  
+  // Response after creating a user
+message UpdateSuperAdminResponse {}
+
+message ChangePasswordRequest {
+    string password = 1;
+    string userId = 2;
+  }
+  
+  // Response after creating a user
+message ChangePasswordResponse {}
+
+// Message for setting exposure limit
+message SetExposureLimitRequest {
+  string userId = 1;
+  float exposureLimit = 2;
+}
+
+message SetExposureLimitResponse {}
+
+// Message for setting credit reference
+message SetCreditReferenceRequest {
+  string userId = 1;
+  float amount = 2;
+  string remark = 3;
+}
+
+message SetCreditReferenceResponse {}
+
+// Message for updating user balance
+message UpdateUserBalanceRequest {
+    string userId = 1;
+    float amount = 2;
+    string transactionType = 3;
+    string remark = 4;
+}
+
+message UpdateUserBalanceResponse {}
+
+// Message for locking/unlocking a super admin
+message LockUnlockSuperAdminRequest {
+    string userId = 1;
+    string loginId = 2;
+    bool betBlock = 3;
+    bool userBlock = 4;
+}
+
+message LockUnlockSuperAdminResponse {}
+
+// Message for getting user list
+message GetUserListRequest {
+    string query = 1;
+}
+
+message GetUserListResponse {
+    string data = 1;
+}
+
+// Message for getting total user list balance
+message GetTotalUserListBalanceRequest {
+    string query = 1;
+}
+
+message GetTotalUserListBalanceResponse {
+    string data = 1;
+}
+
+// Message for getting user balance sum
+message UserBalanceSumRequest {
+    string roleName = 1;
+    string userId = 2;
+}
+
+message UserBalanceSumResponse {
+    string data = 1;
+}
+
+// Message for getting user profit loss
+message GetUserProfitLossRequest {
+    string userIds = 1;
+    string matchId = 2;
+}
+
+message GetUserProfitLossResponse {
+    string data = 1;
+}
+
+// Message for deleting a user
+message DeleteUserRequest {
+    string roleName = 1;
+    string userId = 2;
+}
+
+message DeleteUserResponse {}
+
+// Message for checking user balance before deletion
+message CheckUserBalanceRequest {
+    string roleName = 1;
+    string userId = 2;
+}
+
+message CheckUserBalanceResponse {}
+
+// Message for user search
+message UserSearchRequest {
+    string id = 1;
+    string roleName = 2;
+    string userName = 3;
+    bool isUser = 4;
+}
+
+message UserSearchResponse {
+    string data = 1;
+}
+
+// Message for getting expert list
+message ExpertListRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+  string loginId = 3;
+  string searchBy = 4;
+  string keyword = 5;
+}
+
+message ExpertListResponse {
+  string data = 1;
+}
+
+// Message for notifications
+message NotificationRequest {
+  string query = 1;
+}
+
+message NotificationResponse {
+  string data = 1;
+}
+
+
+// Message for lock/unlock expert
+message LockUnlockExpertRequest {
+  string userId = 1;
+  bool userBlock = 2;
+  string blockBy = 3;
+}
+
+message LockUnlockExpertResponse {}
+
+message ChangePasswordExpertRequest {
+  string password = 1;
+  string userId = 2;
+}
+
+// Response after creating a user
+message ChangePasswordExpertResponse {}
+
+// Request message for checking if a user exists
+message IsUserExistRequest {
+  string userName = 1;
+}
+
+// Response message for checking if a user exists
+message IsUserExistResponse {
+  bool isExist = 1;
+}
+
+// Service for user management
+service UserService {
+  rpc CreateExpert(CreateExpertRequest) returns (CreateExpertResponse);
+  rpc UpdateExpert(UpdateExpertRequest) returns (UpdateExpertResponse);
+  rpc CreateSuperAdmin(CreateSuperAdminRequest) returns (CreateSuperAdminResponse);
+  rpc UpdateSuperAdmin(UpdateSuperAdminRequest) returns (UpdateSuperAdminResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc SetExposureLimit(SetExposureLimitRequest) returns (SetExposureLimitResponse);
+  rpc SetCreditReference(SetCreditReferenceRequest) returns (SetCreditReferenceResponse);
+  rpc UpdateUserBalance(UpdateUserBalanceRequest) returns (UpdateUserBalanceResponse);
+  rpc LockUnlockSuperAdmin(LockUnlockSuperAdminRequest) returns (LockUnlockSuperAdminResponse);
+  rpc GetUserList(GetUserListRequest) returns (GetUserListResponse);
+  rpc GetTotalUserListBalance(GetTotalUserListBalanceRequest) returns (GetTotalUserListBalanceResponse);
+  rpc UserBalanceSum(UserBalanceSumRequest) returns (UserBalanceSumResponse);
+  rpc GetUserProfitLoss(GetUserProfitLossRequest) returns (GetUserProfitLossResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc CheckUserBalance(CheckUserBalanceRequest) returns (CheckUserBalanceResponse);
+  rpc UserSearch(UserSearchRequest) returns (UserSearchResponse);
+  rpc GetExpertList(ExpertListRequest) returns (ExpertListResponse);
+  rpc GetNotification(NotificationRequest) returns (NotificationResponse);
+  rpc LockUnlockExpert(LockUnlockExpertRequest) returns (LockUnlockExpertResponse);
+  rpc ChangePasswordExpert(ChangePasswordExpertRequest) returns (ChangePasswordExpertResponse);
+  rpc IsUserExist(IsUserExistRequest) returns (IsUserExistResponse);
+}

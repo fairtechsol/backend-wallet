@@ -164,7 +164,7 @@ exports.declareVirtualCasinoResult = async (call) => {
     // Handle any errors and return an error response
     throw {
       code: grpc.status.INTERNAL,
-      message: err?.message || __mf("internalServerError"),
+      message: error?.message || __mf("internalServerError"),
     };
   }
 }

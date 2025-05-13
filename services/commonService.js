@@ -1496,7 +1496,12 @@ exports.updateSuperAdminData = async (response, type, userData) => {
       response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
       response.superAdminData[userId].balance = 0;
     }
-    userData[userId] = response?.superAdminData?.[userId];
+    if (userData) {
+      userData[userId] = response?.superAdminData?.[userId];
+    }
+    else {
+      updateUserBalanceData(userId, response?.superAdminData?.[userId]);
+    }
     logger.info({
       message: `Updating user balance created by fgadmin or wallet in declare ${type}: `,
       data: {

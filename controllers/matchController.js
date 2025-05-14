@@ -610,7 +610,7 @@ exports.userEventWiseExposure = async (req, res) => {
       let domainData = await getFaAdminDomain(user);
 
       for (let url of domainData) {
-        let data = await virtualEventWiseExposureHandler({ roleName: user.roleName, userId: user.id }).catch((err) => {
+        let data = await virtualEventWiseExposureHandler({ roleName: user.roleName, userId: user.id }, url?.domain).catch((err) => {
           logger.error({
             context: `error in ${url?.domain} user wise exposure`,
             process: `User ID : ${user.id} `,

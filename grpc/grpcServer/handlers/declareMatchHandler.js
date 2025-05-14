@@ -600,7 +600,7 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     });
 
     if (
-      parentUserRedisData?.exposure
+      parentUserRedisData
     ) {
 
       let settingRedisDataObj = { ...profitLossDataWallet };

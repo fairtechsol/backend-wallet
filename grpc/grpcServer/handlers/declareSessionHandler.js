@@ -207,7 +207,7 @@ exports.declareSessionResult = async (call) => {
         parentUser,
       },
     });
-    if (parentUserRedisData?.exposure) {
+    if (parentUserRedisData) {
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
@@ -401,7 +401,7 @@ exports.declareSessionNoResult = async (call) => {
       },
     });
 
-    if (parentUserRedisData?.exposure) {
+    if (parentUserRedisData) {
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
         .hincrbyfloat(parentUser.userId, `${redisKeys.userSessionExposure}${matchId}`, -exposure)

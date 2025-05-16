@@ -334,7 +334,6 @@ const checkTransactionPassword = async (userId, oldTransactionPass) => {
   return bcrypt.compareSync(oldTransactionPass, user.transPassword);
 };
 
-// API endpoint for changing password
 exports.changePassword = async (req, res, next) => {
   try {
     // Destructure request body
@@ -1250,7 +1249,6 @@ exports.setCreditReferrence = async (req, res, next) => {
   }
 };
 
-// Controller function for locking/unlocking a user
 exports.lockUnlockUser = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
@@ -1321,7 +1319,6 @@ exports.lockUnlockUser = async (req, res, next) => {
     return ErrorResponse(error, req, res);
   }
 };
-
 
 exports.generateTransactionPassword = async (req, res) => {
   const { id } = req.user;

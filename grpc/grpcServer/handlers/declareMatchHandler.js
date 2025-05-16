@@ -123,7 +123,7 @@ exports.declareTournamentMatchResult = async (call) => {
     userIds.push(fgWallet.id);
 
     const [users, userBalances, usersRedisData] = await Promise.all([
-      getUsersWithoutCount({ id: In(userIds) }, ["matchComissionType", "matchCommission", "fwPartnership","id"])
+      getUsersWithoutCount({ id: In(userIds) }, ["matchComissionType", "matchCommission", "fwPartnership", "id"])
         .then(arr => arr.reduce((m, u) => (m[u.id] = u, m), {})),
       getUserBalanceDataByUserIds(userIds)
         .then(arr => arr.reduce((m, b) => (m[b.userId] = b, m), {})),
@@ -236,7 +236,7 @@ exports.declareTournamentMatchResult = async (call) => {
         },
       });
 
-      if (parentUserRedisData) {
+      if (Object.keys(parentUserRedisData || {}).length) {
         // queue Redis increments & key deletion
         updatePipeline
           .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
@@ -297,7 +297,7 @@ exports.declareTournamentMatchResult = async (call) => {
         parentUser,
       },
     });
-    if (parentUserRedisData) {
+    if (Object.keys(parentUserRedisData || {}).length) {
       updatePipeline
         .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
@@ -515,7 +515,7 @@ exports.unDeclareTournamentMatchResult = async (call) => {
         settingRedisDataObj[items] = JSON.stringify(settingRedisDataObj[items]);
       });
 
-      if (parentUserRedisData) {
+      if (Object.keys(parentUserRedisData||{}).length) {
         updatePipeline
           .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
           .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
@@ -600,7 +600,7 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     });
 
     if (
-      parentUserRedisData
+      Object.keys(parentUserRedisData||{}).length
     ) {
 
       let settingRedisDataObj = { ...profitLossDataWallet };

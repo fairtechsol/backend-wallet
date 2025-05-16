@@ -128,7 +128,7 @@ exports.declareSessionResult = async (call) => {
             balance: 0
           }
 
-          if (parentUserRedisData) {
+          if (Object.keys(parentUserRedisData || {}).length) {
             updatePipeline
               .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
               .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
@@ -207,7 +207,7 @@ exports.declareSessionResult = async (call) => {
         parentUser,
       },
     });
-    if (parentUserRedisData) {
+    if (Object.keys(parentUserRedisData || {}).length) {
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
@@ -338,7 +338,7 @@ exports.declareSessionNoResult = async (call) => {
             },
           });
 
-          if (parentUserRedisData) {
+          if (Object.keys(parentUserRedisData || {}).length) {
             updatePipeline
               .hincrbyfloat(userId, 'exposure', -adminBalanceData?.exposure)
               .hincrbyfloat(userId, `${redisKeys.userSessionExposure}${matchId}`, -adminBalanceData?.exposure)
@@ -401,7 +401,7 @@ exports.declareSessionNoResult = async (call) => {
       },
     });
 
-    if (parentUserRedisData) {
+    if (Object.keys(parentUserRedisData || {}).length) {
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
         .hincrbyfloat(parentUser.userId, `${redisKeys.userSessionExposure}${matchId}`, -exposure)
@@ -623,7 +623,7 @@ exports.unDeclareSessionResult = async (call) => {
           } : {}),
         };
         if (
-          parentUserRedisData
+          Object.keys(parentUserRedisData||{}).length
         ) {
           updatePipeline
             .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
@@ -738,7 +738,7 @@ exports.unDeclareSessionResult = async (call) => {
       } : {}),
     };
     if (
-      parentUserRedisData
+      Object.keys(parentUserRedisData || {}).length
     ) {
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))

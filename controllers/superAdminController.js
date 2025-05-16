@@ -766,7 +766,6 @@ exports.updateUserBalance = async (req, res) => {
   }
 };
 
-// Controller function for locking/unlocking a super admin
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object

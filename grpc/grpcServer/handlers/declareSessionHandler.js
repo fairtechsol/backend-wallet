@@ -59,7 +59,7 @@ exports.declareSessionResult = async (call) => {
         const userIdsData = Object.keys(userData);
 
         const [users, userBalances, usersRedisData] = await Promise.all([
-          getUsersWithoutCount({ id: In(userIdsData) }, ["sessionCommission", "fwPartnership"])
+          getUsersWithoutCount({ id: In(userIdsData) }, ["sessionCommission", "fwPartnership", "id"])
             .then(arr => arr.reduce((m, u) => (m[u.id] = u, m), {})),
           getUserBalanceDataByUserIds(userIdsData)
             .then(arr => arr.reduce((m, b) => (m[b.userId] = b, m), {})),
@@ -174,8 +174,8 @@ exports.declareSessionResult = async (call) => {
 
 
     const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
-    const commissionWallet = await bulkCommission.filter((item) => allChildUsers.find((items) => items.id == item.parentId) != undefined)?.reduce((prev, curr) => {
-      return roundToTwoDecimals(prev + (curr.commissionAmount * curr.partnerShip / 100))
+      const commissionWallet = await bulkCommission.filter((item) => !!allChildUsers.find((items) => items.id == item.parentId))?.reduce((prev, curr) => {
+      return roundToTwoDecimals(prev + (curr.commissionAmount * curr.partnerShip / 100));
     }, 0);
     parentUser.totalCommission += commissionWallet || 0;
 

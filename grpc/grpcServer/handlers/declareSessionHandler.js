@@ -1,6 +1,6 @@
 const grpc = require("@grpc/grpc-js");
 const { __mf } = require("i18n");
-const { userRoleConstant, redisKeys, socketData, oldBetFairDomain, marketBetType, unDeclare, sessionBettingType } = require("../../../config/contants");
+const { userRoleConstant, redisKeys, socketData, oldBetFairDomain, marketBetType, unDeclare, sessionBettingType, oddsSessionBetType } = require("../../../config/contants");
 const { logger } = require("../../../config/logger");
 const { addResultFailed } = require("../../../services/betService");
 const { insertCommissions, getCombinedCommission, deleteCommission } = require("../../../services/commissionService");
@@ -129,12 +129,14 @@ exports.declareSessionResult = async (call) => {
           }
 
           if (Object.keys(parentUserRedisData || {}).length) {
+            const baseKey = `session:${userId}:${matchId}:${betId}`
+
             updatePipeline
               .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
               .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
               .hincrbyfloat(userId, 'exposure', -adminBalanceData?.exposure)
               .hincrbyfloat(userId, `${redisKeys.userSessionExposure}${matchId}`, -adminBalanceData?.exposure)
-              .hdel(userId, `${betId}${redisKeys.profitLoss}`);
+              .del(`${baseKey}:profitLoss`, `${baseKey}:lowerLimitOdds`, `${baseKey}:upperLimitOdds`, `${baseKey}:totalBet`, `${baseKey}:maxLoss`);
 
           }
 
@@ -174,7 +176,7 @@ exports.declareSessionResult = async (call) => {
 
 
     const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
-      const commissionWallet = await bulkCommission.filter((item) => !!allChildUsers.find((items) => items.id == item.parentId))?.reduce((prev, curr) => {
+    const commissionWallet = await bulkCommission.filter((item) => !!allChildUsers.find((items) => items.id == item.parentId))?.reduce((prev, curr) => {
       return roundToTwoDecimals(prev + (curr.commissionAmount * curr.partnerShip / 100));
     }, 0);
     parentUser.totalCommission += commissionWallet || 0;
@@ -208,12 +210,14 @@ exports.declareSessionResult = async (call) => {
       },
     });
     if (Object.keys(parentUserRedisData || {}).length) {
+      const baseKey = `session:${parentUser.userId}:${matchId}:${betId}`
+
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
         .hincrbyfloat(parentUser.userId, `${redisKeys.userSessionExposure}${matchId}`, -exposure)
-        .hdel(parentUser.userId, `${betId}${redisKeys.profitLoss}`);
+        .del(`${baseKey}:profitLoss`, `${baseKey}:lowerLimitOdds`, `${baseKey}:upperLimitOdds`, `${baseKey}:totalBet`, `${baseKey}:maxLoss`);
 
     }
 
@@ -339,10 +343,13 @@ exports.declareSessionNoResult = async (call) => {
           });
 
           if (Object.keys(parentUserRedisData || {}).length) {
+            const baseKey = `session:${userId}:${matchId}:${betId}`
+
             updatePipeline
               .hincrbyfloat(userId, 'exposure', -adminBalanceData?.exposure)
               .hincrbyfloat(userId, `${redisKeys.userSessionExposure}${matchId}`, -adminBalanceData?.exposure)
-              .hdel(userId, `${betId}${redisKeys.profitLoss}`);
+              .del(`${baseKey}:profitLoss`, `${baseKey}:lowerLimitOdds`, `${baseKey}:upperLimitOdds`, `${baseKey}:totalBet`, `${baseKey}:maxLoss`);
+            ;
 
           }
 
@@ -402,11 +409,11 @@ exports.declareSessionNoResult = async (call) => {
     });
 
     if (Object.keys(parentUserRedisData || {}).length) {
+      const baseKey = `session:${parentUser.userId}:${matchId}:${betId}`
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
         .hincrbyfloat(parentUser.userId, `${redisKeys.userSessionExposure}${matchId}`, -exposure)
-        .hdel(parentUser.userId, `${betId}${redisKeys.profitLoss}`);
-
+        .del(`${baseKey}:profitLoss`, `${baseKey}:lowerLimitOdds`, `${baseKey}:upperLimitOdds`, `${baseKey}:totalBet`, `${baseKey}:maxLoss`);
     }
 
     await updatePipeline.exec();
@@ -615,27 +622,30 @@ exports.unDeclareSessionResult = async (call) => {
           }
         }
 
-        let parentRedisUpdateObj = {
-          ...(profitLossDataAdmin[parentUser.userId] ? {
-            [betId + redisKeys.profitLoss]: JSON.stringify(
-              profitLossDataAdmin[parentUser.userId]
-            )
-          } : {}),
-        };
+        let parentRedisUpdateObj = profitLossDataAdmin[parentUser.userId] || {};
         if (
-          Object.keys(parentUserRedisData||{}).length
+          Object.keys(parentUserRedisData || {}).length
         ) {
+          const baseKey = `session:${userId}:${matchId}:${betId}`;
+
           updatePipeline
             .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
             .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
             .hincrbyfloat(userId, 'exposure', adminBalanceData?.exposure)
             .hincrbyfloat(userId, `${redisKeys.userSessionExposure}${matchId}`, adminBalanceData?.exposure)
-            .hmset(userId, parentRedisUpdateObj);
+            .hset(`${baseKey}:profitLoss`, oddsSessionBetType.includes(sessionDetails?.type) ? parentRedisUpdateObj?.betPlaced?.reduce((acc, item) => {
+              acc[item?.odds] = item?.profitLoss
+              return acc
+            }, {}) : parentRedisUpdateObj?.betPlaced)
+            .set(`${baseKey}:lowerLimitOdds`, parentRedisUpdateObj?.lowerLimitOdds)
+            .set(`${baseKey}:upperLimitOdds`, parentRedisUpdateObj?.upperLimitOdds)
+            .set(`${baseKey}:totalBet`, parentRedisUpdateObj?.totalBet)
+            .set(`${baseKey}:maxLoss`, parentRedisUpdateObj?.maxLoss);
         }
         sendMessageToUser(parentUser.userId, socketData.sessionResultUnDeclare, {
           betId,
           matchId,
-          parentRedisUpdateObj
+          parentRedisUpdateObj: { [betId + redisKeys.profitLoss]: JSON.stringify(parentRedisUpdateObj) }
         });
 
         exposure += parseFloat(adminBalanceData?.["exposure"]);
@@ -730,27 +740,30 @@ exports.unDeclareSessionResult = async (call) => {
     });
 
 
-    let parentRedisUpdateObj = {
-      ...(profitLossDataWallet ? {
-        [betId + redisKeys.profitLoss]: JSON.stringify(
-          profitLossDataWallet
-        )
-      } : {}),
-    };
+    let parentRedisUpdateObj = profitLossDataWallet || {};
     if (
       Object.keys(parentUserRedisData || {}).length
     ) {
+      const baseKey = `session:${parentUser.userId}:${matchId}:${betId}`;
+
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'myProfitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'exposure', exposure)
         .hincrbyfloat(parentUser.userId, `${redisKeys.userSessionExposure}${matchId}`, exposure)
-        .hmset(parentUser.userId, parentRedisUpdateObj);
+        .hset(`${baseKey}:profitLoss`, oddsSessionBetType.includes(sessionDetails?.type) ? parentRedisUpdateObj?.betPlaced?.reduce((acc, item) => {
+          acc[item?.odds] = item?.profitLoss
+          return acc
+        }, {}) : parentRedisUpdateObj?.betPlaced)
+        .set(`${baseKey}:lowerLimitOdds`, parentRedisUpdateObj?.lowerLimitOdds)
+        .set(`${baseKey}:upperLimitOdds`, parentRedisUpdateObj?.upperLimitOdds)
+        .set(`${baseKey}:totalBet`, parentRedisUpdateObj?.totalBet)
+        .set(`${baseKey}:maxLoss`, parentRedisUpdateObj?.maxLoss);
     }
     sendMessageToUser(parentUser.userId, socketData.sessionResultUnDeclare, {
       betId,
       matchId,
-      parentRedisUpdateObj
+      parentRedisUpdateObj: { [betId + redisKeys.profitLoss]: JSON.stringify(parentRedisUpdateObj) }
     });
 
     await updatePipeline.exec();

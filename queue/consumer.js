@@ -1,14 +1,15 @@
 const Queue = require('bee-queue');
 const lodash = require('lodash');
-const { getUserRedisData, incrementValuesRedis } = require('../services/redis/commonFunctions');
+const { getUserRedisData, incrementValuesRedis, hasUserInCache, getUserSessionPL, setUserPLSession, setUserPLSessionOddEven, getUserSessionAllPL, setProfitLossData } = require('../services/redis/commonFunctions');
 const { updateUserBalanceExposure } = require('../services/userBalanceService');
 const { calculateProfitLossSession, mergeProfitLoss, calculateRacingExpertRate, parseRedisData, calculateProfitLossSessionOddEven, calculateProfitLossSessionCasinoCricket, calculateProfitLossSessionFancy1, calculateProfitLossKhado, calculateProfitLossMeter } = require('../services/commonService');
 const { logger } = require('../config/logger');
-const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData, sessionBettingType, jobQueueConcurrent } = require('../config/contants');
+const { redisKeys, partnershipPrefixByRole, userRoleConstant, socketData, sessionBettingType, jobQueueConcurrent, oddsSessionBetType } = require('../config/contants');
 const { sendMessageToUser } = require('../sockets/socketManager');
 const { getUsersWithoutCount } = require('../services/userService');
 const { In } = require('typeorm');
 const { CardProfitLoss } = require('../services/cardService/cardProfitLossCalc');
+const { roundToTwoDecimals } = require('../utils/mathUtils');
 const walletRedisOption = {
   removeOnSuccess: true,
   redis: {
@@ -58,13 +59,7 @@ let calculateTournamentRateAmount = async (jobData, userId) => {
     }
   });
 
-  const usersData = await getUsersWithoutCount({
-    id: In(partnerShipIds)
-  }, ["id"]);
-
-  const userIds = usersData?.map((item) => item.id);
-
-  updateUserBalanceExposure(userIds, {
+  updateUserBalanceExposure(partnerShipIds, {
     exposure: -userOldExposure + userCurrentExposure
   });
 
@@ -259,13 +254,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
     }
   });
 
-  const usersData = await getUsersWithoutCount({
-    id: In(partnerShipIds)
-  }, ["id"]);
-
-  const userIds = usersData?.map((item) => item.id);
-
-  updateUserBalanceExposure(userIds, {
+  updateUserBalanceExposure(partnerShipIds, {
     exposure: partnerSessionExposure
   });
 
@@ -286,25 +275,11 @@ const calculateSessionRateAmount = async (jobData, userId) => {
 
         try {
           // Get user data from Redis or balance data by userId
-          let masterRedisData = await getUserRedisData(partnershipId);
-
-          if (!lodash.isEmpty(masterRedisData)) {
-
-            // If masterRedisData exists, update partner exposure and session data
-            let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
-            let partnerExposure = (parseFloat(masterExposure) || 0) + partnerSessionExposure;
-
+          const masterRedisData = await hasUserInCache(partnershipId);
+          if (!masterRedisData) {
 
             // Calculate profit loss session and update Redis data
-            const redisBetData = masterRedisData[
-              `${placedBetObject?.betPlacedData?.betId}_profitLoss`
-            ]
-              ? JSON.parse(
-                masterRedisData[
-                `${placedBetObject?.betPlacedData?.betId}_profitLoss`
-                ]
-              )
-              : null;
+            const userPLData = await getUserSessionPL(partnershipId, jobData?.placedBet?.matchId, jobData?.placedBet?.betId);
 
             let redisData;
 
@@ -313,42 +288,71 @@ const calculateSessionRateAmount = async (jobData, userId) => {
               case sessionBettingType.overByOver:
               case sessionBettingType.ballByBall:
                 redisData = await calculateProfitLossSession(
-                  redisBetData,
+                  userPLData,
                   placedBetObject,
                   partnership
                 );
                 break;
               case sessionBettingType.khado:
                 redisData = await calculateProfitLossKhado(
-                  redisBetData,
+                  userPLData,
                   placedBetObject,
                   partnership
                 );
                 break;
               case sessionBettingType.meter:
                 redisData = await calculateProfitLossMeter(
-                  redisBetData,
+                  userPLData,
                   placedBetObject,
                   partnership
                 );
                 break;
               case sessionBettingType.oddEven:
-                redisData = await calculateProfitLossSessionOddEven(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                redisData = await calculateProfitLossSessionOddEven(userPLData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
                 break;
               case sessionBettingType.cricketCasino:
-                redisData = await calculateProfitLossSessionCasinoCricket(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                redisData = await calculateProfitLossSessionCasinoCricket(userPLData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
                 break;
               case sessionBettingType.fancy1:
-                redisData = await calculateProfitLossSessionFancy1(redisBetData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
+                redisData = await calculateProfitLossSessionFancy1(userPLData, { ...placedBetObject, winAmount: -placedBetObject?.winAmount, lossAmount: -placedBetObject?.lossAmount }, partnership);
                 break;
               default:
                 break;
             }
 
-            await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(partnerSessionExposure).toFixed(2)), [`${redisKeys.userSessionExposure}${placedBetObject?.betPlacedData?.matchId}`]: parseFloat(redisData?.maxLoss || 0.0) - parseFloat(redisBetData?.maxLoss || 0.0) }, {
-              [`${placedBetObject?.betPlacedData?.betId}_profitLoss`]:
-                JSON.stringify(redisData)
-            });
+            let socketRedisData = {};
+            if ([sessionBettingType.session, sessionBettingType.overByOver, sessionBettingType.ballByBall, sessionBettingType.khado, sessionBettingType.meter].includes(jobData?.placedBet?.marketType)) {
+              const returnedPF = await setUserPLSession(partnershipId, jobData?.placedBet?.matchId, jobData?.placedBet?.betId, redisData?.betPlaced?.map((item) => ([item?.odds?.toString(), item?.profitLoss?.toString()]))?.flat(2));
+              const [maxL, , , totalBet, ...pl] = returnedPF;
+              socketRedisData = {
+                betPlaced: pl.map((item, index) => {
+                  if (index % 2 === 0) {
+                    return {
+                      odds: item,
+                      profitLoss: pl[index + 1]
+                    }
+                  }
+                  return null;
+                }).filter(Boolean),
+                maxLoss: maxL,
+                totalBet: totalBet
+              }
+            }
+            else if ([sessionBettingType.oddEven, sessionBettingType.cricketCasino, sessionBettingType.fancy1].includes(jobData?.placedBet?.marketType)) {
+              const returnedPF = await setUserPLSessionOddEven(partnershipId, jobData?.placedBet?.matchId, jobData?.placedBet?.betId, Object.entries(redisData?.betPlaced)?.flat(2)?.map((item) => item.toString()));
+              const [maxL, totalBet, ...pl] = returnedPF;
+              socketRedisData = {
+                betPlaced: pl.reduce((acc, curr, index) => {
+                  if (index % 2 === 0) {
+                    acc[curr] = pl[index + 1];
+                  }
+                  return acc;
+                }, {}),
+                maxLoss: maxL,
+                totalBet: totalBet
+              }
+            }
+            await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: roundToTwoDecimals(partnerSessionExposure) });
 
             // Log information about exposure and stake update
             logger.info({
@@ -357,7 +361,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
               data: `My Stake : ${(
                 (stake * parseFloat(partnership)) /
                 100
-              ).toFixed(2)} exposure: ${partnerExposure}`,
+              ).toFixed(2)}`,
             });
 
             // Update jobData with calculated stake
@@ -369,7 +373,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
             // Send data to socket for session bet placement
             sendMessageToUser(partnershipId, socketData.SessionBetPlaced, {
               jobData,
-              profitLoss: redisData
+              profitLoss: socketRedisData
             });
           }
 
@@ -406,7 +410,6 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
     let deleteReason = jobData.deleteReason;
     let domainUrl = jobData.domainUrl;
     let betPlacedId = jobData.betPlacedId;
-    let redisName = `${betId}_profitLoss`;
     let redisSesionExposureName = redisKeys.userSessionExposure + matchId;
     let sessionType = jobData.sessionType;
     const partnerShipIds = [userId];
@@ -444,6 +447,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
           try {
             // Get user data from Redis or balance data by userId
             let masterRedisData = await getUserRedisData(partnershipId);
+            const masterRedisDataPL = await getUserSessionAllPL(partnershipId, matchId, betId, sessionType);
 
             if (!lodash.isEmpty(masterRedisData)) {
 
@@ -451,7 +455,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               let masterExposure = parseFloat(masterRedisData.exposure) ?? 0;
               let partnerExposure = (masterExposure || 0) - exposureDiff;
 
-              let oldProfitLossParent = JSON.parse(masterRedisData[redisName] || "{}");
+              let oldProfitLossParent = masterRedisDataPL;
               let parentPLbetPlaced = oldProfitLossParent?.betPlaced || [];
               let oldMaxLossParent = oldProfitLossParent?.maxLoss;
               let newMaxLossParent = 0;
@@ -486,7 +490,6 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               oldProfitLossParent.totalBet = oldProfitLossParent.totalBet - userDeleteProfitLoss.total_bet;
               let sessionExposure = parseFloat(masterRedisData[redisSesionExposureName]) - oldMaxLossParent + newMaxLossParent;
               let redisObj = {
-                [redisName]: JSON.stringify(oldProfitLossParent),
                 exposure: partnerExposure,
                 [redisSesionExposureName]: sessionExposure
               };
@@ -494,9 +497,16 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               await incrementValuesRedis(partnershipId, {
                 exposure: -exposureDiff,
                 [redisSesionExposureName]: - oldMaxLossParent + newMaxLossParent,
-              }, {
-                [redisName]: JSON.stringify(oldProfitLossParent)
               });
+
+              if (oddsSessionBetType.includes(sessionType)) {
+                oldProfitLossParent.betPlaced = oldProfitLossParent.betPlaced.reduce((acc, item) => {
+                  acc[item.odds] = item.profitLoss;
+                  return acc;
+                }, {});
+              }
+              await setProfitLossData(partnershipId, matchId, betId, oldProfitLossParent);
+
 
               // Log information about exposure and stake update
               logger.info({

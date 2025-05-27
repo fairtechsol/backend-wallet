@@ -189,6 +189,7 @@ module.exports.betResultStatus = {
 module.exports.matchBettingType = {
   tournament: "tournament" 
 };
+module.exports.oddsSessionBetType = [this.sessionBettingType.session, this.sessionBettingType.overByOver, this.sessionBettingType.ballByBall, this.sessionBettingType.khado, this.sessionBettingType.meter];
 
 module.exports.racingBettingType = {
   matchOdd: "matchOdd",

@@ -1,9 +1,9 @@
 const { Not } = require("typeorm");
-const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain } = require("../config/contants");
+const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBettingType, casinoMicroServiceDomain, oddsSessionBetType } = require("../config/contants");
 const { logger } = require("../config/logger");
 const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern } = require("../services/redis/commonFunctions");
+const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getAllSessions } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -26,47 +26,56 @@ exports.matchDetails = async (req, res) => {
       if (Array.isArray(apiResponse?.data)) {
         for (let i = 0; i < apiResponse?.data?.length; i++) {
           const matchId = apiResponse?.data?.[i]?.id;
-          const redisIds = apiResponse?.data?.[i]?.sessionBettings?.map((item) => JSON.parse(item)?.id + redisKeys.profitLoss);
-          // redisIds.push(...[`${redisKeys.userTeamARate}${matchId}`, `${redisKeys.userTeamBRate}${matchId}`, `${redisKeys.userTeamCRate}${matchId}`, `${redisKeys.yesRateComplete}${matchId}`, `${redisKeys.noRateComplete}${matchId}`, `${redisKeys.yesRateTie}${matchId}`, `${redisKeys.noRateTie}${matchId}`]);
 
           let redisData = [];
-          if (redisIds?.length > 0) {
-            redisData = await getUserRedisKeys(userId, redisIds);
+          if (apiResponse?.data?.[i]?.sessionBettings?.length > 0) {
+            redisData = await getAllSessions(userId, matchId);
           }
+
           let sessionResult = [];
           let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
-          redisData?.forEach((item, index) => {
-            if (item) {
+          Object.entries(redisData?.[matchId] || {})?.forEach(([betIdItem, betData]) => {
+            if (betIdItem) {
               sessionResult.push({
-                betId: redisIds?.[index]?.split("_")[0],
-                maxLoss: JSON.parse(item)?.maxLoss,
-                totalBet: JSON.parse(item)?.totalBet,
-                profitLoss: JSON.parse(item)?.betPlaced,
+                betId: betIdItem,
+                maxLoss: betData?.maxLoss,
+                totalBet: betData?.totalBet,
+                profitLoss: oddsSessionBetType.includes(marketTypes?.[betIdItem]) ? betData?.betPlaced : betData?.betPlaced?.reduce((prev, curr) => {
+                  prev[curr.odds] = curr?.profitLoss;
+                  return prev;
+                }, {})
               });
             }
           });
+
           apiResponse.data[i].profitLossDataSession = sessionResult;
           apiResponse.data[i].profitLossDataMatch = matchResult;
         }
       }
       else {
-        const redisIds = apiResponse?.data?.sessionBettings?.map((item) => JSON.parse(item)?.id + redisKeys.profitLoss);
-        // redisIds.push(...[`${redisKeys.userTeamARate}${matchId}`, `${redisKeys.userTeamBRate}${matchId}`, `${redisKeys.userTeamCRate}${matchId}`, `${redisKeys.yesRateComplete}${matchId}`, `${redisKeys.noRateComplete}${matchId}`, `${redisKeys.yesRateTie}${matchId}`, `${redisKeys.noRateTie}${matchId}`]);
 
         let redisData = [];
-        if (redisIds?.length > 0) {
-          redisData = await getUserRedisKeys(userId, redisIds);
+        const marketTypes = apiResponse?.data?.sessionBettings?.reduce((prev, curr) => {
+          const currData = JSON.parse(curr?.betData || "{}");
+          prev[currData?.id] = currData?.marketType;
+          return prev;
+        }, {});
+
+        if (apiResponse?.data?.sessionBettings?.length > 0) {
+          redisData = await getAllSessions(userId, matchId);
         }
         let sessionResult = [];
         let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
-        redisData?.forEach((item, index) => {
-          if (item) {
+        Object.entries(redisData?.[matchId] || {})?.forEach(([betIdItem, betData]) => {
+          if (betIdItem) {
             sessionResult.push({
-              betId: redisIds?.[index]?.split("_")[0],
-              maxLoss: JSON.parse(item)?.maxLoss,
-              totalBet: JSON.parse(item)?.totalBet,
-              profitLoss: JSON.parse(item)?.betPlaced,
-
+              betId: betIdItem,
+              maxLoss: betData?.maxLoss,
+              totalBet: betData?.totalBet,
+              profitLoss: oddsSessionBetType.includes(marketTypes?.[betIdItem]) ? betData?.betPlaced : betData?.betPlaced?.reduce((prev, curr) => {
+                prev[curr.odds] = curr?.profitLoss;
+                return prev;
+              }, {})
             });
           }
         });
@@ -91,7 +100,6 @@ exports.matchDetails = async (req, res) => {
 exports.raceDetails = async (req, res) => {
   try {
     let userId = req.user.id;
-    let domain = expertDomain;
     let apiResponse = {};
     try {
       apiResponse = await getRaceDetailsHandler({ matchId: req.params.id });
@@ -217,10 +225,10 @@ exports.listMatch = async (req, res) => {
         return []; // fallback to empty array on failure
       });
     });
-    
+
     const betResults = await Promise.all(betPromises);
     const bets = betResults.flat();
-    
+
 
     for (let i = 0; i < apiResponse.data?.matches?.length; i++) {
       let matchDetail = apiResponse.data?.matches[i];
@@ -493,17 +501,17 @@ exports.raceMarketAnalysis = async (req, res) => {
         },
         url?.domain
       )
-      .catch((err) => {
-        logger.error({
-          context: `error in ${url?.domain} setting bet placed redis`,
-          process: `User ID : ${user.id} `,
-          error: err.message,
-          stake: err.stack,
+        .catch((err) => {
+          logger.error({
+            context: `error in ${url?.domain} setting bet placed redis`,
+            process: `User ID : ${user.id} `,
+            error: err.message,
+            stake: err.stack,
+          });
+          return []; // return empty array on error to keep structure
         });
-        return []; // return empty array on error to keep structure
-      });
     });
-    
+
     const betResults = await Promise.all(betPromises);
     const bets = betResults.flat(); // flatten array of arrays
 
@@ -581,7 +589,7 @@ exports.userEventWiseExposure = async (req, res) => {
       let gamesExposure = await getUserExposuresGameWise(user);
 
       const allMatchBetData = gamesExposure || {};
-      
+
       if (Object.keys(allMatchBetData || {}).length) {
         for (let item of Object.keys(allMatchBetData)) {
           if (eventNameByMatchId[item]) {

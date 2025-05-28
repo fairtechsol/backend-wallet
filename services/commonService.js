@@ -811,7 +811,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
         while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
           const newEntry = {
             odds: newbetPlaced?.[0]?.odds - 1,
-            profitLoss: newbetPlaced?.[0]?.profitLoss,
+            profitLoss: parseFloat(newbetPlaced?.[0]?.profitLoss),
           };
           newbetPlaced?.unshift(newEntry);
         }
@@ -820,7 +820,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
         while (newbetPlaced?.[0]?.odds != oldbetPlaced?.[0]?.odds) {
           const newEntry = {
             odds: oldbetPlaced?.[0]?.odds - 1,
-            profitLoss: oldbetPlaced?.[0]?.profitLoss,
+            profitLoss: parseFloat(oldbetPlaced?.[0]?.profitLoss),
           };
           oldbetPlaced?.unshift(newEntry);
         }
@@ -830,7 +830,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
         while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
           const newEntry = {
             odds: oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds + 1,
-            profitLoss: oldbetPlaced?.[oldbetPlaced?.length - 1]?.profitLoss,
+            profitLoss: parseFloat(oldbetPlaced?.[oldbetPlaced?.length - 1]?.profitLoss),
           };
           oldbetPlaced?.push(newEntry);
         }
@@ -839,7 +839,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
         while (newbetPlaced?.[newbetPlaced?.length - 1]?.odds != oldbetPlaced?.[oldbetPlaced?.length - 1]?.odds) {
           const newEntry = {
             odds: newbetPlaced?.[newbetPlaced?.length - 1]?.odds + 1,
-            profitLoss: newbetPlaced?.[newbetPlaced?.length - 1]?.profitLoss,
+            profitLoss: parseFloat(newbetPlaced?.[newbetPlaced?.length - 1]?.profitLoss),
           };
           newbetPlaced?.push(newEntry);
         }
@@ -849,7 +849,7 @@ exports.mergeProfitLoss = (newbetPlaced, oldbetPlaced, type = sessionBettingType
     case sessionBettingType.fancy1:
     case sessionBettingType.cricketCasino:
       Object.keys(newbetPlaced)?.forEach((item) => {
-        newbetPlaced[item] = oldbetPlaced[item] + newbetPlaced[item];
+        newbetPlaced[item] = parseFloat(oldbetPlaced[item]) + parseFloat(newbetPlaced[item]);
       });
       return;
     default:

@@ -79,7 +79,10 @@ exports.getWalletLoginBetsData = async () => {
           result[upperKey] = betData?.upperLimitOdds || 0;
           result[lowerKey] = betData?.lowerLimitOdds || 0;
           result[totalBetKey] = betData?.totalBet || 0;
-          result[profitLossKey] = betData?.betPlaced || 0;
+          result[profitLossKey] = betData?.betPlaced?.reduce((prev, curr) => {
+            prev[curr?.odds] = curr?.profitLoss || 0;
+            return prev;
+          }, {}) || {};
           result[maxLossKey] = betData?.maxLoss || 0;
         });
       });
@@ -88,7 +91,14 @@ exports.getWalletLoginBetsData = async () => {
       const data = await settingBetsDataAtLogin(user);
       if (data?.plResult) {
         Object.entries(data?.plResult)?.forEach(([matchId, vals]) => {
+          if (vals.includes("profitLoss")) {
+            vals = vals.reduce((acc, curr) => {
+              acc[curr.odds] = curr.profitLoss || 0;
+              return acc;
+            }, {});
+          }
           result[matchId?.replace(user.id, "expert")] = vals;
+
         })
       }
     }

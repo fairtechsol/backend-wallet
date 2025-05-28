@@ -231,7 +231,7 @@ exports.setUserPLSession = async (userId, matchId, betId, redisData) => {
                    end
                  end
 
-                return { math.abs(maxLoss), low, high, totalBet, unpack(updatedProfitLoss) }
+                return { tostring(math.abs(maxLoss)), low, high, totalBet, unpack(updatedProfitLoss) }
                 `, 6,
     base + 'profitLoss',
     base + 'lowerLimitOdds',
@@ -274,7 +274,7 @@ exports.setUserPLSessionOddEven = async (userId, matchId, betId, redisData) => {
                    end
                  end
 
-                return { math.abs(maxLoss), totalBet, unpack(updatedProfitLoss) }
+                return { tostring(math.abs(maxLoss)), totalBet, unpack(updatedProfitLoss) }
 
                 `, 4,
     base + 'profitLoss',

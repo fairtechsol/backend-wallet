@@ -1,6 +1,6 @@
 const internalRedis = require("../../config/internalRedisConnection");
 const externalRedis = require("../../config/externalRedisConnection");
-const { redisKeys, matchBettingType, oddsSessionBetType } = require("../../config/contants");
+const { redisKeys, matchBettingType, oddsSessionBetType, redisTimeOut, sessionBettingType } = require("../../config/contants");
 
 exports.getUserRedisData = async (userId) => {
 
@@ -224,13 +224,21 @@ exports.setUserPLSession = async (userId, matchId, betId, redisData) => {
                 local totalBet = redis.call('INCRBY', KEYS[4], 1)
                 redis.call('SET', KEYS[5], math.abs(maxLoss))
 
+                 local ttl = redis.call('TTL', KEYS[6])
+                 if ttl > 0 then
+                   for i = 1, 5 do
+                     redis.call('EXPIRE', KEYS[i], ttl)
+                   end
+                 end
+
                 return { math.abs(maxLoss), low, high, totalBet, unpack(updatedProfitLoss) }
-                `, 5,
+                `, 6,
     base + 'profitLoss',
     base + 'lowerLimitOdds',
     base + 'upperLimitOdds',
     base + 'totalBet',
     base + 'maxLoss',
+    userId,
     ...redisData);
 };
 
@@ -259,12 +267,20 @@ exports.setUserPLSessionOddEven = async (userId, matchId, betId, redisData) => {
                 local totalBet =redis.call('INCRBY', KEYS[2], 1)
                 redis.call('SET', KEYS[3], math.abs(maxLoss))
 
+                local ttl = redis.call('TTL', KEYS[4])
+                 if ttl > 0 then
+                   for i = 1, 3 do
+                     redis.call('EXPIRE', KEYS[i], ttl)
+                   end
+                 end
+
                 return { math.abs(maxLoss), totalBet, unpack(updatedProfitLoss) }
 
-                `, 3,
+                `, 4,
     base + 'profitLoss',
     base + 'totalBet',
     base + 'maxLoss',
+    userId,
     ...redisData);
 };
 
@@ -310,16 +326,26 @@ exports.getUserSessionAllPL = async (userId, matchId, betId, type = sessionBetti
 
 exports.setProfitLossData = async (userId, matchId, betId, redisData) => {
   const base = `session:${userId}:${matchId}:${betId}:`;
+  const userKeyTTL = await internalRedis.ttl(userId);
+  
   const pipeline = internalRedis.pipeline();
   pipeline.hset(base + 'profitLoss', redisData.betPlaced);
+  pipeline.expire(base + 'profitLoss', userKeyTTL);
+
   pipeline.set(base + 'totalBet', redisData.totalBet);
+  pipeline.expire(base + 'totalBet', userKeyTTL);
+
   if (redisData.upperLimitOdds != null) {
     pipeline.set(base + 'upperLimitOdds', redisData.upperLimitOdds);
+    pipeline.expire(base + 'upperLimitOdds', userKeyTTL);
   }
   if (redisData.lowerLimitOdds != null) {
     pipeline.set(base + 'lowerLimitOdds', redisData.lowerLimitOdds);
+    pipeline.expire(base + 'lowerLimitOdds', userKeyTTL);
   }
   pipeline.set(base + 'maxLoss', redisData.maxLoss);
+  pipeline.expire(base + 'maxLoss', userKeyTTL);
+
   await pipeline.exec();
 }
 

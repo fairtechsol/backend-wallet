@@ -276,7 +276,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
         try {
           // Get user data from Redis or balance data by userId
           const masterRedisData = await hasUserInCache(partnershipId);
-          if (!masterRedisData) {
+          if (masterRedisData) {
 
             // Calculate profit loss session and update Redis data
             const userPLData = await getUserSessionPL(partnershipId, jobData?.placedBet?.matchId, jobData?.placedBet?.betId);

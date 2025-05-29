@@ -1200,7 +1200,6 @@ exports.settingBetsDataAtLogin = async (user) => {
     let maxLoss = 0;
     Object.keys(redisData)?.forEach((key) => {
       maxLoss += Math.abs(Math.min(...Object.values(redisData[key] || {}), 0));
-      redisData[key] = JSON.stringify(redisData[key]);
     });
 
     matchResult = {
@@ -1210,6 +1209,12 @@ exports.settingBetsDataAtLogin = async (user) => {
     matchExposure[`${redisKeys.userMatchExposure}${matchId}`] = parseFloat((parseFloat(matchExposure[`${redisKeys.userMatchExposure}${matchId}`] || 0) + maxLoss).toFixed(2));
 
   }
+  Object.keys(matchResult)?.forEach((key) => {
+      const [currBetId, , currMatchId] = key.split("_");
+      const baseKey = `match:${user.id}:${currMatchId}:${currBetId}:profitLoss`
+      matchResult[baseKey] = matchResult[key];
+      delete matchResult[key];
+    });
   return { plResult: { ...sessionResult, ...matchResult }, expResult: { ...sessionExp, ...matchExposure } }
 }
 

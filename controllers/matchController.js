@@ -3,7 +3,7 @@ const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBet
 const { logger } = require("../config/logger");
 const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getAllSessions } = require("../services/redis/commonFunctions");
+const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getAllSessions, getAllTournament } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -33,7 +33,7 @@ exports.matchDetails = async (req, res) => {
           }
 
           let sessionResult = [];
-          let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
+          const matchResult = await getAllTournament(userId, matchId);
           Object.entries(redisData?.[matchId] || {})?.forEach(([betIdItem, betData]) => {
             if (betIdItem) {
               sessionResult.push({
@@ -65,7 +65,7 @@ exports.matchDetails = async (req, res) => {
           redisData = await getAllSessions(userId, matchId);
         }
         let sessionResult = [];
-        let matchResult = await getHashKeysByPattern(userId, `*_${matchId}`);
+        const matchResult = await getAllTournament(userId, matchId);
         Object.entries(redisData?.[matchId] || {})?.forEach(([betIdItem, betData]) => {
           if (betIdItem) {
             sessionResult.push({

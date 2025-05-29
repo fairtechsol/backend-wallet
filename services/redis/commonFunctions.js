@@ -477,15 +477,204 @@ exports.deleteProfitLossData = async (userId) => {
   let cursor = '0';
   const keysToUnlink = [];
 
+  // Scan and collect session keys
   do {
     const [newCursor, keys] = await internalRedis.scan(cursor, 'MATCH', `session:${userId}:*`, 'COUNT', 10000);
     cursor = newCursor;
     keysToUnlink.push(...keys);
   } while (cursor !== '0');
 
+  // Reset cursor to scan match keys
+  cursor = '0';
+  do {
+    const [newCursor, keys] = await internalRedis.scan(cursor, 'MATCH', `match:${userId}:*`, 'COUNT', 10000);
+    cursor = newCursor;
+    keysToUnlink.push(...keys);
+  } while (cursor !== '0');
+
+  // Delete collected keys
   if (keysToUnlink.length > 0) {
     const pipeline = internalRedis.pipeline();
     keysToUnlink.forEach(key => pipeline.unlink(key));
     await pipeline.exec();
   }
 }
+
+exports.setUserPLTournament = async (userId, matchId, betId, redisData) => {
+  const base = `match:${userId}:${matchId}:${betId}:`;
+
+  return await internalRedis.eval(`
+                local pl = KEYS[1]
+                local updatedProfitLoss = {}
+
+                for i = 1, #ARGV, 2 do
+                  local k = ARGV[i]
+                  local v = tonumber(ARGV[i + 1])
+
+                  local incr = v
+                  local newValue =  redis.call('HINCRBYFLOAT', pl, k, tonumber(incr))
+                 
+                  table.insert(updatedProfitLoss, ARGV[i])     
+                  table.insert(updatedProfitLoss, tostring(newValue))
+                end
+
+                local ttl = redis.call('TTL', KEYS[2])
+                 if ttl > 0 then
+                   redis.call('EXPIRE', KEYS[1], ttl)
+                 end
+
+                return { unpack(updatedProfitLoss) }
+                `, 2,
+    base + 'profitLoss',
+    userId,
+    ...Object.entries(redisData).flat(2));
+};
+
+exports.setProfitLossDataTournament = async (userId, matchId, betId, redisData) => {
+  const base = `match:${userId}:${matchId}:${betId}:`;
+  const userKeyTTL = await internalRedis.ttl(userId);
+
+  const pipeline = internalRedis.pipeline();
+  pipeline.hset(base + 'profitLoss', redisData);
+  pipeline.expire(base + 'profitLoss', userKeyTTL);
+
+  await pipeline.exec();
+}
+
+exports.getProfitLossDataTournament = async (userId, matchId, betId) => {
+  const base = `match:${userId}:${matchId}:${betId}:profitLoss`;
+  return await internalRedis.hgetall(base);
+}
+
+exports.getUserRedisMultiKeyDataMatch = async (userIds, matchId, betId) => {
+  // Validate input to avoid unnecessary processing
+  if (!Array.isArray(userIds) || userIds.length === 0 || !matchId || !betId) {
+    return {};
+  }
+
+  try {
+    const pipeline = internalRedis.pipeline();
+
+    // Use more efficient array iteration
+    for (const userId of userIds) {
+      pipeline.get(`match:${userId}:${matchId}:${betId}:profitLoss`);
+    }
+
+    const results = await pipeline.exec();
+
+    // Process results to extract values and handle potential individual command errors
+    return results.reduce((prev, [error, data], index) => {
+      if (!error && data != null) {
+        prev[userIds[index]] = {};
+        prev[userIds[index]].profitLoss = data;
+      }
+      return prev;
+    }, {});
+  } catch (error) {
+    throw error;
+  }
+};
+
+exports.getAllTournament = async (userId, matchId) => {
+  if (matchId) {
+    const pattern = `match:${userId}:${matchId}:*`;
+    let cursor = '0';
+    const sessions = {};
+
+    do {
+      // 1) Fetch a batch of keys
+      const [nextCursor, keys] = await internalRedis.scan(
+        cursor,
+        'MATCH', pattern,
+        'COUNT', 1000       // bump this up if you can afford more per‐round
+      );
+      cursor = nextCursor;
+
+      if (keys.length) {
+        // 2) Pipeline all TYPE calls
+        const typePipeline = internalRedis.pipeline();
+        keys.forEach(key => typePipeline.type(key));
+        const typeResults = await typePipeline.exec();
+
+        // 3) Pipeline GET or HGETALL based on type
+        const dataPipeline = internalRedis.pipeline();
+        typeResults.forEach(([_, type], idx) => {
+          const key = keys[idx];
+          if (type === 'hash') {
+            dataPipeline.hgetall(key);
+          } else {
+            dataPipeline.get(key);
+          }
+        });
+        const dataResults = await dataPipeline.exec();
+
+        // 4) Assemble results
+        for (let i = 0; i < keys.length; i++) {
+          const [, , , betId, key] = keys[i]?.split(":")
+          sessions[betId] = {
+            ...sessions[betId],
+            [key]: dataResults[i][1]
+          }
+        }
+      }
+    } while (cursor !== '0');
+
+    return Object.entries(sessions).reduce((prev, [key, val]) => {
+      prev[`${key}${redisKeys.profitLoss}_${matchId}`] = val.profitLoss;
+      return prev;
+    }, {});
+
+  }
+  else {
+    const data = await internalRedis.eval(`
+      local userId = KEYS[1]
+local pattern = 'match:' .. userId .. ':*'
+local cursor = '0'
+local tournament = {}
+
+repeat
+  local scanResult = redis.call('SCAN', cursor, 'MATCH', pattern, 'COUNT', 1000)
+  cursor = scanResult[1]
+  local keys = scanResult[2]
+
+  for _, key in ipairs(keys) do
+    local parts = {}
+    for part in string.gmatch(key, '([^:]+)') do
+      table.insert(parts, part)
+    end
+    local matchId = parts[3]
+    local betId = parts[4]
+    local field = parts[5]
+
+    local t = redis.call('TYPE', key).ok
+    local value
+    if t == 'hash' then
+      local raw = redis.call('HGETALL', key)
+      local tbl = {}
+      for i = 1, #raw, 2 do
+        tbl[raw[i]] = raw[i+1]
+      end
+      value = tbl
+    else
+      value = redis.call('GET', key)
+    end
+
+    tournament[matchId] = tournament[matchId] or {}
+    tournament[matchId][betId] = tournament[matchId][betId] or {}
+    tournament[matchId][betId][field] = value
+  end
+until cursor == '0'
+
+return cjson.encode(tournament)
+`, 1, userId)
+    return Object.entries(JSON.parse(data || "{}"))?.reduce((prev, [key, val]) => {
+      prev = {
+        ...prev, ...Object.entries(val)?.reduce((prev, [betKey, betVal]) => {
+          prev[`${betKey}${redisKeys.profitLoss}_${key}`] = betVal.profitLoss;
+          return prev;
+        }, {})
+      }
+      return prev;
+    }, {})
+  }
+};

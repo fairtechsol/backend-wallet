@@ -1,6 +1,6 @@
 const Queue = require('bee-queue');
 const lodash = require('lodash');
-const { getUserRedisData, incrementValuesRedis, hasUserInCache, getUserSessionPL, setUserPLSession, setUserPLSessionOddEven, getUserSessionAllPL, setProfitLossData } = require('../services/redis/commonFunctions');
+const { getUserRedisData, incrementValuesRedis, hasUserInCache, getUserSessionPL, setUserPLSession, setUserPLSessionOddEven, getUserSessionAllPL, setProfitLossData, setUserPLTournament } = require('../services/redis/commonFunctions');
 const { updateUserBalanceExposure } = require('../services/userBalanceService');
 const { calculateProfitLossSession, mergeProfitLoss, calculateRacingExpertRate, parseRedisData, calculateProfitLossSessionOddEven, calculateProfitLossSessionCasinoCricket, calculateProfitLossSessionFancy1, calculateProfitLossKhado, calculateProfitLossMeter } = require('../services/commonService');
 const { logger } = require('../config/logger');
@@ -77,42 +77,32 @@ let calculateTournamentRateAmount = async (jobData, userId) => {
         let partnership = partnershipObj[`${partnerShipKey}Partnership`];
         try {
           // Get user data from Redis or balance data by userId
-          let masterRedisData = await getUserRedisData(partnershipId);
-          if (!lodash.isEmpty(masterRedisData)) {
-
-            let masterExposure = masterRedisData.exposure ? masterRedisData.exposure : 0;
-            let partnerExposure = (parseFloat(masterExposure) || 0) - userOldExposure + userCurrentExposure;
-
-            let teamRates = masterRedisData?.[`${jobData?.betId}${redisKeys.profitLoss}_${jobData?.matchId}`];
-
-            if (teamRates) {
-              teamRates = JSON.parse(teamRates);
-            }
-
-            if (!teamRates) {
-              teamRates = jobData?.runners?.reduce((acc, key) => {
-                acc[key?.id] = 0;
-                return acc;
-              }, {});
-            }
-
-            teamRates = Object.keys(teamRates).reduce((acc, key) => {
-              acc[key] = parseRedisData(key, teamRates);
+          const masterRedisData = await hasUserInCache(partnershipId);
+          if (masterRedisData) {
+            let teamRates = jobData?.runners?.reduce((acc, key) => {
+              acc[key?.id] = 0;
               return acc;
             }, {});
 
-            let teamData = await calculateRacingExpertRate(teamRates, obj, partnership);
-            let userRedisObj = {
-              [`${jobData?.betId}${redisKeys.profitLoss}_${jobData?.matchId}`]: JSON.stringify(teamData)
-            }
-            await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) }, userRedisObj);
+            const teamData = await calculateRacingExpertRate(teamRates, obj, partnership);
+
+            await incrementValuesRedis(partnershipId, { [redisKeys.userAllExposure]: parseFloat(parseFloat(-parseFloat(userOldExposure) + parseFloat(userCurrentExposure)).toFixed(2)) });
+
+            const plData = await setUserPLTournament(partnershipId, jobData?.matchId, jobData?.betId, teamData);
+            const socketRedisData = plData?.reduce((acc, curr, index) => {
+              if (index % 2 === 0) {
+                acc[curr] = roundToTwoDecimals(plData[index + 1]);
+              }
+              return acc;
+            }, {})
+
             jobData.myStake = Number(((jobData.stake / 100) * partnership).toFixed(2));
-            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj: teamData, jobData })
+            sendMessageToUser(partnershipId, socketData.MatchBetPlaced, { userRedisObj: socketRedisData, jobData })
             // Log information about exposure and stake update
             logger.info({
               context: "Update User Exposure and Stake at the match bet",
               process: `User ID : ${userId} ${item} id ${partnershipId}`,
-              data: `My Stake : ${jobData.myStake} exposure: ${partnerExposure}`
+              data: `My Stake : ${jobData.myStake}`
             });
 
           }
@@ -608,24 +598,26 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
 
           try {
             // Get user data from Redis or balance data by userId
-            let masterRedisData = await getUserRedisData(partnershipId);
+            const masterRedisData = await hasUserInCache(partnershipId);
 
-            if (!lodash.isEmpty(masterRedisData)) {
+            if (masterRedisData) {
 
-              let masterTeamRates = JSON.parse(masterRedisData[`${betId}${redisKeys.profitLoss}_${matchId}`]);
-
-              masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
-                acc[key] = parseFloat((parseRedisData(key, masterTeamRates) + ((newTeamRate[key] * partnership) / 100)).toFixed(2));
+              const masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
+                acc[key] = roundToTwoDecimals((newTeamRate[key] * partnership) / 100);
                 return acc;
               }, {});
 
-              let redisObj = {
-                [`${betId}${redisKeys.profitLoss}_${matchId}`]: JSON.stringify(masterTeamRates)
-              }
-
               await incrementValuesRedis(partnershipId, {
                 exposure: -exposureDiff
-              }, redisObj);
+              });
+
+              const plData = await setUserPLTournament(partnershipId, matchId, betId, masterTeamRates);
+              const socketRedisData = plData?.reduce((acc, curr, index) => {
+                if (index % 2 === 0) {
+                  acc[curr] = roundToTwoDecimals(plData[index + 1]);
+                }
+                return acc;
+              }, {});
 
               // Log information about exposure and stake update
               logger.info({
@@ -637,7 +629,7 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
               // Send data to socket for session bet placement
               sendMessageToUser(partnershipId, socketData.matchDeleteBet, {
                 exposure: redisObj?.exposure,
-                teamRate: masterTeamRates,
+                teamRate: socketRedisData,
                 betId: betId,
                 matchId: matchId,
                 betPlacedId: betPlacedId,

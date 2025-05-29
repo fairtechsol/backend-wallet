@@ -76,20 +76,20 @@ exports.declareTournamentMatchResult = async (call) => {
         commission: [...(acc?.faAdminCal?.commission || []), ...(curr?.faAdminCal?.commission || [])],
         userData: {
           ...acc?.faAdminCal?.userData,
-          ...Object.keys({  ...curr?.faAdminCal?.userData }).reduce((res, key) => {
+          ...Object.keys({ ...curr?.faAdminCal?.userData }).reduce((res, key) => {
             const currUser = curr?.faAdminCal?.userData?.[key] || {};
             const prevUser = acc?.faAdminCal?.userData?.[key] || {};
             const calc = (field) => roundToTwoDecimals(parseFloat(prevUser[field] || 0) + parseFloat(currUser[field] || 0));
-            if(Object.keys(currUser).length){
+            if (Object.keys(currUser).length) {
               res[key] = prevUser && Object.keys(prevUser).length
-              ? {
-                ...currUser,
-                profitLoss: calc("profitLoss"),
-                exposure: calc("exposure"),
-                myProfitLoss: calc("myProfitLoss"),
-                userOriginalProfitLoss: calc("userOriginalProfitLoss"),
-              }
-              : currUser;
+                ? {
+                  ...currUser,
+                  profitLoss: calc("profitLoss"),
+                  exposure: calc("exposure"),
+                  myProfitLoss: calc("myProfitLoss"),
+                  userOriginalProfitLoss: calc("userOriginalProfitLoss"),
+                }
+                : currUser;
             }
             return res;
           }, {})
@@ -240,12 +240,14 @@ exports.declareTournamentMatchResult = async (call) => {
       });
 
       if (Object.keys(parentUserRedisData || {}).length) {
+        const baseKey = `match:${userId}:${matchId}:${matchBettingDetails?.id}:profitLoss`;
+
         // queue Redis increments & key deletion
         updatePipeline
           .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
           .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
           .hincrbyfloat(userId, 'exposure', -adminBalanceData?.exposure)
-          .hdel(userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+          .del(baseKey);
       }
 
       exposure += parseFloat(adminBalanceData?.exposure);
@@ -301,11 +303,13 @@ exports.declareTournamentMatchResult = async (call) => {
       },
     });
     if (Object.keys(parentUserRedisData || {}).length) {
+      const baseKey = `match:${userId}:${matchId}:${matchBettingDetails?.id}:profitLoss`;
+
       updatePipeline
         .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(userId, 'exposure', -exposure)
-        .hdel(userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+        .del(baseKey);
     }
 
     insertCommissions(bulkCommission);
@@ -515,15 +519,18 @@ exports.unDeclareTournamentMatchResult = async (call) => {
 
       let settingRedisDataObj = { ...profitLossDataAdmin[parentUser.userId] };
       Object.keys(settingRedisDataObj)?.forEach((items) => {
-        settingRedisDataObj[items] = JSON.stringify(settingRedisDataObj[items]);
+        settingRedisDataObj = { ...settingRedisDataObj, ...settingRedisDataObj[items] };
+        delete settingRedisDataObj[items];
       });
 
-      if (Object.keys(parentUserRedisData||{}).length) {
+      if (Object.keys(parentUserRedisData || {}).length) {
+        const baseKey = `match:${userId}:${matchId}:${matchBetting?.id}:profitLoss`;
+
         updatePipeline
           .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
           .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
           .hincrbyfloat(userId, 'exposure', adminBalanceData?.exposure)
-          .hmset(userId, settingRedisDataObj);
+          .hmset(baseKey, settingRedisDataObj);
       }
 
       sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
@@ -603,19 +610,21 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     });
 
     if (
-      Object.keys(parentUserRedisData||{}).length
+      Object.keys(parentUserRedisData || {}).length
     ) {
 
       let settingRedisDataObj = { ...profitLossDataWallet };
       Object.keys(settingRedisDataObj)?.forEach((items) => {
-        settingRedisDataObj[items] = JSON.stringify(settingRedisDataObj[items]);
+        settingRedisDataObj = { ...settingRedisDataObj, ...settingRedisDataObj[items] };
+        delete settingRedisDataObj[items];
       });
+      const baseKey = `match:${userId}:${matchId}:${matchBetting?.id}:profitLoss`;
 
       updatePipeline
         .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(userId, 'exposure', exposure)
-        .hmset(userId, settingRedisDataObj);
+        .hmset(baseKey, settingRedisDataObj);
 
     }
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {

@@ -91,14 +91,13 @@ exports.getWalletLoginBetsData = async () => {
       const data = await settingBetsDataAtLogin(user);
       if (data?.plResult) {
         Object.entries(data?.plResult)?.forEach(([matchId, vals]) => {
-          if (vals.includes("profitLoss")) {
+          if (matchId.includes("profitLoss")) {
             vals = vals.reduce((acc, curr) => {
               acc[curr.odds] = curr.profitLoss || 0;
               return acc;
             }, {});
           }
           result[matchId?.replace(user.id, "expert")] = vals;
-
         })
       }
     }

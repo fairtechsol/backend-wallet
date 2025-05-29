@@ -623,12 +623,11 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
               logger.info({
                 context: "Update User Exposure and Stake at the delete tournament match bet",
                 process: `User ID : ${userId} ${item} id ${partnershipId}`,
-                data: `My Stake : ${JSON.stringify(redisObj)}`,
+                data: `My Stake : ${JSON.stringify(socketRedisData)}`,
               });
 
               // Send data to socket for session bet placement
               sendMessageToUser(partnershipId, socketData.matchDeleteBet, {
-                exposure: redisObj?.exposure,
                 teamRate: socketRedisData,
                 betId: betId,
                 matchId: matchId,

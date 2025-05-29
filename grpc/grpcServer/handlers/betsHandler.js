@@ -91,12 +91,6 @@ exports.getWalletLoginBetsData = async () => {
       const data = await settingBetsDataAtLogin(user);
       if (data?.plResult) {
         Object.entries(data?.plResult)?.forEach(([matchId, vals]) => {
-          if (matchId.includes("profitLoss")&&!matchId.startsWith("match")) {
-            vals = vals.reduce((acc, curr) => {
-              acc[curr.odds] = curr.profitLoss || 0;
-              return acc;
-            }, {});
-          }
           result[matchId?.replace(user.id, "expert")] = vals;
         })
       }

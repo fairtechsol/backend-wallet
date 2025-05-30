@@ -602,7 +602,7 @@ walletTournamentMatchBetDeleteQueue.process(async (job, done) => {
 
             if (masterRedisData) {
 
-              const masterTeamRates = Object.keys(masterTeamRates).reduce((acc, key) => {
+              const masterTeamRates = Object.keys(newTeamRate).reduce((acc, key) => {
                 acc[key] = roundToTwoDecimals((newTeamRate[key] * partnership) / 100);
                 return acc;
               }, {});

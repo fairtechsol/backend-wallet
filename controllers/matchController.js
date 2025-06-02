@@ -3,7 +3,7 @@ const { expertDomain, redisKeys, userRoleConstant, matchWiseBlockType, racingBet
 const { logger } = require("../config/logger");
 const { getFaAdminDomain, getUserExposuresGameWise, getCasinoMatchDetailsExposure, getUserProfitLossMatch } = require("../services/commonService");
 const { getUserDomainWithFaId } = require("../services/domainDataService");
-const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getAllSessions, getAllTournament } = require("../services/redis/commonFunctions");
+const { getUserRedisKeys, getUserRedisKey, getHashKeysByPattern, getAllSessions, getAllTournament, getProfitLossDataTournament } = require("../services/redis/commonFunctions");
 const { getUsersWithoutCount, getUserMatchLock, addUserMatchLock, deleteUserMatchLock, isAllChildDeactive, getUserById, getUser } = require("../services/userService");
 const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const { SuccessResponse, ErrorResponse } = require("../utils/response");
@@ -234,9 +234,7 @@ exports.listMatch = async (req, res) => {
       let matchDetail = apiResponse.data?.matches[i];
       apiResponse.data.matches[i].totalBet = bets?.reduce((prev, curr) => { return curr?.matchId == matchDetail.id ? prev + parseInt(curr?.count) : prev }, 0);
 
-      const redisId = `${matchDetail?.matchOddTournament?.id}_profitLoss_${matchDetail?.id}`;
-
-      let redisData = await getUserRedisKey(user.id, redisId);
+      let redisData = await getProfitLossDataTournament(user.id, matchDetail?.id, matchDetail?.matchOddTournament?.id);
       if (redisData) {
         redisData = JSON.parse(redisData);
         const runners = matchDetail?.matchOddTournament?.runners?.sort((a, b) => a.sortPriority - b.sortPriority);

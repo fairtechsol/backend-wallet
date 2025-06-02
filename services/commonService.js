@@ -1108,7 +1108,7 @@ exports.settingBetsDataAtLogin = async (user) => {
         deleteReason: "isNull",
         result: `inArr${JSON.stringify([betResultStatus.PENDING])}`,
         ...(user.roleName == userRoleConstant.fairGameAdmin ? { userId: user.id, roleName: userRoleConstant.fairGameAdmin } : {}),
-        eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics])}`,
+        eventType: `inArr${JSON.stringify([gameType.cricket, gameType.politics, gameType.tennis, gameType.football])}`,
       })
     }, url?.domain).catch((err) => {
       logger.error({
@@ -1210,11 +1210,11 @@ exports.settingBetsDataAtLogin = async (user) => {
 
   }
   Object.keys(matchResult)?.forEach((key) => {
-      const [currBetId, , currMatchId] = key.split("_");
-      const baseKey = `match:${user.id}:${currMatchId}:${currBetId}:profitLoss`
-      matchResult[baseKey] = matchResult[key];
-      delete matchResult[key];
-    });
+    const [currBetId, , currMatchId] = key.split("_");
+    const baseKey = `match:${user.id}:${currMatchId}:${currBetId}:profitLoss`
+    matchResult[baseKey] = matchResult[key];
+    delete matchResult[key];
+  });
   return { plResult: { ...sessionResult, ...matchResult }, expResult: { ...sessionExp, ...matchExposure } }
 }
 

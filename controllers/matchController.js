@@ -236,7 +236,6 @@ exports.listMatch = async (req, res) => {
 
       let redisData = await getProfitLossDataTournament(user.id, matchDetail?.id, matchDetail?.matchOddTournament?.id);
       if (redisData) {
-        redisData = JSON.parse(redisData);
         const runners = matchDetail?.matchOddTournament?.runners?.sort((a, b) => a.sortPriority - b.sortPriority);
         apiResponse.data.matches[i].teamARate = redisData?.[runners?.[0]?.id] || 0;
         apiResponse.data.matches[i].teamBRate = redisData?.[runners?.[1]?.id];

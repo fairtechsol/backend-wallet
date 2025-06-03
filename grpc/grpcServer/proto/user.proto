@@ -9,7 +9,7 @@ package grpc.userProvider;
 // Update balance via API call
 message UpdateBalanceAPICallRequest {
   string userId = 1;
-  float balance = 2;
+  double balance = 2;
 }
 
 message UpdateBalanceAPICallResponse {}

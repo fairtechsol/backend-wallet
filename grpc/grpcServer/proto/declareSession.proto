@@ -28,8 +28,8 @@ message DeclareSessionRequest {
 
 message DeclareSessionResponse {
  message Data{
-  float profitLoss=1;
-  float totalCommission=2;
+  double profitLoss=1;
+  double totalCommission=2;
  }
 
  Data data = 2;
@@ -60,7 +60,7 @@ message UnDeclareSessionRequest {
 
 message UnDeclareSessionResponse {
   message Data{
-    float profitLoss=1;
+    double profitLoss=1;
    string profitLossObj=2;
   }
  

@@ -342,7 +342,7 @@ const calculateSessionRateAmount = async (jobData, userId) => {
                 totalBet: totalBet
               }
             }
-            else if([sessionBettingType.meter].includes(jobData?.placedBet?.marketType)) {
+            else if ([sessionBettingType.meter].includes(jobData?.placedBet?.marketType)) {
               const returnedPF = await setUserPLMeter(partnershipId, jobData?.placedBet?.matchId, jobData?.placedBet?.betId, redisData?.betPlaced?.map((item) => ([item?.odds?.toString(), item?.profitLoss?.toString()]))?.flat(2));
               const [maxL, , , totalBet, ...pl] = returnedPF;
               socketRedisData = {
@@ -505,6 +505,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
                 exposure: -exposureDiff,
                 [redisSesionExposureName]: - oldMaxLossParent + newMaxLossParent,
               });
+              const oldPL = { ...oldProfitLossParent }
 
               if (oddsSessionBetType.includes(sessionType)) {
                 oldProfitLossParent.betPlaced = oldProfitLossParent.betPlaced.reduce((acc, item) => {
@@ -526,7 +527,7 @@ walletSessionBetDeleteQueue.process(async (job, done) => {
               sendMessageToUser(partnershipId, socketData.sessionDeleteBet, {
                 exposure: redisObj?.exposure,
                 sessionExposure: redisObj[redisSesionExposureName],
-                profitLoss: oldProfitLossParent,
+                profitLoss: oldPL,
                 matchId: matchId,
                 betPlacedId: betPlacedId,
                 deleteReason: deleteReason,

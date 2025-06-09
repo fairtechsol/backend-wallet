@@ -242,10 +242,10 @@ exports.declareTournamentMatchResult = async (call) => {
       if (Object.keys(parentUserRedisData || {}).length) {
         // queue Redis increments & key deletion
         updatePipeline
-          .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
-          .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
-          .hincrbyfloat(userId, 'exposure', -adminBalanceData?.exposure)
-          .hdel(userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+          .hincrbyfloat(parentUserId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
+          .hincrbyfloat(parentUserId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
+          .hincrbyfloat(parentUserId, 'exposure', -adminBalanceData?.exposure)
+          .hdel(parentUserId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
       }
 
       exposure += parseFloat(adminBalanceData?.exposure);
@@ -302,10 +302,10 @@ exports.declareTournamentMatchResult = async (call) => {
     });
     if (Object.keys(parentUserRedisData || {}).length) {
       updatePipeline
-        .hincrbyfloat(userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(userId, 'exposure', -exposure)
-        .hdel(userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+        .hincrbyfloat(parentUser.userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(parentUser.userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
+        .hdel(parentUser.userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
     }
 
     insertCommissions(bulkCommission);
@@ -520,10 +520,10 @@ exports.unDeclareTournamentMatchResult = async (call) => {
 
       if (Object.keys(parentUserRedisData||{}).length) {
         updatePipeline
-          .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
-          .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
-          .hincrbyfloat(userId, 'exposure', adminBalanceData?.exposure)
-          .hmset(userId, settingRedisDataObj);
+          .hincrbyfloat(parentUserId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
+          .hincrbyfloat(parentUserId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
+          .hincrbyfloat(parentUserId, 'exposure', adminBalanceData?.exposure)
+          .hmset(parentUserId, settingRedisDataObj);
       }
 
       sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
@@ -612,10 +612,10 @@ exports.unDeclareTournamentMatchResult = async (call) => {
       });
 
       updatePipeline
-        .hincrbyfloat(userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(userId, 'myProfitLoss', roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(userId, 'exposure', exposure)
-        .hmset(userId, settingRedisDataObj);
+        .hincrbyfloat(parentUser.userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(parentUser.userId, 'myProfitLoss', roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(parentUser.userId, 'exposure', exposure)
+        .hmset(parentUser.userId, settingRedisDataObj);
 
     }
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {

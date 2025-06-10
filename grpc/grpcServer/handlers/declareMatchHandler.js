@@ -94,7 +94,7 @@ exports.declareTournamentMatchResult = async (call) => {
         // Merge faAdminCal
         const cal = curr.faAdminCal || {};
         response.faAdminCal.fwWalletDeduction = roundToTwoDecimals(
-          response.faAdminCal.fwWalletDeduction + (cal.fwWalletDeduction || 0)
+          response.faAdminCal.fwWalletDeduction + parseFloat(cal.fwWalletDeduction || 0)
         );
 
         if (cal.commission && cal.commission.length) {

@@ -82,7 +82,7 @@ exports.declareTournamentMatchResult = async (call) => {
         resultProfitLoss = roundToTwoDecimals(resultProfitLoss + parseFloat(curr.fwProfitLoss || 0));
 
         // Merge response data incrementally
-        response.fwProfitLoss = roundToTwoDecimals(response.fwProfitLoss + (curr.fwProfitLoss || 0));
+        response.fwProfitLoss = roundToTwoDecimals(response.fwProfitLoss + parseFloat(curr.fwProfitLoss || 0));
         response.superAdminData = { ...response.superAdminData, ...(curr.superAdminData || {}) };
 
         // Merge bulkCommission

@@ -79,7 +79,7 @@ exports.declareTournamentMatchResult = async (call) => {
       for (const curr of batchResults) {
         if (!curr) continue;
 
-        resultProfitLoss = roundToTwoDecimals(resultProfitLoss + (curr.fwProfitLoss || 0));
+        resultProfitLoss = roundToTwoDecimals(resultProfitLoss + parseFloat(curr.fwProfitLoss || 0));
 
         // Merge response data incrementally
         response.fwProfitLoss = roundToTwoDecimals(response.fwProfitLoss + (curr.fwProfitLoss || 0));

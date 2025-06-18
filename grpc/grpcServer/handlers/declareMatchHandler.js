@@ -280,7 +280,7 @@ exports.declareTournamentMatchResult = async (call) => {
           .hincrbyfloat(parentUserId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss || 0))
           .hincrbyfloat(parentUserId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss || 0))
           .hincrbyfloat(parentUserId, 'exposure', -(adminBalanceData?.exposure || 0))
-          .hdel(baseKey);
+          .del(baseKey);
       }
 
       exposure += parseFloat(adminBalanceData?.exposure || 0);

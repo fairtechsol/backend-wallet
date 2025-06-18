@@ -1,26 +1,16 @@
-const { expertDomain, redisKeys, socketData } = require('../config/contants.js');
-const { commonGetMatchDetailsFromRedis } = require('../services/commonService.js');
+const { redisKeys, socketData } = require('../config/contants.js');
+const { deleteReasonChangeHandler, getMatchDetailsHandler } = require('../grpc/grpcClient/handlers/expert/matchHandler.js');
+const { deleteMultipleBetHandler, changeBetsDeleteReasonHandler } = require('../grpc/grpcClient/handlers/wallet/betsHandler.js');
 const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
 const { sendMessageToUser } = require('../sockets/socketManager.js');
-const { allApiRoutes, apiCall, apiMethod } = require('../utils/apiService.js');
 const { ErrorResponse, SuccessResponse } = require('../utils/response.js');
 
 exports.deleteMultipleBet = async (req, res) => {
     try {
         let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
-        let domain = expertDomain;
         let matchExist = {};
         try {
-            const redisMatch = await commonGetMatchDetailsFromRedis(matchId);
-            if (redisMatch?.data) {
-                matchExist = redisMatch;
-            }
-            else {
-                matchExist = await apiCall(
-                    apiMethod.get,
-                    domain + allApiRoutes.MATCHES.matchDetails + matchId
-                );
-            }
+            matchExist = await getMatchDetailsHandler({ matchId: matchId });
             if (!matchExist) {
                 return ErrorResponse(
                     { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
@@ -36,11 +26,7 @@ exports.deleteMultipleBet = async (req, res) => {
         }
         let promiseArray = []
         for (let url in urlData) {
-            let promise = apiCall(
-                apiMethod.post,
-                url + allApiRoutes.deleteMultipleBet,
-                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
-            );
+            let promise = deleteMultipleBetHandler({ data: JSON.stringify(urlData[url]), deleteReason, matchId, isPermanentDelete }, url);
             promiseArray.push(promise);
         }
         let failedUrl = new Set();
@@ -77,126 +63,18 @@ exports.getSessionProfitLoss = async (req, res) => {
         return ErrorResponse(err, req, res);
     }
 };
-    
-exports.deleteMultipleBetForOther = async (req, res) => {
-    try {
-        let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
-        let domain = expertDomain;
-        let matchExist = {};
-        try {
-            const redisMatch = await commonGetMatchDetailsFromRedis(matchId);
-            if (redisMatch?.data) {
-                matchExist = redisMatch;
-            }
-            else {
-                matchExist = await apiCall(
-                    apiMethod.get,
-                    domain + allApiRoutes.MATCHES.otherMatchDetails + matchId
-                );
-            }
-        } catch (error) {
-            throw error?.response?.data;
-        }
-        if (!Object.keys(urlData).length) {
-            return ErrorResponse({ statusCode: 400, message: { msg: "invalid", keys: { name: "url data" } } }, req, res);
-        }
-        let promiseArray = []
-        for (let url in urlData) {
-            let promise = apiCall(
-                apiMethod.post,
-                url + allApiRoutes.deleteMultipleBetForOther,
-                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
-            );
-            promiseArray.push(promise);
-        }
-        let failedUrl = new Set();
-        await Promise.allSettled(promiseArray)
-            .then(results => {
-                let urlDataArray = Object.keys(urlData);
-                results.forEach((result, index) => {
-                    if(result.status === 'rejected'){
-                        failedUrl.add(urlDataArray[index]);
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error in handling settled promises:', error);
-            });
-        if (failedUrl.size) {
-            return ErrorResponse({ statusCode: 400, message: { msg: "deleteBetError", keys: { urlData: Array.from(failedUrl).join(', ') } } }, req, res);
-        }
-        return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
-    } catch (err) {
-        return ErrorResponse(err, req, res);
-    }
-};
-
-exports.deleteMultipleBetForRace = async (req, res) => {
-    try {
-        let { matchId, deleteReason, urlData, isPermanentDelete } = req.body;
-        let domain = expertDomain;
-        let matchExist = {};
-        try {
-            matchExist = await apiCall(
-                apiMethod.get,
-                domain + allApiRoutes.MATCHES.raceDetails + matchId
-            );
-            if (!matchExist) {
-                return ErrorResponse(
-                    { statusCode: 404, message: { msg: "notFound", keys: { name: "Match" } } },
-                    req,
-                    res
-                );
-            }
-        } catch (error) {
-            throw error?.response?.data;
-        }
-        if (!Object.keys(urlData).length) {
-            return ErrorResponse({ statusCode: 400, message: { msg: "invalid", keys: { name: "url data" } } }, req, res);
-        }
-        let promiseArray = []
-        for (let url in urlData) {
-            let promise = apiCall(
-                apiMethod.post,
-                url + allApiRoutes.deleteMultipleBetForRace,
-                { data: urlData[url], deleteReason, matchId, isPermanentDelete }
-            );
-            promiseArray.push(promise);
-        }
-        let failedUrl = new Set();
-        await Promise.allSettled(promiseArray)
-            .then(results => {
-                let urlDataArray = Object.keys(urlData);
-                results.forEach((result, index) => {
-                    if (result.status === 'rejected') {
-                        failedUrl.add(urlDataArray[index]);
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error in handling settled promises:', error);
-            });
-        if (failedUrl.size) {
-            return ErrorResponse({ statusCode: 400, message: { msg: "deleteBetError", keys: { urlData: Array.from(failedUrl).join(', ') } } }, req, res);
-        }
-        return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
-    } catch (err) {
-        return ErrorResponse(err, req, res);
-    }
-};
 
 exports.changeBetsDeleteReason = async (req, res) => {
     try {
         let { deleteReason, betData, matchId } = req.body;
-
         const domains = Object.keys(betData);
         let promiseArray = [];
         for (let domain of domains) {
-            let promise = apiCall(
-                apiMethod.post,
-                domain + allApiRoutes.changeDeleteBetReason,
-                { betIds: betData[domain], deleteReason: deleteReason, matchId: matchId }
-            );
+            let promise = changeBetsDeleteReasonHandler({
+                betIds: JSON.stringify(betData[domain]),
+                deleteReason: deleteReason,
+                matchId: matchId
+            }, domain);
             promiseArray.push(promise);
         }
         let failedUrl = new Set();
@@ -209,9 +87,9 @@ exports.changeBetsDeleteReason = async (req, res) => {
                     }
                     else if (result.status == "fulfilled") {
 
-                        Object.keys(result?.value?.data)?.forEach((item) => {
+                        Object.keys(result?.value)?.forEach((item) => {
                             sendMessageToUser(item, socketData.updateDeleteReason, {
-                                betIds: result?.value?.data?.[item]?.bets,
+                                betIds: result?.value?.[item]?.bets,
                                 deleteReason: deleteReason,
                                 matchId: matchId
                             });
@@ -227,11 +105,7 @@ exports.changeBetsDeleteReason = async (req, res) => {
         }
 
 
-        await apiCall(
-            apiMethod.post,
-            expertDomain + allApiRoutes.EXPERTS.updateDeleteReason,
-            { betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId }
-        );
+        await deleteReasonChangeHandler({ betIds: Object.values(betData)?.flat(2), deleteReason: deleteReason, matchId: matchId });
         return SuccessResponse({ statusCode: 200, message: { msg: "updated", keys: { name: "Bet" } } }, req, res);
     } catch (err) {
         return ErrorResponse(err, req, res);

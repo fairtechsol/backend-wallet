@@ -3,7 +3,6 @@ const {
   transType,
   walletDescription,
   oldBetFairDomain,
-  redisKeys,
   partnershipPrefixByRole,
 } = require("../config/contants");
 const {
@@ -15,18 +14,15 @@ const {
   deleteUser,
   userBlockUnblock,
   betBlockUnblock,
-  getParentUsers,
-  getFirstLevelChildUser,
   getFirstLevelChildUserWithPartnership,
 } = require("../services/userService");
 const { ErrorResponse, SuccessResponse } = require("../utils/response");
 const { insertTransactions } = require("../services/transactionService");
 const bcrypt = require("bcryptjs");
 const lodash = require("lodash");
-const {  getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
+const { getFaAdminDomain, mergeBetsArray } = require("../services/commonService");
 const {
   getUserBalanceDataByUserId,
-  updateUserBalanceByUserId,
   addInitialUserBalance,
   updateUserBalanceData,
 } = require("../services/userBalanceService");
@@ -38,16 +34,15 @@ const {
   updateDomain,
   getUserDomainWithFaId,
 } = require("../services/domainDataService");
-const { apiCall, apiMethod, allApiRoutes } = require("../utils/apiService");
 const {
   calculatePartnership,
   checkUserCreationHierarchy,
 } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { hasUserInCache, updateUserDataRedis, getUserRedisKeys, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
-const { getCasinoCardResult, getCardResultData } = require("../services/cardService");
-const { CardResultTypeWin } = require("../services/cardService/cardResultTypeWinPlayer");
+const { hasUserInCache, updateUserDataRedis, getUserRedisData, incrementValuesRedis } = require("../services/redis/commonFunctions");
 const { updateSuperAdminData } = require("./expertController");
+const { getBets } = require("../grpc/grpcClient/handlers/wallet/betsHandler");
+const { createSuperAdminHandler, updateSuperAdminHandler, changePasswordHandler, setExposureLimitHandler, setCreditReferenceHandler, updateUserBalanceHandler, lockUnlockSuperAdminHandler, getUserProfitLossHandler } = require("../grpc/grpcClient/handlers/wallet/userHandler");
 
 exports.createSuperAdmin = async (req, res) => {
   try {
@@ -213,10 +208,9 @@ exports.createSuperAdmin = async (req, res) => {
       domain: { domain, logo, sidebarColor, headerColor, footerColor },
     };
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.createSuperAdmin,
-        response
+      await createSuperAdminHandler(
+        response,
+        domain
       );
     } catch (err) {
       logger.error({
@@ -225,7 +219,7 @@ exports.createSuperAdmin = async (req, res) => {
         stake: err?.stack
       });
       await deleteUser(response?.id);
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     let updateUser = {};
@@ -259,7 +253,7 @@ exports.createSuperAdmin = async (req, res) => {
       });
     }
 
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
     let insertUserBalanceData = {
       currentBalance: 0,
       userId: insertUser.id,
@@ -347,39 +341,39 @@ exports.updateSuperAdmin = async (req, res) => {
 
     updateUser = {
       ...updateUser, ...(isOldFairGame ? {
-        sessionCommission: sessionCommission || updateUser.sessionCommission,
-        matchComissionType: matchComissionType || updateUser.matchComissionType,
-        matchCommission: matchCommission || updateUser.matchCommission
+        sessionCommission: sessionCommission ?? updateUser.sessionCommission,
+        matchComissionType: matchComissionType,
+        matchCommission: matchCommission ?? updateUser.matchCommission
       } : {})
     }
     let domainData = {};
     let response = {};
-    let domain = isOldFairGame ? {domain:oldBetFairDomain} : {};
+    let domain = isOldFairGame ? { domain: oldBetFairDomain } : {};
 
-    if(!isOldFairGame){
+    if (!isOldFairGame) {
 
-    domain = await getDomainDataByUserId(updateUser.id, [
-      "id",
-      "logo",
-      "sidebarColor",
-      "footerColor",
-      "headerColor",
-      "domain",
-    ]);
-    if (!domain)
-      return ErrorResponse(
-        { statusCode: 400, message: { msg: "invalidData" } },
-        req,
-        res
-      );
+      domain = await getDomainDataByUserId(updateUser.id, [
+        "id",
+        "logo",
+        "sidebarColor",
+        "footerColor",
+        "headerColor",
+        "domain",
+      ]);
+      if (!domain)
+        return ErrorResponse(
+          { statusCode: 400, message: { msg: "invalidData" } },
+          req,
+          res
+        );
 
-    domainData = {
-      logo: logo || domain.logo,
-      sidebarColor: sidebarColor || domain.sidebarColor,
-      headerColor: headerColor || domain.headerColor,
-      footerColor: footerColor || domain.footerColor,
-    };
-  }
+      domainData = {
+        logo: logo || domain.logo,
+        sidebarColor: sidebarColor || domain.sidebarColor,
+        headerColor: headerColor || domain.headerColor,
+        footerColor: footerColor || domain.footerColor,
+      };
+    }
 
     if (!isOldFairGame) {
       response["domain"] = domainData;
@@ -398,17 +392,13 @@ exports.updateSuperAdmin = async (req, res) => {
     response["isOldFairGame"] = isOldFairGame;
 
     try {
-      await apiCall(
-        "post",
-        domain.domain + allApiRoutes.updateSuperAdmin,
-        response
-      );
+      await updateSuperAdminHandler(response, domain.domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
     await addUser(updateUser);
     if (!isOldFairGame) {
-       await updateDomain(domain.id, domainData);
+      await updateDomain(domain.id, domainData);
     }
     return SuccessResponse(
       {
@@ -433,8 +423,8 @@ exports.setExposureLimit = async (req, res, next) => {
     let loginUser = await getUserById(reqUser.id, ["id", "exposureLimit", "roleName"]);
     if (!loginUser) return ErrorResponse({ statusCode: 400, message: { msg: "notFound", keys: { name: "Login user" } } }, req, res);
 
-    if ( parseFloat(amount) > loginUser.exposureLimit)
-      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit" , keys: { amount: loginUser.exposureLimit }} }, req, res);
+    if (parseFloat(amount) > loginUser.exposureLimit)
+      return ErrorResponse({ statusCode: 400, message: { msg: "user.InvalidExposureLimit", keys: { amount: loginUser.exposureLimit } } }, req, res);
 
     let user = await getUser({ id: userId, createBy: reqUser.id }, [
       "id",
@@ -462,13 +452,9 @@ exports.setExposureLimit = async (req, res, next) => {
     let response = lodash.pick(user, ["id", "exposureLimit"]);
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.setExposureLimit,
-        response
-      );
+      await setExposureLimitHandler(response, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     await addUser(user);
@@ -538,13 +524,9 @@ exports.setCreditReferrence = async (req, res, next) => {
     };
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.setCreditReferrence,
-        data
-      );
+      await setCreditReferenceHandler(data, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     let previousCreditReference = parseFloat(user.creditRefrence);
@@ -585,7 +567,7 @@ exports.setCreditReferrence = async (req, res, next) => {
       },
     ];
 
-    const transactioninserted = await insertTransactions(transactionArray);
+    await insertTransactions(transactionArray);
 
     let updateLoginUser = {
       downLevelCreditRefrence: parseFloat(loginUser.downLevelCreditRefrence) - previousCreditReference + amount,
@@ -718,21 +700,20 @@ exports.updateUserBalance = async (req, res) => {
     }
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domainData + allApiRoutes.updateUserBalance,
-        body
+      await updateUserBalanceHandler(
+        body, domainData
       );
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
-    await updateUserBalanceData(user.id, { 
-      profitLoss: newUserAmount, 
-      myProfitLoss: newUserUpdateMyProfitLoss, 
-      exposure: 0, 
-      totalCommission: 0, 
-      balance: newUserAmount});
+    await updateUserBalanceData(user.id, {
+      profitLoss: newUserAmount,
+      myProfitLoss: newUserUpdateMyProfitLoss,
+      exposure: 0,
+      totalCommission: 0,
+      balance: newUserAmount
+    });
 
     await updateUserBalanceData(reqUser.id, { 
       profitLoss: 0, 
@@ -744,7 +725,7 @@ exports.updateUserBalance = async (req, res) => {
     const parentUserExistRedis = await hasUserInCache(reqUser.id);
 
     if (parentUserExistRedis) {
-        await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
+      await updateUserDataRedis(reqUser.id, updatedLoginUserBalanceData);
     }
 
     let transactionArray = [
@@ -785,11 +766,10 @@ exports.updateUserBalance = async (req, res) => {
   }
 };
 
-// Controller function for locking/unlocking a super admin
 exports.lockUnlockSuperAdmin = async (req, res, next) => {
   try {
     // Extract relevant data from the request body and user object
-   const { userId, betBlock, userBlock, userDomain } = req.body;
+    const { userId, betBlock, userBlock, userDomain } = req.body;
     const { id: loginId } = req.user;
 
     // Fetch user details of the current user, including block information
@@ -854,13 +834,9 @@ exports.lockUnlockSuperAdmin = async (req, res, next) => {
     };
 
     try {
-      await apiCall(
-        apiMethod.post,
-        domain + allApiRoutes.lockUnlockSuperAdmin,
-        body
-      );
+      await lockUnlockSuperAdminHandler(body, domain);
     } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
+      return ErrorResponse({ message: err?.message }, req, res);
     }
 
     // Return success response
@@ -903,11 +879,8 @@ exports.changePassword = async (req, res, next) => {
       password,
       userId,
     };
-    try {
-      apiCall(apiMethod.post, domain + allApiRoutes.changePassword, body);
-    } catch (err) {
-      return ErrorResponse(err?.response?.data, req, res);
-    }
+    changePasswordHandler(body, domain);
+
     // Update loginAt, password, and reset transactionPassword
     await updateUser(userId, {
       loginAt: null,
@@ -936,33 +909,7 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-exports.getPartnershipId = async (req, res, next) => {
-  try {
-    // Destructure request body
-    const { userId } = req.params;
 
-    const partnershipIds = await getParentUsers(userId);
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        data: partnershipIds
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    // Log any errors that occur
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.getPlacedBets = async (req, res, next) => {
   try {
@@ -972,22 +919,22 @@ exports.getPlacedBets = async (req, res, next) => {
 
     let promiseArray = []
     if (domain) {
-      let promise = apiCall(apiMethod.get, domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+      let promise = getBets({ query: JSON.stringify({ ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id }) }, domain);
       promiseArray.push(promise);
     }
     else {
       for (let url of domainData) {
-        let promise = apiCall(apiMethod.get, url?.domain + allApiRoutes.bets.placedBet, null, {}, { ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id, isTeamNameAllow: true });
+        let promise = getBets({ query: JSON.stringify({ ...query, roleName: roleName || req?.user?.roleName, userId: userId || req?.user?.id }) }, url?.domain);
         promiseArray.push(promise);
       }
     }
     await Promise.allSettled(promiseArray)
       .then(async results => {
-          for (let item of results) {
-            if (item?.status == "fulfilled") {
-              result = await mergeBetsArray(result, item?.value?.data?.rows);
-            }
+        for (let item of results) {
+          if (item?.status == "fulfilled") {
+            result = await mergeBetsArray(result, item?.value?.rows);
           }
+        }
       })
       .catch(error => {
         logger.error({
@@ -1023,38 +970,6 @@ exports.getPlacedBets = async (req, res, next) => {
   }
 }
 
-exports.updateUserBalanceBySA = async (req, res, next) => {
-  try {
-
-    const { userId, balance } = req.body;
-
-    await updateUserBalanceByUserId(userId, {
-      currentBalance: balance
-    });
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    logger.error({
-      error: `Error at update super admin balance.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.getUserProfitLoss = async (req, res, next) => {
   try {
@@ -1065,19 +980,19 @@ exports.getUserProfitLoss = async (req, res, next) => {
 
     let oldBetFairUserIds = [];
     let userProfitLossData = [];
-    let markets={};
+    let markets = {};
 
     for (let element of users) {
-      let currUserProfitLossData = {profitLoss:{}};
+      let currUserProfitLossData = { profitLoss: {} };
       element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
       if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
+        const faDomains = await getFaAdminDomain(element);
         for (let usersDomain of faDomains) {
-       
-          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLoss + matchId, null, {}, {
+
+          const response = await getUserProfitLossHandler({
+            matchId: matchId,
             userIds: JSON.stringify(element),
-          })
-            .then((data) => data)
+          }, usersDomain?.domain)
             .catch((err) => {
               logger.error({
                 context: `error in ${usersDomain?.domain} getting user profit loss`,
@@ -1088,11 +1003,11 @@ exports.getUserProfitLoss = async (req, res, next) => {
               throw err;
             });
 
-            for(let items of response?.data?.markets){
-              markets[items.betId]=items;
-            }
+          for (let items of response?.markets) {
+            markets[items.betId] = items;
+          }
 
-          response?.data?.profitLoss?.forEach((item) => {
+          response?.profitLoss?.forEach((item) => {
             Object.entries(item?.profitLoss)?.forEach(([key, val]) => {
               Object.entries(val.teams)?.forEach(([teamKey, teamVal]) => {
                 currUserProfitLossData.profitLoss[key] = currUserProfitLossData.profitLoss[key] || { name: val.name, teams: {} };
@@ -1115,36 +1030,35 @@ exports.getUserProfitLoss = async (req, res, next) => {
           oldBetFairUserIds.push(element);
         }
         else {
-          const doaminData =await getDomainByUserId(element.id);
+          const doaminData = await getDomainByUserId(element.id);
 
-          const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLoss + matchId, null, {}, {
-            userIds: JSON.stringify(element),
-          })
-            .then((data) => data)
-            .catch((err) => {
-              logger.error({
-                context: `error in ${doaminData} getting user profit loss`,
-                process: `User ID : ${req.user.id} `,
-                error: err.message,
-                stake: err.stack,
-              });
-              throw err;
+          const response = await getUserProfitLossHandler({
+            matchId: matchId,
+            userIds: JSON.stringify(element)
+          }, doaminData).catch((err) => {
+            logger.error({
+              context: `error in ${doaminData} getting user profit loss`,
+              process: `User ID : ${req.user.id} `,
+              error: err.message,
+              stake: err.stack,
             });
+            throw err;
+          });;
 
-          userProfitLossData.push(...response?.data?.profitLoss);
-          for(let items of response?.data?.markets){
-            markets[items.betId]=items;
+          userProfitLossData.push(...response?.profitLoss);
+          for (let items of response?.markets) {
+            markets[items.betId] = items;
           }
         }
       }
     };
 
-   
+
     if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLoss + matchId, null,{}, {
+      let response = await getUserProfitLossHandler({
+        matchId: matchId,
         userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
-      })
-        .then((data) => data)
+      }, oldBetFairDomain)
         .catch((err) => {
           logger.error({
             context: `error in ${oldBetFairUserIds?.join(",")} getting user list`,
@@ -1155,11 +1069,11 @@ exports.getUserProfitLoss = async (req, res, next) => {
           throw err;
         });
 
-        userProfitLossData.push(...response?.data?.profitLoss);
-        for(let items of response?.data?.markets){
-          markets[items.betId]=items;
-        }
+      userProfitLossData.push(...response?.profitLoss);
+      for (let items of response?.markets) {
+        markets[items.betId] = items;
       }
+    }
 
     // userProfitLossData = userProfitLossData?.filter((item) => item.teamRateA || item.teamRateB || item.teamRateC);
 
@@ -1188,220 +1102,6 @@ exports.getUserProfitLoss = async (req, res, next) => {
   }
 }
 
-exports.getUserRacingProfitLoss = async (req, res, next) => {
-  try {
-    const { matchId } = req.params;
-    const { id, roleName } = req.user;
-
-    const users = await getFirstLevelChildUserWithPartnership(id, partnershipPrefixByRole[roleName] + "Partnership");
-
-    let oldBetFairUserIds = [];
-    let userProfitLossData = [];
-
-    for (let element of users) {
-      let currUserProfitLossData = {};
-      element.partnerShip = element[partnershipPrefixByRole[roleName] + "Partnership"];
-      if (element?.roleName == userRoleConstant.fairGameAdmin) {
-        const faDomains =await getFaAdminDomain(element);
-        let totalPLVal = 0;
-
-        for (let usersDomain of faDomains) {
-       
-          const response = await apiCall(apiMethod.get, usersDomain?.domain + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
-            userIds: JSON.stringify(element),
-          })
-            .then((data) => data)
-            .catch((err) => {
-              logger.error({
-                context: `error in ${usersDomain?.domain} getting user profit loss`,
-                process: `User ID : ${req.user.id} `,
-                error: err.message,
-                stake: err.stack,
-              });
-              throw err;
-            });
-          const mergeObjectsWithSum = (obj1, obj2) => Object.fromEntries(Object.entries(obj1).map(([k, v]) => [k, (v || 0) + (obj2[k] ?? 0)]).concat(Object.entries(obj2).filter(([k]) => !(k in obj1))));
-          currUserProfitLossData = mergeObjectsWithSum(response?.data?.reduce((prev, curr) => {
-            Object.keys(curr)?.forEach((item) => {
-              if (typeof curr[item] === 'number' && !isNaN(curr[item])) {
-                prev[item] = (prev[item] || 0) + curr[item];
-                totalPLVal += curr[item];
-                prev[item] = parseFloat(prev[item]?.toFixed(2));
-              }
-            });
-            return prev;
-          }, {}), currUserProfitLossData);
-        
-          };
-          currUserProfitLossData.userName = element?.userName;
-        if (totalPLVal != 0) {
-          userProfitLossData.push(currUserProfitLossData);
-        }
-      }
-      else {
-        if (!element.isUrl && element.roleName != userRoleConstant.fairGameAdmin && element.roleName != userRoleConstant.fairGameWallet) {
-          oldBetFairUserIds.push(element);
-        }
-        else {
-          const doaminData =await getDomainByUserId(element.id);
-
-          const response = await apiCall(apiMethod.get, doaminData + allApiRoutes.userProfitLossRacing + matchId, null, {}, {
-            userIds: JSON.stringify(element),
-          })
-            .then((data) => data)
-            .catch((err) => {
-              logger.error({
-                context: `error in ${doaminData} getting user profit loss`,
-                process: `User ID : ${req.user.id} `,
-                error: err.message,
-                stake: err.stack,
-              });
-              throw err;
-            });
-
-            userProfitLossData.push(...response?.data);
-        }
-      }
-    };
-
-   
-    if (oldBetFairUserIds?.length > 0) {
-      let response = await apiCall(apiMethod.get, oldBetFairDomain + allApiRoutes.userProfitLossRacing + matchId, null,{}, {
-        userIds: oldBetFairUserIds.map((item) => JSON.stringify(item)).join("|")
-      })
-        .then((data) => data)
-        .catch((err) => {
-          logger.error({
-            context: `error in ${oldBetFairUserIds?.join(",")} getting user list`,
-            process: `User ID : ${req.user.id} `,
-            error: err.message,
-            stake: err.stack,
-          });
-          throw err;
-        });
-
-        userProfitLossData.push(...response?.data);
-    }
-
-    return SuccessResponse(
-      {
-        statusCode: 200,
-        data:userProfitLossData
-      },
-      req,
-      res
-    );
-  } catch (error) {
-    logger.error({
-      error: `Error at get user profit loss match.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
-
-// Controller function for locking/unlocking a super admin
-exports.lockUnlockUserByUserPanel = async (req, res, next) => {
-  try {
-    // Extract relevant data from the request body and user object
-    const { userId, userBlock, parentId, autoBlock } = req.body;
-
-    await updateUser(userId, {
-      userBlock: userBlock,
-      userBlockedBy: parentId,
-      autoBlock: autoBlock
-    });
-
-    // Return success response
-    return SuccessResponse(
-      { statusCode: 200, message: { msg: "user.lock/unlockSuccessfully" } },
-      req,
-      res
-    );
-  } catch (error) {
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-};
-
-exports.getCardResult = async ( req, res ) => {
-  try {
-
-    const { type } = req.params;
-    const query  = req.query;
-    const currGameWinner = new CardResultTypeWin(type).getCardGameProfitLoss();
-    const select = ['cardResult.gameType as "gameType"', "cardResult.id as id", 'cardResult.createdAt as "createdAt"', currGameWinner, `"cardResult".result ->> 'mid' as mid`]
-
-    let result = await getCasinoCardResult(query, { gameType: type }, select);
-    
-    SuccessResponse(
-      {
-        statusCode: 200,
-        data: result,
-      },
-      req,
-      res
-    );
-  } catch ( error ) {
-    logger.error({
-      error: `Error while getting card results.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
-
-exports.getCardResultDetail = async ( req, res ) => {
-  try {
-    const { id } = req.params;
-    const result = await getCardResultData(`result ->> 'mid' = '${id}' `);
-    
-    SuccessResponse(
-      {
-        statusCode: 200,
-        data: result,
-      },
-      req,
-      res
-    );
-  } catch ( error ) {
-    logger.error({
-      error: `Error while getting card result detail.`,
-      stack: error.stack,
-      message: error.message,
-    });
-    return ErrorResponse(
-      {
-        statusCode: 500,
-        message: error.message,
-      },
-      req,
-      res
-    );
-  }
-}
 
 exports.declareVirtualCasinoResult = async (req, res) => {
   try {

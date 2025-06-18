@@ -116,3 +116,34 @@ exports.getAllSessionRedis = async (matchId) => {
   // Return the session data as an object or null if no data is found
   return Object.keys(sessionData)?.length == 0 ? null : sessionData;
 };
+
+exports.getUserRedisMultiKeyData = async (userIds, keys) => {
+  // Validate input to avoid unnecessary processing
+  if (!Array.isArray(userIds) || !Array.isArray(keys) || userIds.length === 0 || keys.length === 0) {
+    return {};
+  }
+
+  try {
+    const pipeline = internalRedis.pipeline();
+
+    // Use more efficient array iteration
+    for (const userId of userIds) {
+      pipeline.hmget(userId, ...keys);
+    }
+
+    const results = await pipeline.exec();
+
+    // Process results to extract values and handle potential individual command errors
+    return results.reduce((prev, [error, data], index) => {
+      if (!error&&data?.filter((item) => item !== null).length) {
+        prev[userIds[index]] = {};
+        for (let i = 0; i < data.length; i++) {
+          prev[userIds[index]][keys[i]] = data[i];
+        }
+      }
+      return prev;
+    }, {});
+  } catch (error) {
+    throw error;
+  }
+};

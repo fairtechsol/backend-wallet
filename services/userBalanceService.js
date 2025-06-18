@@ -83,3 +83,7 @@ exports.getBalanceSumByRoleName = async (roleName) => {
     .getRawOne();
   return balanceSum;
 }
+
+exports.updateUserDeclareBalanceData =async (data) => {
+  await UserBalance.query(`SELECT "updateUserBalancesBatch"($1)`,[data]);
+}

@@ -7,7 +7,7 @@ const { mergeBetsArray, settingBetsDataAtLogin } = require("../../../services/co
 const { getBets, sessionProfitLossUserWiseData, sessionProfitLossBetsData } = require("../../grpcClient/handlers/wallet/betsHandler");
 const { userRoleConstant, redisKeys } = require("../../../config/contants");
 const { getUser } = require("../../../services/userService");
-const { getUserRedisData } = require("../../../services/redis/commonFunctions");
+const { getUserRedisData, getAllSessions } = require("../../../services/redis/commonFunctions");
 
 exports.getPlacedBets = async (call) => {
   try {
@@ -66,17 +66,34 @@ exports.getWalletLoginBetsData = async () => {
 
     let result = {};
 
-    const betData = await getUserRedisData(user.id);
-    if (betData) {
-      Object.keys(betData)?.forEach((item) => {
-        if (item?.includes(redisKeys.profitLoss)) {
-          result[item] = betData[item];
-        }
+    const betData = await getAllSessions(user.id);
+    if (Object.values(betData).length > 0) {
+      Object.entries(betData)?.forEach(([matchId, vals]) => {
+        Object.entries(vals)?.forEach(([betId, betData]) => {
+          const upperKey = `session:expert:${matchId}:${betId}:upperLimitOdds`;
+          const lowerKey = `session:expert:${matchId}:${betId}:lowerLimitOdds`;
+          const totalBetKey = `session:expert:${matchId}:${betId}:totalBet`;
+          const profitLossKey = `session:expert:${matchId}:${betId}:profitLoss`;
+          const maxLossKey = `session:expert:${matchId}:${betId}:maxLoss`;
+
+          result[upperKey] = betData?.upperLimitOdds || 0;
+          result[lowerKey] = betData?.lowerLimitOdds || 0;
+          result[totalBetKey] = betData?.totalBet || 0;
+          result[profitLossKey] = betData?.betPlaced?.reduce((prev, curr) => {
+            prev[curr?.odds] = curr?.profitLoss || 0;
+            return prev;
+          }, {}) || {};
+          result[maxLossKey] = betData?.maxLoss || 0;
+        });
       });
     }
     else {
-      result = await settingBetsDataAtLogin(user);
-     
+      const data = await settingBetsDataAtLogin(user);
+      if (data?.plResult) {
+        Object.entries(data?.plResult)?.forEach(([matchId, vals]) => {
+          result[matchId?.replace(user.id, "expert")] = vals;
+        })
+      }
     }
 
     return { data: JSON.stringify(result) };
@@ -103,7 +120,7 @@ exports.getUserWiseSessionBetProfitLossExpert = async (call) => {
 
     for (let url of domainData) {
 
-      let response = await sessionProfitLossUserWiseData({betId: betId}, url.domain)
+      let response = await sessionProfitLossUserWiseData({ betId: betId }, url.domain)
         .catch((err) => {
           logger.error({
             context: `error in ${url.domain} getting user list`,

@@ -23,175 +23,205 @@ exports.declareTournamentMatchResult = async (call) => {
     const { result, matchBettingDetails, userId, matchId, match, isMatchOdd } = call.request;
     const domainData = await getUserDomainWithFaId();
 
-
     const fgWallet = await getUser({
       roleName: userRoleConstant?.fairGameWallet
     }, ["id", "matchComissionType", "matchCommission"]);
 
-    let fwProfitLoss = 0;
-    let exposure = 0;
-
-    let bulkCommission = [];
-    let totalCommissions = [];
+    // Initialize aggregated response
+    const response = {
+      fwProfitLoss: 0,
+      superAdminData: {},
+      bulkCommission: {},
+      faAdminCal: {
+        fwWalletDeduction: 0,
+        commission: [],
+        userData: {}
+      }
+    };
     let resultProfitLoss = 0;
-    const promises = domainData.map(async (item) => {
-      try {
-        const response = await declareMatchHandler({
-          result, marketDetail: matchBettingDetails, userId, matchId, match, isMatchOdd: isMatchOdd
-        }, item?.domain);
-        resultProfitLoss += roundToTwoDecimals(response?.fwProfitLoss || 0);
-        return response;
-      }
-      catch (err) {
-        logger.error({
-          error: `Error at declare match result for the domain ${item?.domain}.`,
-          stack: err.stack,
-          message: err.message,
-        });
 
-        await addResultFailed({
-          matchId: matchId,
-          betId: matchBettingDetails?.id,
-          userId: item?.userId?.id,
-          result: result,
-          createBy: userId
-        });
-        notifyTelegram(`Error at result declare tournament wallet side for domain ${item?.domain} on tournament ${matchBettingDetails?.id} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+    // Process domains in batches
+    const BATCH_SIZE = process.env.RESULT_BATCH_SIZE || 10;
+    for (let i = 0; i < domainData.length; i += BATCH_SIZE) {
+      const batch = domainData.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(item =>
+        declareMatchHandler({
+          result,
+          marketDetail: matchBettingDetails,
+          userId,
+          matchId,
+          match,
+          isMatchOdd
+        }, item?.domain)
+          .catch(err => {
+            logger.error({
+              error: `Error at declare match result for domain ${item?.domain}.`,
+              stack: err.stack,
+              message: err.message,
+            });
 
-        return {};
-      }
-    })
-    const returnedVal = await Promise.all(promises);
+            addResultFailed({
+              matchId: matchId,
+              betId: matchBettingDetails?.id,
+              userId: item?.userId?.id,
+              result: result,
+              createBy: userId
+            });
 
-    let response = returnedVal?.reduce((acc, curr) => {
-      acc.fwProfitLoss = roundToTwoDecimals((acc.fwProfitLoss || 0) + parseFloat(curr?.fwProfitLoss || 0));
-      acc.superAdminData = { ...(acc.superAdminData || {}), ...(curr?.superAdminData || {}) };
-      acc.bulkCommission = Object.keys({ ...acc?.bulkCommission, ...curr?.bulkCommission }).reduce((result, key) => ({
-        ...result,
-        [key]: [...(acc?.bulkCommission?.[key] || []), ...(curr?.bulkCommission?.[key] || [])]
-      }), {});
+            notifyTelegram(`Error at result declare tournament wallet side for domain ${item?.domain} on tournament ${matchBettingDetails?.id} for match ${matchId} ${JSON.stringify(err || "{}")}`);
+            return null;
+          })
+      );
 
-      acc.faAdminCal = {
-        fwWalletDeduction: roundToTwoDecimals((acc?.faAdminCal?.fwWalletDeduction || 0) + parseFloat(curr?.faAdminCal?.fwWalletDeduction || 0)),
-        commission: [...(acc?.faAdminCal?.commission || []), ...(curr?.faAdminCal?.commission || [])],
-        userData: {
-          ...acc?.faAdminCal?.userData,
-          ...Object.keys({  ...curr?.faAdminCal?.userData }).reduce((res, key) => {
-            const currUser = curr?.faAdminCal?.userData?.[key] || {};
-            const prevUser = acc?.faAdminCal?.userData?.[key] || {};
-            const calc = (field) => roundToTwoDecimals(parseFloat(prevUser[field] || 0) + parseFloat(currUser[field] || 0));
-            if(Object.keys(currUser).length){
-              res[key] = prevUser && Object.keys(prevUser).length
-              ? {
-                ...currUser,
-                profitLoss: calc("profitLoss"),
-                exposure: calc("exposure"),
-                myProfitLoss: calc("myProfitLoss"),
-                userOriginalProfitLoss: calc("userOriginalProfitLoss"),
-              }
-              : currUser;
-            }
-            return res;
-          }, {})
+      const batchResults = await Promise.all(batchPromises);
+
+      // Process batch results incrementally
+      for (const curr of batchResults) {
+        if (!curr) continue;
+
+        resultProfitLoss = roundToTwoDecimals(resultProfitLoss + parseFloat(curr.fwProfitLoss || 0));
+
+        // Merge response data incrementally
+        response.fwProfitLoss = roundToTwoDecimals(response.fwProfitLoss + parseFloat(curr.fwProfitLoss || 0));
+        response.superAdminData = { ...response.superAdminData, ...(curr.superAdminData || {}) };
+
+        // Merge bulkCommission
+        for (const [key, items] of Object.entries(curr.bulkCommission || {})) {
+          if (!response.bulkCommission[key]) response.bulkCommission[key] = [];
+          response.bulkCommission[key].push(...items);
         }
 
-      }
-      return acc;
-    }, {});
+        // Merge faAdminCal
+        const cal = curr.faAdminCal || {};
+        response.faAdminCal.fwWalletDeduction = roundToTwoDecimals(
+          response.faAdminCal.fwWalletDeduction + parseFloat(cal.fwWalletDeduction || 0)
+        );
 
-    for (let userId in response?.superAdminData) {
-      if (response?.superAdminData?.[userId]?.role == userRoleConstant.user) {
-        response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-      }
-      else {
-        response.superAdminData[userId].exposure = -response?.superAdminData?.[userId].exposure;
-        response.superAdminData[userId].myProfitLoss = -response?.superAdminData?.[userId].myProfitLoss;
-        response.superAdminData[userId].balance = 0;
+        if (cal.commission && cal.commission.length) {
+          response.faAdminCal.commission.push(...cal.commission);
+        }
+
+        // Merge userData
+        for (const [userId, userData] of Object.entries(cal.userData || {})) {
+          if (!response.faAdminCal.userData[userId]) {
+            response.faAdminCal.userData[userId] = { ...userData };
+          } else {
+            const existing = response.faAdminCal.userData[userId];
+            existing.profitLoss = roundToTwoDecimals((existing.profitLoss || 0) + (userData.profitLoss || 0));
+            existing.exposure = roundToTwoDecimals((existing.exposure || 0) + (userData.exposure || 0));
+            existing.myProfitLoss = roundToTwoDecimals((existing.myProfitLoss || 0) + (userData.myProfitLoss || 0));
+            existing.userOriginalProfitLoss = roundToTwoDecimals(
+              (existing.userOriginalProfitLoss || 0) + (userData.userOriginalProfitLoss || 0)
+            );
+          }
+        }
       }
 
-      logger.info({
-        message: "Updating user balance created by fgAdmin or wallet in declare: ",
-        data: {
-          superAdminData: response?.superAdminData?.[userId],
-          userId: userId
-        },
-      });
+      // Clear references for garbage collection
+      batch.length = 0;
+      batchPromises.length = 0;
+      batchResults.length = 0;
     }
-    const userUpdateDBData = response?.superAdminData;
-    bulkCommission.push(...(response?.faAdminCal?.commission || []));
 
-    const userData = response?.faAdminCal?.userData || {};
+    // Process superAdminData
+    for (let userId in response.superAdminData) {
+      const data = response.superAdminData[userId];
+      if (data.role === userRoleConstant.user) {
+        data.exposure = -data.exposure;
+      } else {
+        data.exposure = -data.exposure;
+        data.myProfitLoss = -data.myProfitLoss;
+        data.balance = 0;
+      }
+    }
+
+    const userUpdateDBData = response.superAdminData;
+    const bulkCommission = [...(response.faAdminCal.commission || [])];
+    const userData = response.faAdminCal.userData || {};
 
     const userIds = Object.keys(userData);
     userIds.push(fgWallet.id);
 
+    // Optimized user data fetching
     const [users, userBalances, usersRedisData] = await Promise.all([
       getUsersWithoutCount({ id: In(userIds) }, ["matchComissionType", "matchCommission", "fwPartnership", "id"])
-        .then(arr => arr.reduce((m, u) => (m[u.id] = u, m), {})),
+        .then(arr => arr.reduce((map, u) => map.set(u.id, u), new Map())),
       getUserBalanceDataByUserIds(userIds)
-        .then(arr => arr.reduce((m, b) => (m[b.userId] = b, m), {})),
+        .then(arr => arr.reduce((map, b) => map.set(b.userId, b), new Map())),
       getUserRedisMultiKeyData(userIds, ['profitLoss', 'myProfitLoss', 'exposure', 'totalCommission'])
     ]);
+
     const updatePipeline = internalRedis.pipeline();
+    const totalCommissions = [];
+    let fwProfitLoss = 0;
+    let exposure = 0;
 
-    for (let parentUserId in userData) {
-
-      const adminBalanceData = userData[parentUserId];
+    // Process admin users
+    for (const [parentUserId, adminBalanceData] of Object.entries(userData)) {
       if (!adminBalanceData || adminBalanceData.role !== userRoleConstant.fairGameAdmin) continue;
 
       fwProfitLoss += roundToTwoDecimals(adminBalanceData?.profitLoss || 0);
       totalCommissions.push(...(response?.faAdminCal?.commission || []));
 
-      const parentUser = userBalances[parentUserId];
-      const userCommission = users[parentUserId];
+      const parentUser = userBalances.get(parentUserId);
+      const userCommission = users.get(parentUserId);
       const parentUserRedisData = usersRedisData[parentUserId];
 
-      const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-      const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
-      const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
+      if (!parentUser) continue;
 
-      parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + parseFloat(adminBalanceData?.profitLoss));
-      parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - parseFloat(adminBalanceData?.myProfitLoss));
-      parentUser.exposure = roundToTwoDecimals(parentExposure - adminBalanceData?.exposure);
+      const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss || 0);
+      const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss || 0);
+      const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure || 0);
+
+      parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + (adminBalanceData?.profitLoss || 0));
+      parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - (adminBalanceData?.myProfitLoss || 0));
+      parentUser.exposure = roundToTwoDecimals(parentExposure - (adminBalanceData?.exposure || 0));
 
       let totalCommissionData = 0;
-      const bulkCommissionEntries = Object.entries(response?.bulkCommission || {});
+      const bulkCommissionEntries = Object.entries(response.bulkCommission || {});
 
+      for (const [key, items] of bulkCommissionEntries) {
+        if (userCommission?.matchComissionType === matchComissionTypeConstant.entryWise) {
+          for (const item of items.filter(i => i?.superParent === parentUserId)) {
+            const commissionAmount = Math.abs(roundToTwoDecimals(
+              (parseFloat(item?.lossAmount || 0) *
+                (parseFloat(userCommission?.matchCommission || 0) / 100) *
+                (parseFloat(userCommission.fwPartnership || 0) / 100
+                ))));
 
-      bulkCommissionEntries?.forEach(([key, item]) => {
-        if (userCommission?.matchComissionType == matchComissionTypeConstant.entryWise) {
-          item?.filter((items) => items?.superParent == parentUserId)?.forEach((items) => {
-
-            const commissionAmount = Math.abs(roundToTwoDecimals((parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100) * (parseFloat(userCommission.fwPartnership) / 100)));
-
-            parentUser.totalCommission = parseFloat(parentUser.totalCommission) + commissionAmount;
+            parentUser.totalCommission = parseFloat(parentUser.totalCommission || 0) + commissionAmount;
             totalCommissionData += commissionAmount;
 
             bulkCommission.push({
               createBy: key,
-              matchId: items.matchId,
-              betId: items?.betId,
-              betPlaceId: items?.betPlaceId,
+              matchId: item.matchId,
+              betId: item?.betId,
+              betPlaceId: item?.betPlaceId,
               parentId: parentUserId,
-              teamName: items?.sessionName,
-              betPlaceDate: new Date(items?.betPlaceDate),
-              odds: items?.odds,
-              betType: items?.betType,
-              stake: items?.stake,
-              commissionAmount: Math.abs(roundToTwoDecimals(parseFloat(items?.lossAmount) * parseFloat(userCommission?.matchCommission) / 100)),
+              teamName: item?.sessionName,
+              betPlaceDate: new Date(item?.betPlaceDate),
+              odds: item?.odds,
+              betType: item?.betType,
+              stake: item?.stake,
+              commissionAmount: Math.abs(roundToTwoDecimals(
+                parseFloat(item?.lossAmount || 0) *
+                parseFloat(userCommission?.matchCommission || 0) / 100
+              )),
               partnerShip: userCommission.fwPartnership,
               matchName: match?.title,
               matchStartDate: new Date(match?.startAt),
-              userName: items.userName,
+              userName: item.userName,
               matchType: marketBetType.MATCHBETTING
             });
-          });
-        }
-        else if (parseFloat(adminBalanceData?.userOriginalProfitLoss) < 0) {
+          }
+        } else if (parseFloat(adminBalanceData?.userOriginalProfitLoss || 0) < 0) {
+          const commissionAmount = Math.abs(roundToTwoDecimals(
+            (parseFloat(adminBalanceData?.userOriginalProfitLoss || 0) *
+              (parseFloat(userCommission?.matchCommission || 0) / 100) *
+              (parseFloat(userCommission.fwPartnership || 0) / 100
+              ))));
 
-          const commissionAmount = Math.abs(roundToTwoDecimals((parseFloat(adminBalanceData?.userOriginalProfitLoss) * parseFloat(userCommission?.matchCommission) / 100) * (parseFloat(userCommission.fwPartnership) / 100)));
-
-          parentUser.totalCommission = parseFloat(parentUser.totalCommission) + commissionAmount;
+          parentUser.totalCommission = parseFloat(parentUser.totalCommission || 0) + commissionAmount;
           totalCommissionData += commissionAmount;
 
           bulkCommission.push({
@@ -199,7 +229,10 @@ exports.declareTournamentMatchResult = async (call) => {
             matchId: matchId,
             betId: matchBettingDetails?.id,
             parentId: parentUserId,
-            commissionAmount: Math.abs(roundToTwoDecimals((parseFloat(adminBalanceData?.userOriginalProfitLoss)) * parseFloat(userCommission?.matchCommission) / 100)),
+            commissionAmount: Math.abs(roundToTwoDecimals(
+              (parseFloat(adminBalanceData?.userOriginalProfitLoss || 0) *
+                parseFloat(userCommission?.matchCommission || 0) / 100
+              ))),
             partnerShip: userCommission.fwPartnership,
             matchName: match?.title,
             matchStartDate: new Date(match?.startAt),
@@ -208,8 +241,7 @@ exports.declareTournamentMatchResult = async (call) => {
             matchType: marketBetType.MATCHBETTING
           });
         }
-      });
-
+      }
 
       if (parentUser.exposure < 0) {
         logger.info({
@@ -223,10 +255,11 @@ exports.declareTournamentMatchResult = async (call) => {
         adminBalanceData.exposure += parentUser.exposure;
         parentUser.exposure = 0;
       }
-      userUpdateDBData[parentUser.userId] = {
-        profitLoss: roundToTwoDecimals(adminBalanceData?.profitLoss),
-        myProfitLoss: -roundToTwoDecimals(adminBalanceData?.myProfitLoss),
-        exposure: -adminBalanceData?.exposure,
+
+      userUpdateDBData[parentUserId] = {
+        profitLoss: roundToTwoDecimals(adminBalanceData?.profitLoss || 0),
+        myProfitLoss: -roundToTwoDecimals(adminBalanceData?.myProfitLoss || 0),
+        exposure: -(adminBalanceData?.exposure || 0),
         totalCommission: roundToTwoDecimals(totalCommissionData),
         balance: 0
       }
@@ -240,37 +273,42 @@ exports.declareTournamentMatchResult = async (call) => {
       });
 
       if (Object.keys(parentUserRedisData || {}).length) {
+        const baseKey = `match:${parentUserId}:${matchId}:${matchBettingDetails?.id}:profitLoss`;
+
         // queue Redis increments & key deletion
         updatePipeline
-          .hincrbyfloat(parentUserId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss))
-          .hincrbyfloat(parentUserId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss))
-          .hincrbyfloat(parentUserId, 'exposure', -adminBalanceData?.exposure)
-          .hdel(parentUserId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+          .hincrbyfloat(parentUserId, 'profitLoss', roundToTwoDecimals(adminBalanceData?.profitLoss || 0))
+          .hincrbyfloat(parentUserId, 'myProfitLoss', -roundToTwoDecimals(adminBalanceData?.myProfitLoss || 0))
+          .hincrbyfloat(parentUserId, 'exposure', -(adminBalanceData?.exposure || 0))
+          .hdel(baseKey);
       }
 
-      exposure += parseFloat(adminBalanceData?.exposure);
+      exposure += parseFloat(adminBalanceData?.exposure || 0);
     }
 
-    fwProfitLoss += parseFloat(response?.faAdminCal?.fwWalletDeduction || 0);
-    exposure += parseFloat(response?.faAdminCal?.userData?.[fgWallet.id]?.exposure || 0);
+    // Process fair game wallet
+    fwProfitLoss += parseFloat(response.faAdminCal?.fwWalletDeduction || 0);
+    exposure += parseFloat(userData[fgWallet.id]?.exposure || 0);
 
-    const parentUser = userBalances[fgWallet.id];
+    const parentUser = userBalances.get(fgWallet.id);
     const parentUserRedisData = usersRedisData[fgWallet.id];
 
-    const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss);
-    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss);
-    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure);
+    const parentProfitLoss = roundToTwoDecimals(parentUserRedisData?.profitLoss || parentUser?.profitLoss || 0);
+    const parentMyProfitLoss = roundToTwoDecimals(parentUserRedisData?.myProfitLoss || parentUser?.myProfitLoss || 0);
+    const parentExposure = roundToTwoDecimals(parentUserRedisData?.exposure || parentUser?.exposure || 0);
 
     parentUser.profitLoss = roundToTwoDecimals(parentProfitLoss + fwProfitLoss);
     parentUser.myProfitLoss = roundToTwoDecimals(parentMyProfitLoss - fwProfitLoss);
     parentUser.exposure = roundToTwoDecimals(parentExposure - exposure);
 
-
     const allChildUsers = await getUsersWithoutCount({ createBy: fgWallet.id }, ["id"]);
-    const commissionWallet = await bulkCommission.filter((item) => !!allChildUsers.find((items) => items.id == item.parentId))?.reduce((prev, curr) => {
-      return roundToTwoDecimals(prev + (curr.commissionAmount * curr.partnerShip / 100));
-    }, 0);
-    parentUser.totalCommission += commissionWallet;
+    const commissionWallet = bulkCommission
+      .filter(item => allChildUsers.some(u => u.id === item.parentId))
+      .reduce((sum, curr) => {
+        return roundToTwoDecimals(sum + (curr.commissionAmount * (curr.partnerShip || 0) / 100));
+      }, 0);
+
+    parentUser.totalCommission = (parentUser.totalCommission || 0) + commissionWallet;
 
     if (parentUser.exposure < 0) {
       logger.info({
@@ -301,22 +339,33 @@ exports.declareTournamentMatchResult = async (call) => {
       },
     });
     if (Object.keys(parentUserRedisData || {}).length) {
+      const baseKey = `match:${fgWallet.id}:${matchId}:${matchBettingDetails?.id}:profitLoss`;
+
       updatePipeline
-        .hincrbyfloat(parentUser.userId, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(parentUser.userId, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
-        .hincrbyfloat(parentUser.userId, 'exposure', -exposure)
-        .hdel(parentUser.userId, `${matchBettingDetails?.id}${redisKeys.profitLoss}_${matchId}`);
+        .hincrbyfloat(fgWallet.id, 'profitLoss', roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(fgWallet.id, 'myProfitLoss', -roundToTwoDecimals(fwProfitLoss))
+        .hincrbyfloat(fgWallet.id, 'exposure', -exposure)
+        .del(baseKey);
     }
 
-    insertCommissions(bulkCommission);
+    // Insert commissions in batches
+    if (bulkCommission.length > 0) {
+      const commissionBatches = [];
+      for (let i = 0; i < bulkCommission.length; i += 500) {
+        commissionBatches.push(bulkCommission.slice(i, i + 500));
+      }
+      for (const batch of commissionBatches) {
+        await insertCommissions(batch);
+      }
+    }
 
+    // Execute Redis pipeline
     await updatePipeline.exec();
 
     const updateUserBatch = convertToBatches(500, userUpdateDBData);
     for (let i = 0; i < updateUserBatch.length; i++) {
       await updateUserDeclareBalanceData(updateUserBatch[i]);
     }
-
 
     broadcastEvent(socketData.matchResult, {
       matchId,
@@ -325,20 +374,19 @@ exports.declareTournamentMatchResult = async (call) => {
       betType: matchBettingType.tournament,
     });
 
-    return { data: { profitLoss: resultProfitLoss, totalCommission: commissionWallet } }
+    return { data: { profitLoss: resultProfitLoss, totalCommission: commissionWallet } };
   } catch (error) {
     logger.error({
       error: `Error at declare tournament match result for the expert.`,
       stack: error.stack,
       message: error.message,
     });
-    // Handle any errors and return an error response
     throw {
       code: grpc.status.INTERNAL,
       message: error?.message || __mf("internalServerError"),
     };
   }
-}
+};
 
 exports.unDeclareTournamentMatchResult = async (call) => {
   try {
@@ -515,15 +563,18 @@ exports.unDeclareTournamentMatchResult = async (call) => {
 
       let settingRedisDataObj = { ...profitLossDataAdmin[parentUser.userId] };
       Object.keys(settingRedisDataObj)?.forEach((items) => {
-        settingRedisDataObj[items] = JSON.stringify(settingRedisDataObj[items]);
+        settingRedisDataObj = { ...settingRedisDataObj, ...settingRedisDataObj[items] };
+        delete settingRedisDataObj[items];
       });
 
-      if (Object.keys(parentUserRedisData||{}).length) {
+      if (Object.keys(parentUserRedisData || {}).length) {
+        const baseKey = `match:${parentUserId}:${matchId}:${matchBetting?.id}:profitLoss`;
+
         updatePipeline
           .hincrbyfloat(parentUserId, 'profitLoss', -roundToTwoDecimals(adminBalanceData?.profitLoss))
           .hincrbyfloat(parentUserId, 'myProfitLoss', roundToTwoDecimals(adminBalanceData?.myProfitLoss))
           .hincrbyfloat(parentUserId, 'exposure', adminBalanceData?.exposure)
-          .hmset(parentUserId, settingRedisDataObj);
+          .hmset(baseKey, settingRedisDataObj);
       }
 
       sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {
@@ -603,19 +654,21 @@ exports.unDeclareTournamentMatchResult = async (call) => {
     });
 
     if (
-      Object.keys(parentUserRedisData||{}).length
+      Object.keys(parentUserRedisData || {}).length
     ) {
 
       let settingRedisDataObj = { ...profitLossDataWallet };
       Object.keys(settingRedisDataObj)?.forEach((items) => {
-        settingRedisDataObj[items] = JSON.stringify(settingRedisDataObj[items]);
+        settingRedisDataObj = { ...settingRedisDataObj, ...settingRedisDataObj[items] };
+        delete settingRedisDataObj[items];
       });
+      const baseKey = `match:${parentUser.userId}:${matchId}:${matchBetting?.id}:profitLoss`;
 
       updatePipeline
         .hincrbyfloat(parentUser.userId, 'profitLoss', -roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'myProfitLoss', roundToTwoDecimals(fwProfitLoss))
         .hincrbyfloat(parentUser.userId, 'exposure', exposure)
-        .hmset(parentUser.userId, settingRedisDataObj);
+        .hmset(baseKey, settingRedisDataObj);
 
     }
     sendMessageToUser(parentUser.userId, socketData.matchResultUnDeclare, {

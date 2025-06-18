@@ -12,7 +12,7 @@ const { getUserWithUserBalance } = require("../services/userService");
 const { userLoginAtUpdate } = require("../services/authService");
 const { forceLogoutIfLogin, settingBetsDataAtLogin } = require("../services/commonService");
 const { logger } = require("../config/logger");
-const { updateUserDataRedis } = require("../services/redis/commonFunctions");
+const { updateUserDataRedis, setLoginVal, deleteProfitLossData } = require("../services/redis/commonFunctions");
 
 // Function to validate a user by username and password
 const validateUser = async (userName, password) => {
@@ -42,13 +42,14 @@ const validateUser = async (userName, password) => {
 
 const setUserDetailsRedis = async (user) => {
   logger.info({ message: "Setting exposure at login time.", data: user });
-  
+
   // Fetch user details from Redis
   const redisUserData = await internalRedis.hget(user.id, "userName");
 
   if (!redisUserData) {
     // Fetch and set betting data at login
     let betData = await settingBetsDataAtLogin(user);
+    await setLoginVal(betData?.plResult)
 
     // Set user details and partnerships in Redis
     await updateUserDataRedis(user.id, {
@@ -58,15 +59,15 @@ const setUserDetailsRedis = async (user) => {
       userName: user.userName,
       currentBalance: user?.userBal?.currentBalance || 0,
       roleName: user.roleName,
-      ...(betData || {}),
+      ...(betData?.expResult || {}),
     });
 
     // Expire user data in Redis
     await internalRedis.expire(user.id, redisTimeOut);
   }
-  else{
-     // Expire user data in Redis
-     await internalRedis.expire(user.id, redisTimeOut);
+  else {
+    // Expire user data in Redis
+    await internalRedis.expire(user.id, redisTimeOut);
   }
 };
 
@@ -207,6 +208,7 @@ exports.logout = async (req, res) => {
 
     // Remove the user's token from Redis using their ID as the key
     await internalRedis.del(user.id);
+    await deleteProfitLossData(user.id);
 
     return SuccessResponse(
       {

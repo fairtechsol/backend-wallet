@@ -1,7 +1,7 @@
-const { redisKeys, socketData } = require('../config/contants.js');
+const { socketData } = require('../config/contants.js');
 const { deleteReasonChangeHandler, getMatchDetailsHandler } = require('../grpc/grpcClient/handlers/expert/matchHandler.js');
 const { deleteMultipleBetHandler, changeBetsDeleteReasonHandler } = require('../grpc/grpcClient/handlers/wallet/betsHandler.js');
-const { getUserRedisKeys } = require('../services/redis/commonFunctions.js');
+const { getUserSessionAllPL } = require('../services/redis/commonFunctions.js');
 const { sendMessageToUser } = require('../sockets/socketManager.js');
 const { ErrorResponse, SuccessResponse } = require('../utils/response.js');
 
@@ -55,8 +55,9 @@ exports.getSessionProfitLoss = async (req, res) => {
     try {
         const { id: userId } = req.user;
         const { betId } = req.params;
+        const { matchId } = req.query;
 
-        const sessionProfitLoss = await getUserRedisKeys(userId, betId + redisKeys.profitLoss);
+        const sessionProfitLoss = await getUserSessionAllPL(userId, matchId, betId);
 
         return SuccessResponse({ statusCode: 200, message: { msg: "fetched", keys: { type: "Session profit loss" } }, data: { profitLoss: sessionProfitLoss } }, req, res);
     } catch (err) {

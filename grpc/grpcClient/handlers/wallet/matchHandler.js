@@ -13,6 +13,19 @@ exports.addMatchHandler = async (requestData, address) => {
     }
 };
 
+exports.updateMatchHandler = async (requestData, address) => {
+    try {
+        await grpcReq.user(address).callMethod(
+            "MatchProvider",
+            "UpdateMatch",
+            requestData
+        );
+
+    } catch (error) {
+        throw error;
+    }
+};
+
 exports.addRaceMatchHandler = async (requestData, address) => {
     try {
         await grpcReq.user(address).callMethod(

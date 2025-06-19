@@ -73,6 +73,15 @@ message DeclareVirtualCasinoResultRequest {
 message DeclareVirtualCasinoResultResponse {
 }
 
+// Request to update a match
+message UpdateMatchRequest {
+  string id = 1;
+  string data = 2;
+}
+
+// Response after adding a match
+message UpdateMatchResponse {}
+
 
 // ============================
 // MatchProvider Service
@@ -81,6 +90,7 @@ message DeclareVirtualCasinoResultResponse {
 service MatchProvider {
   rpc AddMatch(AddMatchRequest) returns (AddMatchResponse);
   rpc AddRaceMatch(AddRaceMatchRequest) returns (AddRaceMatchResponse);
+  rpc UpdateMatch(UpdateMatchRequest) returns (UpdateMatchResponse);
 
   // New card result methods
   rpc GetCardResult(GetCardResultRequest) returns (GetCardResultResponse);

@@ -2,7 +2,7 @@ const grpc = require("@grpc/grpc-js");
 const { __mf } = require("i18n");
 const { logger } = require("../../../config/logger");
 const { getUserDomainWithFaId } = require("../../../services/domainDataService");
-const { addMatchHandler, addRaceMatchHandler } = require("../../grpcClient/handlers/wallet/matchHandler");
+const { addMatchHandler, addRaceMatchHandler, updateMatchHandler } = require("../../grpcClient/handlers/wallet/matchHandler");
 const { CardResultTypeWin } = require("../../../services/cardService/cardResultTypeWinPlayer");
 const { getCasinoCardResult, getCardResultData } = require("../../../services/cardService");
 const { getUser } = require("../../../services/userService");
@@ -20,6 +20,36 @@ exports.addMatch = async (call) => {
 
     for (let url of domainData) {
       const promise = addMatchHandler(call.request, url?.domain);
+      promiseArray.push(promise);
+    }
+
+    await Promise.allSettled(promiseArray)
+      .catch(error => {
+        throw error;
+      });
+
+    return {}
+  } catch (err) {
+    logger.error({
+      context: "Error in add match user side.",
+      message: err.message,
+      stake: err.stack
+    });
+    throw {
+      code: grpc.status.INTERNAL,
+      message: err?.message || __mf("internalServerError"),
+    };
+  }
+};
+
+exports.updateMatch = async (call) => {
+  try {
+    const domainData = await getUserDomainWithFaId();
+
+    let promiseArray = []
+
+    for (let url of domainData) {
+      const promise = updateMatchHandler(call.request, url?.domain);
       promiseArray.push(promise);
     }
 

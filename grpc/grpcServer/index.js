@@ -2,7 +2,7 @@ const { Server } = require("./grpcServer");
 const { getPlacedBets, getWalletLoginBetsData, getResultBetProfitLoss, getUserWiseSessionBetProfitLossExpert } = require("./handlers/betsHandler");
 const { declareTournamentMatchResult, unDeclareTournamentMatchResult, declareFinalMatchResult, unDeclareFinalMatchResult } = require("./handlers/declareMatchHandler");
 const { declareSessionResult, declareSessionNoResult, unDeclareSessionResult } = require("./handlers/declareSessionHandler");
-const { addMatch, raceAdd, getCardResult, getCardResultDetail, declareVirtualCasinoResult } = require("./handlers/matchHandler");
+const { addMatch, raceAdd, getCardResult, getCardResultDetail, declareVirtualCasinoResult, updateMatch } = require("./handlers/matchHandler");
 const { updateUserBalanceBySA, lockUnlockUserByUserPanel, getPartnershipId } = require("./handlers/userHandler");
 
 const { GRPC_PORT = 50500 } = process.env;
@@ -55,6 +55,7 @@ server
     .addService("BetsProvider", "GetSessionProfitLossBet", getResultBetProfitLoss)
 
     .addService("MatchProvider", "AddMatch", addMatch)
+    .addService("MatchProvider", "UpdateMatch", updateMatch)
     .addService("MatchProvider", "AddRaceMatch", raceAdd)
     .addService("MatchProvider", "GetCardResult", getCardResult)
     .addService("MatchProvider", "GetCardResultDetail", getCardResultDetail)
